@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStore } from '../stores/userStore';
-import { chatService, Conversation, OtherUser } from '../api/chatService';
+import { chatService, Conversation } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 
