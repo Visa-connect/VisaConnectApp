@@ -1,3 +1,5 @@
+import { useUserStore } from '../stores/userStore';
+
 export interface PhotoUploadResult {
   success: boolean;
   url?: string;
@@ -5,14 +7,16 @@ export interface PhotoUploadResult {
   error?: string;
 }
 
-export const uploadProfilePhoto = async (file: File): Promise<PhotoUploadResult> => {
+export const uploadProfilePhoto = async (
+  file: File
+): Promise<PhotoUploadResult> => {
   try {
     // Create FormData for file upload
     const formData = new FormData();
     formData.append('photo', file);
 
-    // Get auth token from localStorage
-    const token = localStorage.getItem('userToken');
+    // Get auth token from user store
+    const token = useUserStore.getState().getToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
@@ -21,14 +25,16 @@ export const uploadProfilePhoto = async (file: File): Promise<PhotoUploadResult>
     const response = await fetch('/api/photo/upload-profile-photo', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: formData,
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
+      throw new Error(
+        errorData.error || `Upload failed: ${response.statusText}`
+      );
     }
 
     const data = await response.json();
@@ -47,10 +53,12 @@ export const uploadProfilePhoto = async (file: File): Promise<PhotoUploadResult>
   }
 };
 
-export const deleteProfilePhoto = async (publicId: string): Promise<PhotoUploadResult> => {
+export const deleteProfilePhoto = async (
+  publicId: string
+): Promise<PhotoUploadResult> => {
   try {
-    // Get auth token from localStorage
-    const token = localStorage.getItem('userToken');
+    // Get auth token from user store
+    const token = useUserStore.getState().getToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
@@ -59,13 +67,15 @@ export const deleteProfilePhoto = async (publicId: string): Promise<PhotoUploadR
     const response = await fetch('/api/photo/delete-profile-photo', {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `Delete failed: ${response.statusText}`);
+      throw new Error(
+        errorData.error || `Delete failed: ${response.statusText}`
+      );
     }
 
     return {

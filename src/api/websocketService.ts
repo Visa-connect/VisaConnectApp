@@ -1,3 +1,5 @@
+import { useUserStore } from '../stores/userStore';
+
 export interface WebSocketMessage {
   type: 'authenticate' | 'subscribe' | 'unsubscribe' | 'update';
   data: any;
@@ -86,7 +88,7 @@ class WebSocketService {
   }
 
   private authenticate() {
-    const token = localStorage.getItem('userToken');
+    const token = useUserStore.getState().getToken();
     if (token && this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(
         JSON.stringify({

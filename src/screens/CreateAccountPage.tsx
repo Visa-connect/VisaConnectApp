@@ -57,7 +57,7 @@ const CreateAccountPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
   const navigate = useNavigate();
-  const { setUser } = useUserStore();
+  const { setUser, setToken } = useUserStore();
 
   const validateStep1 = () => {
     const newErrors: { [key: string]: string } = {};
@@ -148,8 +148,8 @@ const CreateAccountPage: React.FC = () => {
           employer: form.employer,
         };
 
-        // Update both localStorage and user store
-        localStorage.setItem('userToken', response.token);
+        // Update both user store and localStorage
+        setToken(response.token);
         setUser(userData); // This updates the user store and sets isAuthenticated to true
       }
 

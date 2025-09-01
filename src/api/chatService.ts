@@ -1,3 +1,5 @@
+import { useUserStore } from '../stores/userStore';
+
 // Frontend chat service now uses backend API + WebSocket for real-time updates
 // This provides better security, centralized Firebase management, and eliminates client-side Firebase issues
 
@@ -30,7 +32,7 @@ export interface ChatUser {
 
 class ChatService {
   private getAuthToken(): string | null {
-    return localStorage.getItem('userToken');
+    return useUserStore.getState().getToken();
   }
 
   private async makeRequest(

@@ -1,11 +1,11 @@
 import config from '../config';
+import { useUserStore } from '../stores/userStore';
 
 // Backend API base URL
 const API_BASE_URL = config.apiUrl;
 
 export const getToken = () => {
-  const token = localStorage.getItem('userToken');
-  return token;
+  return useUserStore.getState().getToken();
 };
 
 const defaultHeaders = () => {

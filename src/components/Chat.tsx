@@ -66,8 +66,6 @@ const Chat: React.FC<ChatProps> = ({
     }
   }, [messages.length]);
 
-
-
   // Force scroll to bottom with multiple strategies
   const smoothScrollToBottom = () => {
     // Strategy 1: Scroll the entire page to bottom

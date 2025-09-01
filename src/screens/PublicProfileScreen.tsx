@@ -152,7 +152,7 @@ const PublicProfileScreen: React.FC = () => {
       if (!userId) return;
 
       try {
-        const token = localStorage.getItem('userToken');
+        const token = useUserStore.getState().getToken();
         const response = await fetch(`/api/user/${userId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -183,7 +183,7 @@ const PublicProfileScreen: React.FC = () => {
 
     try {
       // Create or get existing conversation with this user
-      const token = localStorage.getItem('userToken');
+      const token = useUserStore.getState().getToken();
       const response = await fetch('/api/chat/conversations', {
         method: 'POST',
         headers: {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ChatList from '../components/ChatList';
 import Chat from '../components/Chat';
+import { useUserStore } from '../stores/userStore';
 
 const ChatScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const ChatScreen: React.FC = () => {
         `/api/chat/conversations/${conversationId}/user-info`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${useUserStore.getState().getToken()}`,
           },
         }
       );
