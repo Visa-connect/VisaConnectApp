@@ -80,8 +80,7 @@ class ChatService {
           lastMessage: messageData,
           lastMessageTime: messageData.timestamp,
           updatedAt: FieldValue.serverTimestamp(),
-          [`unreadCount.${message.receiverId}`]:
-            message.receiverId === message.senderId ? 0 : 1,
+          [`unreadCount.${message.receiverId}`]: FieldValue.increment(1),
         });
 
       return docRef.id;
