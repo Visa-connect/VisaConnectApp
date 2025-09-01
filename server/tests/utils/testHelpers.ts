@@ -56,12 +56,22 @@ export class TestDataFactory {
     senderId: string,
     content: string,
     timestamp?: Date,
-    read?: boolean
+    read?: boolean,
+    participants?: string[]
   ): Message {
+    // Calculate receiverId as the other participant in the conversation
+    let receiverId: string;
+    if (participants && participants.length === 2) {
+      receiverId = participants.find((p) => p !== senderId) || participants[1];
+    } else {
+      // Fallback: use a default receiver for testing
+      receiverId = senderId === 'user1' ? 'user2' : 'user1';
+    }
+
     return {
       id,
       senderId,
-      receiverId: conversationId, // Use receiverId instead of conversationId
+      receiverId,
       content,
       timestamp: timestamp || new Date(),
       read: read || false,
@@ -85,7 +95,10 @@ export class TestDataFactory {
         `msg-${i + 1}`,
         conversationId,
         senderId,
-        `Message ${i + 1} from ${senderId}`
+        `Message ${i + 1} from ${senderId}`,
+        undefined, // timestamp
+        undefined, // read
+        participants
       );
       messages.push(message);
     }
@@ -135,7 +148,8 @@ export class TestDataFactory {
         senderId,
         `Message ${i + 1} from ${senderId}`,
         new Date(Date.now() - (count - i) * 30000), // Messages are 30 seconds apart
-        i < count - 2 // Last 2 messages are unread
+        i < count - 2, // Last 2 messages are unread
+        participants
       );
       messages.push(message);
     }
