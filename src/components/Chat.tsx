@@ -115,7 +115,7 @@ const Chat: React.FC<ChatProps> = ({
       senderId: user.uid,
       receiverId: otherUserId,
       content: messageContent,
-      timestamp: new Date().toISOString(), // Use ISO string for consistency
+      timestamp: new Date(), // Use JS Date object for consistency with Firestore
       read: false,
     };
 
