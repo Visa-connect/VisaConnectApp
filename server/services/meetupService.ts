@@ -54,25 +54,42 @@ export interface MeetupReport {
 }
 
 export interface CreateMeetupRequest {
+  /** Required: The ID of the meetup category */
   category_id: number;
+  /** Required: The title of the meetup (max 100 characters) */
   title: string;
+  /** Required: Detailed description of the meetup (max 1000 characters) */
   description: string;
+  /** Required: Location where the meetup will take place (max 200 characters) */
   location: string;
-  meetup_date: string; // ISO string
+  /** Required: ISO string date when the meetup will occur (must be in the future) */
+  meetup_date: string;
+  /** Optional: Maximum number of participants allowed (1-1000) */
   max_participants?: number | null;
+  /** Optional: Cloudinary secure URL for the meetup photo (max 500 characters, must be valid URL) */
   photo_url?: string | null;
+  /** Optional: Cloudinary public ID for the meetup photo (max 255 characters, format: folder/filename) */
   photo_public_id?: string | null;
 }
 
 export interface UpdateMeetupRequest {
+  /** Optional: The ID of the meetup category */
   category_id?: number;
+  /** Optional: The title of the meetup (max 100 characters) */
   title?: string;
+  /** Optional: Detailed description of the meetup (max 1000 characters) */
   description?: string;
+  /** Optional: Location where the meetup will take place (max 200 characters) */
   location?: string;
-  meetup_date?: string; // ISO string
+  /** Optional: ISO string date when the meetup will occur (must be in the future) */
+  meetup_date?: string;
+  /** Optional: Maximum number of participants allowed (1-1000) */
   max_participants?: number | null;
+  /** Optional: Whether the meetup is currently active */
   is_active?: boolean;
+  /** Optional: Cloudinary secure URL for the meetup photo (max 500 characters, must be valid URL) */
   photo_url?: string | null;
+  /** Optional: Cloudinary public ID for the meetup photo (max 255 characters, format: folder/filename) */
   photo_public_id?: string | null;
 }
 
@@ -87,6 +104,61 @@ export interface SearchMeetupsRequest {
 }
 
 class MeetupService {
+  // Validate meetup data before creation/update
+  private validateMeetupData(
+    data: CreateMeetupRequest | UpdateMeetupRequest
+  ): void {
+    // Validate title
+    if (data.title && (data.title.length < 1 || data.title.length > 100)) {
+      throw new Error('Title must be between 1 and 100 characters');
+    }
+
+    // Validate description
+    if (
+      data.description &&
+      (data.description.length < 1 || data.description.length > 1000)
+    ) {
+      throw new Error('Description must be between 1 and 1000 characters');
+    }
+
+    // Validate location
+    if (
+      data.location &&
+      (data.location.length < 1 || data.location.length > 200)
+    ) {
+      throw new Error('Location must be between 1 and 200 characters');
+    }
+
+    // Validate max_participants
+    if (
+      data.max_participants &&
+      (data.max_participants < 1 || data.max_participants > 1000)
+    ) {
+      throw new Error('Max participants must be between 1 and 1000');
+    }
+
+    // Validate photo_url format and length
+    if (data.photo_url && data.photo_url.length > 500) {
+      throw new Error('Photo URL must be 500 characters or less');
+    }
+
+    // Validate photo_public_id format and length
+    if (data.photo_public_id && data.photo_public_id.length > 255) {
+      throw new Error('Photo public ID must be 255 characters or less');
+    }
+
+    // Validate meetup_date is in the future (only for creation)
+    if ('meetup_date' in data && data.meetup_date) {
+      const meetupDate = new Date(data.meetup_date);
+      if (isNaN(meetupDate.getTime())) {
+        throw new Error('Invalid meetup date format');
+      }
+      if (meetupDate <= new Date()) {
+        throw new Error('Meetup date must be in the future');
+      }
+    }
+  }
+
   // Get all meetup categories
   async getCategories(): Promise<MeetupCategory[]> {
     try {
@@ -111,6 +183,9 @@ class MeetupService {
     meetupData: CreateMeetupRequest
   ): Promise<number> {
     try {
+      // Validate input data
+      this.validateMeetupData(meetupData);
+
       const result = await pool.query(
         `INSERT INTO meetups (
           creator_id, category_id, title, description, location, 
@@ -520,6 +595,9 @@ class MeetupService {
     updateData: UpdateMeetupRequest
   ): Promise<void> {
     try {
+      // Validate input data
+      this.validateMeetupData(updateData);
+
       // Check if user is the creator
       const meetupResult = await pool.query(
         'SELECT creator_id FROM meetups WHERE id = $1',
@@ -579,6 +657,18 @@ class MeetupService {
         paramCount++;
         updateFields.push(`is_active = $${paramCount}`);
         params.push(updateData.is_active);
+      }
+
+      if (updateData.photo_url !== undefined) {
+        paramCount++;
+        updateFields.push(`photo_url = $${paramCount}`);
+        params.push(updateData.photo_url);
+      }
+
+      if (updateData.photo_public_id !== undefined) {
+        paramCount++;
+        updateFields.push(`photo_public_id = $${paramCount}`);
+        params.push(updateData.photo_public_id);
       }
 
       if (updateFields.length === 0) {

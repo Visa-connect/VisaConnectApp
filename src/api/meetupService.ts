@@ -25,13 +25,21 @@ export interface MeetupCategory {
 }
 
 export interface CreateMeetupRequest {
+  /** Required: The ID of the meetup category */
   category_id: number;
+  /** Required: The title of the meetup (max 100 characters) */
   title: string;
+  /** Required: Detailed description of the meetup (max 1000 characters) */
   description: string;
+  /** Required: Location where the meetup will take place (max 200 characters) */
   location: string;
+  /** Required: ISO string date when the meetup will occur (must be in the future) */
   meetup_date: string;
+  /** Optional: Maximum number of participants allowed (1-1000) */
   max_participants?: number | null;
+  /** Optional: Cloudinary secure URL for the meetup photo (max 500 characters, must be valid URL) */
   photo_url?: string | null;
+  /** Optional: Cloudinary public ID for the meetup photo (max 255 characters, format: folder/filename) */
   photo_public_id?: string | null;
 }
 
