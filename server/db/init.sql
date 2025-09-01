@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS meetups (
     meetup_date TIMESTAMP NOT NULL,
     max_participants INTEGER,
     is_active BOOLEAN DEFAULT TRUE,
+    photo_url VARCHAR(500),
+    photo_public_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -151,6 +153,29 @@ CREATE TABLE IF NOT EXISTS meetup_reports (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
+-- Create business categories table
+CREATE TABLE IF NOT EXISTS business_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create businesses table
+CREATE TABLE IF NOT EXISTS businesses (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category_id INTEGER REFERENCES business_categories(id),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    address TEXT,
+    website VARCHAR(500),
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, name) -- Prevent duplicate business names per user
+);
+
 -- Create indexes for meetups table
 CREATE INDEX IF NOT EXISTS idx_meetups_creator_id ON meetups(creator_id);
 CREATE INDEX IF NOT EXISTS idx_meetups_category_id ON meetups(category_id);
@@ -160,6 +185,8 @@ CREATE INDEX IF NOT EXISTS idx_meetups_created_at ON meetups(created_at);
 CREATE INDEX IF NOT EXISTS idx_meetups_title ON meetups USING GIN(to_tsvector('english', title));
 CREATE INDEX IF NOT EXISTS idx_meetups_description ON meetups USING GIN(to_tsvector('english', description));
 CREATE INDEX IF NOT EXISTS idx_meetups_location ON meetups USING GIN(to_tsvector('english', location));
+CREATE INDEX IF NOT EXISTS idx_meetups_photo_url ON meetups(photo_url);
+CREATE INDEX IF NOT EXISTS idx_meetups_photo_public_id ON meetups(photo_public_id);
 
 -- Create indexes for meetup_interests table
 CREATE INDEX IF NOT EXISTS idx_meetup_interests_meetup_id ON meetup_interests(meetup_id);
@@ -169,6 +196,12 @@ CREATE INDEX IF NOT EXISTS idx_meetup_interests_user_id ON meetup_interests(user
 CREATE INDEX IF NOT EXISTS idx_meetup_reports_meetup_id ON meetup_reports(meetup_id);
 CREATE INDEX IF NOT EXISTS idx_meetup_reports_reporter_id ON meetup_reports(reporter_id);
 CREATE INDEX IF NOT EXISTS idx_meetup_reports_status ON meetup_reports(status);
+
+-- Create indexes for businesses table
+CREATE INDEX IF NOT EXISTS idx_businesses_user_id ON businesses(user_id);
+CREATE INDEX IF NOT EXISTS idx_businesses_category_id ON businesses(category_id);
+CREATE INDEX IF NOT EXISTS idx_businesses_name ON businesses(name);
+CREATE INDEX IF NOT EXISTS idx_businesses_verified ON businesses(verified);
 
 -- Create trigger to automatically update updated_at for meetups
 CREATE TRIGGER update_meetups_updated_at 
@@ -182,6 +215,30 @@ CREATE TRIGGER update_meetup_reports_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+-- Create trigger to automatically update updated_at for businesses
+CREATE TRIGGER update_businesses_updated_at 
+    BEFORE UPDATE ON businesses 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create trigger to automatically update updated_at for business_categories
+CREATE TRIGGER update_business_categories_updated_at 
+    BEFORE UPDATE ON business_categories 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Add comments for meetup photo fields
+COMMENT ON COLUMN meetups.photo_url IS 'URL to the meetup photo/image';
+COMMENT ON COLUMN meetups.photo_public_id IS 'Cloudinary public ID for photo deletion';
+
+-- Add comments for business fields
+COMMENT ON COLUMN businesses.name IS 'Business name';
+COMMENT ON COLUMN businesses.description IS 'Business description';
+COMMENT ON COLUMN businesses.address IS 'Business address';
+COMMENT ON COLUMN businesses.website IS 'Business website URL';
+COMMENT ON COLUMN businesses.verified IS 'Whether the business is verified';
+COMMENT ON COLUMN businesses.category_id IS 'Reference to business category';
+
 -- Insert default meetup categories
 INSERT INTO meetup_categories (name, description) VALUES
     ('Social & Networking', 'Casual meetups for networking and socializing'),
@@ -194,4 +251,19 @@ INSERT INTO meetup_categories (name, description) VALUES
     ('Travel & Exploration', 'Group trips and travel planning'),
     ('Hobbies & Interests', 'Shared hobby activities and workshops'),
     ('Community Service', 'Volunteering and community outreach events')
+ON CONFLICT (name) DO NOTHING;
+
+-- Insert sample business categories (optional)
+-- These can be used to categorize businesses in the future
+INSERT INTO business_categories (name, description) VALUES
+    ('Technology', 'Software, hardware, and IT services'),
+    ('Healthcare', 'Medical services and health-related businesses'),
+    ('Education', 'Schools, training, and educational services'),
+    ('Food & Beverage', 'Restaurants, cafes, and food services'),
+    ('Retail', 'Shopping and consumer goods'),
+    ('Professional Services', 'Legal, consulting, and business services'),
+    ('Manufacturing', 'Production and manufacturing businesses'),
+    ('Real Estate', 'Property and real estate services'),
+    ('Transportation', 'Logistics and transportation services'),
+    ('Entertainment', 'Media, events, and entertainment services')
 ON CONFLICT (name) DO NOTHING;
