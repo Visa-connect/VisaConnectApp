@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Bars3Icon } from '@heroicons/react/24/solid';
 import Button from '../components/Button';
 import { meetupService, Meetup } from '../api/meetupService';
 
@@ -34,10 +33,6 @@ const MeetupsScreen: React.FC = () => {
     fetchMeetups();
   }, [searchQuery]);
 
-  const handleBackClick = () => {
-    navigate(-1);
-  };
-
   const handlePostMeetup = () => {
     navigate('/post-meetup');
   };
@@ -48,12 +43,6 @@ const MeetupsScreen: React.FC = () => {
 
   const clearSearch = () => {
     setSearchQuery('');
-  };
-
-  const location = useLocation();
-
-  const isActiveRoute = (path: string) => {
-    return location.pathname === path;
   };
 
   const handleMeetupClick = (meetupId: number) => {

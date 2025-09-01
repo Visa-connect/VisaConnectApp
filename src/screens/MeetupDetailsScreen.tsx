@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { meetupService, Meetup } from '../api/meetupService';
@@ -38,9 +38,10 @@ const MeetupDetailsScreen: React.FC = () => {
     navigate(-1);
   };
 
-  const handleMoreOptions = () => {
-    // TODO: Show options menu (report, etc.)
-    console.log('More options clicked');
+  const location = useLocation();
+
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path;
   };
 
   const handleImInterested = async () => {
@@ -91,78 +92,81 @@ const MeetupDetailsScreen: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* App Header */}
-      <div className="bg-white px-4 py-3 flex items-center justify-between border-b">
-        <button onClick={handleBackClick} className="p-2 -ml-2">
-          <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
+      {/* Main Content Area */}
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Back Button */}
+        <button
+          onClick={handleBackClick}
+          className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeftIcon className="h-5 w-5 mr-2" />
+          Back to Meetups
         </button>
-        <h1 className="font-bold text-lg text-gray-900 leading-tight">
-          {meetup.title}
-        </h1>
-        <div className="w-10"></div> {/* Spacer for centering */}
-      </div>
 
-      {/* Meetup Details */}
-      <div className="px-4 py-6">
-        {/* Posted By Info */}
-        <div className="text-sm text-gray-500 mb-4">
-          Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
-          {meetup.creator_name}
-        </div>
-
-        {/* Meetup Title */}
-        <h2 className="font-bold text-blue-600 text-xl mb-4">{meetup.title}</h2>
-
-        {/* Key Details */}
-        <div className="space-y-3 mb-6">
-          <div>
-            <span className="font-bold text-gray-900">Date:</span>{' '}
-            <span className="text-gray-700">
-              {new Date(meetup.meetup_date).toLocaleDateString()}
-            </span>
+        {/* Meetup Details */}
+        <div className="space-y-6">
+          {/* Posted By Info */}
+          <div className="text-sm text-gray-500 mb-4">
+            Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
+            {meetup.creator_name}
           </div>
 
-          <div>
-            <span className="font-bold text-gray-900">Time:</span>{' '}
-            <span className="text-gray-700">
-              {new Date(meetup.meetup_date).toLocaleTimeString()}
-            </span>
+          {/* Meetup Title */}
+          <h2 className="font-bold text-blue-600 text-xl mb-4">
+            {meetup.title}
+          </h2>
+
+          {/* Key Details */}
+          <div className="space-y-3 mb-6">
+            <div>
+              <span className="font-bold text-gray-900">Date:</span>{' '}
+              <span className="text-gray-700">
+                {new Date(meetup.meetup_date).toLocaleDateString()}
+              </span>
+            </div>
+
+            <div>
+              <span className="font-bold text-gray-900">Time:</span>{' '}
+              <span className="text-gray-700">
+                {new Date(meetup.meetup_date).toLocaleTimeString()}
+              </span>
+            </div>
+
+            <div>
+              <span className="font-bold text-gray-900">Location:</span>{' '}
+              <span className="text-gray-700">{meetup.location}</span>
+            </div>
           </div>
 
-          <div>
-            <span className="font-bold text-gray-900">Location:</span>{' '}
-            <span className="text-gray-700">{meetup.location}</span>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="mb-6">
-          <span className="font-bold text-gray-900">Description:</span>{' '}
-          <span className="text-gray-700 leading-relaxed">
-            {meetup.description}
-          </span>
-        </div>
-
-        {/* Illustrative Image */}
-        {meetup.photo_url && (
+          {/* Description */}
           <div className="mb-6">
-            <img
-              src={meetup.photo_url}
-              alt="Meetup location"
-              className="w-full h-48 object-cover rounded-lg shadow-sm"
-            />
+            <span className="font-bold text-gray-900">Description:</span>{' '}
+            <span className="text-gray-700 leading-relaxed">
+              {meetup.description}
+            </span>
           </div>
-        )}
 
-        {/* Call to Action Button */}
-        <div className="pb-20">
-          <Button
-            variant="primary"
-            onClick={handleImInterested}
-            className="w-full py-4 text-lg font-bold"
-          >
-            I'm Interested
-          </Button>
+          {/* Illustrative Image */}
+          {meetup.photo_url && (
+            <div className="mb-6">
+              <img
+                src={meetup.photo_url}
+                alt="Meetup location"
+                className="w-full h-48 md:h-64 lg:h-80 xl:h-96 object-cover rounded-lg shadow-sm"
+              />
+            </div>
+          )}
+
+          {/* Call to Action Button */}
+          <div className="pb-20">
+            <Button
+              variant="primary"
+              onClick={handleImInterested}
+              className="w-full py-4 text-lg font-bold"
+            >
+              I'm Interested
+            </Button>
+          </div>
         </div>
       </div>
     </div>
