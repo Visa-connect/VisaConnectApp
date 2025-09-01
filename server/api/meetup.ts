@@ -6,7 +6,7 @@ export default function meetupApi(app: Express) {
   // Get all meetup categories
   app.get('/api/meetups/categories', async (req: Request, res: Response) => {
     try {
-      const categories = await meetupService().getCategories();
+      const categories = await meetupService.getCategories();
       res.json({ success: true, data: categories });
     } catch (error) {
       console.error('Error fetching meetup categories:', error);
@@ -74,7 +74,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetupId = await meetupService().createMeetup(userId, {
+        const meetupId = await meetupService.createMeetup(userId, {
           category_id,
           title,
           description,
@@ -124,7 +124,7 @@ export default function meetupApi(app: Express) {
         offset: parseInt(offset as string),
       };
 
-      const meetups = await meetupService().searchMeetups(searchParams, userId);
+      const meetups = await meetupService.searchMeetups(searchParams, userId);
 
       res.json({
         success: true,
@@ -152,7 +152,7 @@ export default function meetupApi(app: Express) {
         });
       }
 
-      const meetup = await meetupService().getMeetup(meetupId, userId);
+      const meetup = await meetupService.getMeetup(meetupId, userId);
 
       if (!meetup) {
         return res.status(404).json({
@@ -196,10 +196,10 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        await meetupService().expressInterest(meetupId, userId);
+        await meetupService.expressInterest(meetupId, userId);
 
         // Get the meetup details to send notification
-        const meetup = await meetupService().getMeetup(meetupId);
+        const meetup = await meetupService.getMeetup(meetupId);
         if (meetup && meetup.creator) {
           // TODO: Send email and chat message to meetup creator
           // This will be implemented in the notification service
@@ -253,7 +253,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        await meetupService().removeInterest(meetupId, userId);
+        await meetupService.removeInterest(meetupId, userId);
 
         res.json({
           success: true,
@@ -308,7 +308,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const reportId = await meetupService().reportMeetup(
+        const reportId = await meetupService.reportMeetup(
           meetupId,
           userId,
           reason
@@ -343,7 +343,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetups = await meetupService().getUserMeetups(userId);
+        const meetups = await meetupService.getUserMeetups(userId);
 
         res.json({
           success: true,
@@ -373,7 +373,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetups = await meetupService().getUserInterestedMeetups(userId);
+        const meetups = await meetupService.getUserInterestedMeetups(userId);
 
         res.json({
           success: true,
@@ -432,7 +432,7 @@ export default function meetupApi(app: Express) {
           }
         }
 
-        await meetupService().updateMeetup(meetupId, userId, updateData);
+        await meetupService.updateMeetup(meetupId, userId, updateData);
 
         res.json({
           success: true,
@@ -479,7 +479,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        await meetupService().deleteMeetup(meetupId, userId);
+        await meetupService.deleteMeetup(meetupId, userId);
 
         res.json({
           success: true,

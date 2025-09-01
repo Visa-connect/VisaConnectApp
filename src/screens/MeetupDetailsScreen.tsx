@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { meetupService, Meetup } from '../api/meetupService';
@@ -36,12 +36,6 @@ const MeetupDetailsScreen: React.FC = () => {
 
   const handleBackClick = () => {
     navigate(-1);
-  };
-
-  const location = useLocation();
-
-  const isActiveRoute = (path: string) => {
-    return location.pathname === path;
   };
 
   const handleImInterested = async () => {

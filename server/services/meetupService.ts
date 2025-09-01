@@ -627,12 +627,7 @@ class MeetupService {
   }
 }
 
-// Lazy initialization to ensure database is connected first
-let _meetupService: MeetupService | null = null;
-
-export const meetupService = (): MeetupService => {
-  if (!_meetupService) {
-    _meetupService = new MeetupService();
-  }
-  return _meetupService;
-};
+// Direct module-level instantiation
+// In Node.js, modules are cached after first require, making this naturally thread-safe
+// for the single-threaded event loop model
+export const meetupService = new MeetupService();

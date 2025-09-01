@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronDownIcon,
   CalendarIcon,
@@ -183,12 +183,6 @@ const PostMeetupScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const location = useLocation();
-
-  const isActiveRoute = (path: string) => {
-    return location.pathname === path;
   };
 
   const handleBack = () => {
