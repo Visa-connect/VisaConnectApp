@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Bars3Icon,
   ChevronDownIcon,
   CalendarIcon,
   ArrowLeftIcon,
@@ -12,6 +11,7 @@ import {
   MeetupCategory,
   CreateMeetupRequest,
 } from '../api/meetupService';
+import { uploadMeetupPhoto } from '../api/cloudinary';
 
 interface PostMeetupForm {
   category_id: number | null;
@@ -64,17 +64,46 @@ const PostMeetupScreen: React.FC = () => {
     }));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0] || null;
     if (file) {
-      // TODO: Implement actual image upload to Cloudinary or similar service
-      // For now, we'll just store the file name and create a placeholder URL
-      const placeholderUrl = URL.createObjectURL(file);
-      setFormData((prev) => ({
-        ...prev,
-        photo_url: placeholderUrl,
-        photo_public_id: `temp_${Date.now()}`, // Temporary ID
-      }));
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        setError('Image file size must be less than 5MB');
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Upload to Cloudinary
+        const result = await uploadMeetupPhoto(file);
+
+        if (result.success && result.url && result.publicId) {
+          setFormData((prev) => ({
+            ...prev,
+            photo_url: result.url || null,
+            photo_public_id: result.publicId || null,
+          }));
+        } else {
+          setError(result.error || 'Failed to upload image');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        setError('Failed to upload image. Please try again.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -105,8 +134,8 @@ const PostMeetupScreen: React.FC = () => {
         location: formData.location,
         meetup_date: formData.dateTime,
         max_participants: undefined, // Optional field
-        photo_url: formData.photo_url || undefined,
-        photo_public_id: formData.photo_public_id || undefined,
+        photo_url: formData.photo_url || undefined, // Base64 encoded image
+        photo_public_id: formData.photo_public_id || undefined, // Base64 identifier
       };
 
       await meetupService.createMeetup(meetupData);
@@ -263,25 +292,64 @@ const PostMeetupScreen: React.FC = () => {
             />
             <label
               htmlFor="image-upload"
-              className="w-full bg-sky-400 text-white rounded-lg px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-sky-500 transition-colors"
+              className={`w-full bg-sky-400 text-white rounded-lg px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-sky-500 transition-colors ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
-              <span className="mr-2">Upload image</span>
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
+              <span className="mr-2">
+                {loading ? 'Uploading...' : 'Upload image'}
+              </span>
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+              )}
             </label>
+            <p className="text-xs text-gray-500 mt-2">
+              Images are uploaded to Cloudinary (max 5MB). Optimized for web
+              delivery.
+            </p>
             {formData.photo_url && (
-              <p className="text-sm text-gray-600 mt-2">Photo selected</p>
+              <div className="mt-3 space-y-3">
+                {/* Image Preview */}
+                <div className="relative">
+                  <img
+                    src={formData.photo_url}
+                    alt="Preview"
+                    className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                  />
+                </div>
+
+                {/* Photo Actions */}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-600">Photo selected</p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        photo_url: null,
+                        photo_public_id: null,
+                      }))
+                    }
+                    className="text-sm text-red-600 hover:text-red-800"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
