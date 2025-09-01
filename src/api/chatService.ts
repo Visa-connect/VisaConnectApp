@@ -12,6 +12,16 @@ export interface Message {
   read: boolean;
 }
 
+export interface OtherUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  profilePhotoUrl?: string;
+  occupation?: string;
+  visaType?: string;
+}
+
 export interface Conversation {
   id?: string;
   participants: string[];
@@ -20,6 +30,7 @@ export interface Conversation {
   unreadCount?: { [userId: string]: number };
   createdAt: any; // Changed from Timestamp to any for backend compatibility
   updatedAt: any; // Changed from Timestamp to any for backend compatibility
+  otherUser?: OtherUser | null; // Enhanced user data from API
 }
 
 export interface ChatUser {

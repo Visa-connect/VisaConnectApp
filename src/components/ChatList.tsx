@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStore } from '../stores/userStore';
-import { chatService, Conversation } from '../api/chatService';
+import { chatService, Conversation, OtherUser } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline';
 
@@ -60,8 +60,8 @@ const ChatList: React.FC<ChatListProps> = ({
   // Get the other user's name from enhanced conversation data
   const getOtherUserName = (conversation: Conversation): string => {
     // Check if we have enhanced user data from the API
-    if ((conversation as any).otherUser?.fullName) {
-      return (conversation as any).otherUser.fullName;
+    if (conversation.otherUser?.fullName) {
+      return conversation.otherUser.fullName;
     }
 
     // Fallback to user ID if no name is available
@@ -74,8 +74,8 @@ const ChatList: React.FC<ChatListProps> = ({
     conversation: Conversation
   ): string | undefined => {
     // Check if we have enhanced user data from the API
-    if ((conversation as any).otherUser?.profilePhotoUrl) {
-      return (conversation as any).otherUser.profilePhotoUrl;
+    if (conversation.otherUser?.profilePhotoUrl) {
+      return conversation.otherUser.profilePhotoUrl;
     }
 
     // Return undefined to use initials fallback
