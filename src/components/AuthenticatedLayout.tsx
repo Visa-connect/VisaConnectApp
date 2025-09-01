@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import NavigationBar from './NavigationBar';
+import DrawerMenu from './DrawerMenu';
 
 interface AuthenticatedLayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   children,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Determine current page based on pathname
@@ -20,6 +22,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
     if (pathname.startsWith('/public-profile')) return 'dashboard';
     if (pathname === '/social') return 'social';
     if (pathname === '/connect') return 'social';
+    if (pathname === '/chat') return 'chat';
     if (
       pathname === '/background' ||
       pathname === '/lifestyle' ||
@@ -33,14 +36,22 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
 
   const handleMenuClick = () => {
     setIsMenuOpen(!isMenuOpen);
-    // For now, just toggle menu state
-    // TODO: Implement mobile menu functionality
+  };
+
+  const handleOverlayClick = () => {
+    setIsMenuOpen(false);
   };
 
   const currentPage = getCurrentPage(location.pathname);
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DrawerMenu
+        open={isMenuOpen}
+        onClose={handleOverlayClick}
+        navigate={navigate}
+        highlight={currentPage}
+      />
       <NavigationBar currentPage={currentPage} onMenuClick={handleMenuClick} />
       {children}
     </div>

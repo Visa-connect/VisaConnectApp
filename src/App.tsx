@@ -13,6 +13,7 @@ import EditProfileScreen from './screens/EditProfileScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
 import ConnectScreen from './screens/ConnectScreen';
+import ChatScreen from './screens/ChatScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
@@ -95,6 +96,26 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <ConnectScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <ChatScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/chat/:conversationId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <ChatScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }

@@ -51,6 +51,11 @@ interface UserStore {
   clearUser: () => void;
   setLoading: (loading: boolean) => void;
 
+  // Token management
+  getToken: () => string | null;
+  setToken: (token: string) => void;
+  removeToken: () => void;
+
   // Computed values
   getFullName: () => string;
   getLocation: () => string;
@@ -64,7 +69,7 @@ export const useUserStore = create<UserStore>()(
       // Initialize from localStorage for backward compatibility
       init: () => {
         const userData = localStorage.getItem('userData');
-        const userToken = localStorage.getItem('userToken');
+        const userToken = get().getToken();
 
         if (userData && userToken) {
           try {
@@ -86,7 +91,7 @@ export const useUserStore = create<UserStore>()(
 
       // Actions
       setUser: (user: UserData) => {
-        const hasToken = !!localStorage.getItem('userToken');
+        const hasToken = !!get().getToken();
         set({ user, isAuthenticated: true, hasToken });
         // Also update localStorage for backward compatibility
         localStorage.setItem('userData', JSON.stringify(user));
@@ -106,10 +111,15 @@ export const useUserStore = create<UserStore>()(
         set({ user: null, isAuthenticated: false, hasToken: false });
         // Clear localStorage
         localStorage.removeItem('userData');
-        localStorage.removeItem('userToken');
+        get().removeToken();
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      // Token management
+      getToken: () => localStorage.getItem('userToken'),
+      setToken: (token: string) => localStorage.setItem('userToken', token),
+      removeToken: () => localStorage.removeItem('userToken'),
 
       // Computed values
       getFullName: () => {

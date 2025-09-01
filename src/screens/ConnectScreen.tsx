@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
+import { useUserStore } from '../stores/userStore';
 import {
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -49,7 +50,7 @@ const ConnectScreen: React.FC = () => {
 
     setIsSearching(true);
     try {
-      const token = localStorage.getItem('userToken');
+      const token = useUserStore.getState().getToken();
       const response = await fetch(
         `/api/users/search?q=${encodeURIComponent(debouncedQuery.trim())}`,
         {
@@ -189,14 +190,16 @@ const ConnectScreen: React.FC = () => {
                       </p>
                     </div>
 
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleConnect(user.id)}
-                      className="px-4 py-2"
-                    >
-                      Connect
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => handleConnect(user.id)}
+                        className="px-4 py-2"
+                      >
+                        Connect
+                      </Button>
+                    </div>
                   </div>
 
                   {/* User Details */}

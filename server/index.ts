@@ -4,6 +4,7 @@ import cors from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { config } from './config/env';
+import WebSocketService from './services/websocketService';
 
 // Database connection
 import pool from './db/config';
@@ -11,8 +12,9 @@ import pool from './db/config';
 import authApi from './api/auth';
 import userApi from './api/user';
 import photoApi from './api/photo';
+import chatApi from './api/chat';
 
-// Initialize Firebase Admin SDK
+// Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -103,6 +105,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
 authApi(app);
 userApi(app);
 photoApi(app);
+chatApi(app);
 
 // Only serve static files in production
 if (process.env.NODE_ENV !== 'development') {
@@ -144,6 +147,10 @@ if (process.env.NODE_ENV !== 'development') {
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Initialize WebSocket service for real-time chat
+const wsService = new WebSocketService(server);
+console.log('✅ WebSocket service initialized for real-time chat');
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

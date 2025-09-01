@@ -5,16 +5,16 @@ interface DrawerMenuProps {
   open: boolean;
   onClose: () => void;
   navigate: (path: string) => void;
-  highlight?: 'settings';
+  highlight?: string;
 }
 
 const menuItems = [
-  { label: 'Dashboard', route: '/dashboard', enabled: true },
-  { label: 'Work', route: '/work', enabled: false },
-  { label: 'Social', route: '/social', enabled: true },
-  { label: 'Chat', route: '/chat', enabled: false },
-  { label: 'Settings', route: '/settings', enabled: true },
-  { label: 'Contact us', route: '/contact', enabled: false },
+  { label: 'Dashboard', route: '/dashboard', key: 'dashboard', enabled: true },
+  { label: 'Work', route: '/work', key: 'work', enabled: false },
+  { label: 'Social', route: '/social', key: 'social', enabled: true },
+  { label: 'Chat', route: '/chat', key: 'chat', enabled: true },
+  { label: 'Settings', route: '/settings', key: 'settings', enabled: true },
+  { label: 'Contact us', route: '/contact', key: 'contact', enabled: false },
 ];
 
 const DrawerMenu: React.FC<DrawerMenuProps> = ({
@@ -61,7 +61,7 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({
               key={item.label}
               className={`w-full text-left px-6 py-3 rounded transition font-medium text-base ${
                 item.enabled
-                  ? item.label === 'Settings' && highlight === 'settings'
+                  ? item.key === highlight
                     ? 'bg-gray-100 font-bold text-gray-900'
                     : 'text-gray-800 hover:bg-gray-50'
                   : 'text-gray-400 opacity-50 cursor-not-allowed'

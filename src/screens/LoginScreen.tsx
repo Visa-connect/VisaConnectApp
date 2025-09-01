@@ -68,7 +68,7 @@ const SignInScreen: React.FC = () => {
   const navigate = useNavigate();
 
   // Zustand store
-  const { setUser } = useUserStore();
+  const { setUser, setToken } = useUserStore();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -107,7 +107,7 @@ const SignInScreen: React.FC = () => {
       if (loginResponse.user) {
         // Store the Firebase ID token if provided by backend
         if (loginResponse.token) {
-          localStorage.setItem('userToken', loginResponse.token);
+          setToken(loginResponse.token);
         }
 
         // Create user data object

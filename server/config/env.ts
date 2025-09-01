@@ -43,7 +43,7 @@ export const config: Config = {
   },
   firebase: {
     serviceAccount: process.env.FIREBASE_SERVICE_ACCOUNT,
-    webApiKey: process.env.FIREBASE_WEB_API_KEY,
+    webApiKey: process.env.REACT_APP_FIREBASE_WEB_API_KEY,
   },
   cloudinary: {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
