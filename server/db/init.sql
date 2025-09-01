@@ -106,3 +106,92 @@ CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
+
+-- Create meetup categories table
+CREATE TABLE IF NOT EXISTS meetup_categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create meetups table
+CREATE TABLE IF NOT EXISTS meetups (
+    id SERIAL PRIMARY KEY,
+    creator_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    category_id INTEGER NOT NULL REFERENCES meetup_categories(id),
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    location VARCHAR(500) NOT NULL,
+    meetup_date TIMESTAMP NOT NULL,
+    max_participants INTEGER,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create meetup interests table (for tracking who's interested)
+CREATE TABLE IF NOT EXISTS meetup_interests (
+    id SERIAL PRIMARY KEY,
+    meetup_id INTEGER NOT NULL REFERENCES meetups(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(meetup_id, user_id) -- Prevent duplicate interests
+);
+
+-- Create meetup reports table
+CREATE TABLE IF NOT EXISTS meetup_reports (
+    id SERIAL PRIMARY KEY,
+    meetup_id INTEGER NOT NULL REFERENCES meetups(id) ON DELETE CASCADE,
+    reporter_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reason TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, reviewed, resolved, dismissed
+    admin_notes TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Create indexes for meetups table
+CREATE INDEX IF NOT EXISTS idx_meetups_creator_id ON meetups(creator_id);
+CREATE INDEX IF NOT EXISTS idx_meetups_category_id ON meetups(category_id);
+CREATE INDEX IF NOT EXISTS idx_meetups_meetup_date ON meetups(meetup_date);
+CREATE INDEX IF NOT EXISTS idx_meetups_is_active ON meetups(is_active);
+CREATE INDEX IF NOT EXISTS idx_meetups_created_at ON meetups(created_at);
+CREATE INDEX IF NOT EXISTS idx_meetups_title ON meetups USING GIN(to_tsvector('english', title));
+CREATE INDEX IF NOT EXISTS idx_meetups_description ON meetups USING GIN(to_tsvector('english', description));
+CREATE INDEX IF NOT EXISTS idx_meetups_location ON meetups USING GIN(to_tsvector('english', location));
+
+-- Create indexes for meetup_interests table
+CREATE INDEX IF NOT EXISTS idx_meetup_interests_meetup_id ON meetup_interests(meetup_id);
+CREATE INDEX IF NOT EXISTS idx_meetup_interests_user_id ON meetup_interests(user_id);
+
+-- Create indexes for meetup_reports table
+CREATE INDEX IF NOT EXISTS idx_meetup_reports_meetup_id ON meetup_reports(meetup_id);
+CREATE INDEX IF NOT EXISTS idx_meetup_reports_reporter_id ON meetup_reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_meetup_reports_status ON meetup_reports(status);
+
+-- Create trigger to automatically update updated_at for meetups
+CREATE TRIGGER update_meetups_updated_at 
+    BEFORE UPDATE ON meetups 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Create trigger to automatically update updated_at for meetup_reports
+CREATE TRIGGER update_meetup_reports_updated_at 
+    BEFORE UPDATE ON meetup_reports 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Insert default meetup categories
+INSERT INTO meetup_categories (name, description) VALUES
+    ('Social & Networking', 'Casual meetups for networking and socializing'),
+    ('Professional Development', 'Career-focused events, workshops, and seminars'),
+    ('Cultural Exchange', 'Events celebrating different cultures and traditions'),
+    ('Outdoor & Adventure', 'Hiking, sports, and outdoor activities'),
+    ('Food & Dining', 'Restaurant visits, cooking classes, and food tours'),
+    ('Language Exchange', 'Practice different languages with native speakers'),
+    ('Study Groups', 'Academic and professional study sessions'),
+    ('Travel & Exploration', 'Group trips and travel planning'),
+    ('Hobbies & Interests', 'Shared hobby activities and workshops'),
+    ('Community Service', 'Volunteering and community outreach events')
+ON CONFLICT (name) DO NOTHING;
