@@ -12,6 +12,9 @@ import SettingsScreen from './screens/SettingsScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
+import MeetupsScreen from './screens/MeetupsScreen';
+import MeetupDetailsScreen from './screens/MeetupDetailsScreen';
+import PostMeetupScreen from './screens/PostMeetupScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ChatScreen from './screens/ChatScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
@@ -86,6 +89,36 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <SocialPortalScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/meetups"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <MeetupsScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/meetups/:meetupId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <MeetupDetailsScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/post-meetup"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <PostMeetupScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }

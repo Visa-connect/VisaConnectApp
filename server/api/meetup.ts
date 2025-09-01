@@ -38,6 +38,8 @@ export default function meetupApi(app: Express) {
           location,
           meetup_date,
           max_participants,
+          photo_url,
+          photo_public_id,
         } = req.body;
 
         // Validate required fields
@@ -79,6 +81,8 @@ export default function meetupApi(app: Express) {
           location,
           meetup_date,
           max_participants,
+          photo_url,
+          photo_public_id,
         });
 
         res.status(201).json({

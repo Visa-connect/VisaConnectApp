@@ -16,8 +16,7 @@ const SocialPortalScreen: React.FC = () => {
   };
 
   const handleMeetupsClick = () => {
-    // TODO: Navigate to meetups section
-    console.log('Navigate to meetups');
+    navigate('/meetups');
   };
 
   const handleTripsClick = () => {

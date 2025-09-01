@@ -18,6 +18,8 @@ export interface Meetup {
   meetup_date: Date;
   max_participants?: number;
   is_active: boolean;
+  photo_url?: string;
+  photo_public_id?: string;
   created_at?: Date;
   updated_at?: Date;
   // Enhanced fields for API responses
@@ -58,6 +60,8 @@ export interface CreateMeetupRequest {
   location: string;
   meetup_date: string; // ISO string
   max_participants?: number;
+  photo_url?: string;
+  photo_public_id?: string;
 }
 
 export interface UpdateMeetupRequest {
@@ -68,6 +72,8 @@ export interface UpdateMeetupRequest {
   meetup_date?: string; // ISO string
   max_participants?: number;
   is_active?: boolean;
+  photo_url?: string;
+  photo_public_id?: string;
 }
 
 export interface SearchMeetupsRequest {
@@ -108,8 +114,8 @@ class MeetupService {
       const result = await pool.query(
         `INSERT INTO meetups (
           creator_id, category_id, title, description, location, 
-          meetup_date, max_participants, is_active, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()) 
+          meetup_date, max_participants, is_active, photo_url, photo_public_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) 
         RETURNING id`,
         [
           userId,
@@ -120,6 +126,8 @@ class MeetupService {
           new Date(meetupData.meetup_date),
           meetupData.max_participants,
           true,
+          meetupData.photo_url || null,
+          meetupData.photo_public_id || null,
         ]
       );
       return result.rows[0].id;
@@ -158,6 +166,8 @@ class MeetupService {
         meetup_date: row.meetup_date,
         max_participants: row.max_participants,
         is_active: row.is_active,
+        photo_url: row.photo_url,
+        photo_public_id: row.photo_public_id,
         created_at: row.created_at,
         updated_at: row.updated_at,
         creator: {
@@ -276,6 +286,8 @@ class MeetupService {
           meetup_date: row.meetup_date,
           max_participants: row.max_participants,
           is_active: row.is_active,
+          photo_url: row.photo_url,
+          photo_public_id: row.photo_public_id,
           created_at: row.created_at,
           updated_at: row.updated_at,
           creator: {
