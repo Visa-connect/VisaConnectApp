@@ -12,6 +12,9 @@ const MeetupDetailsScreen: React.FC = () => {
   const [meetup, setMeetup] = useState<Meetup | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInterested, setIsInterested] = useState(false);
+  const [interestLoading, setInterestLoading] = useState(false);
+  const [interestMessage, setInterestMessage] = useState<string | null>(null);
 
   // Fetch meetup details on component mount
   useEffect(() => {
@@ -39,15 +42,35 @@ const MeetupDetailsScreen: React.FC = () => {
   };
 
   const handleImInterested = async () => {
-    if (!meetup) return;
+    if (!meetup || interestLoading) return;
 
     try {
+      setInterestLoading(true);
+      setInterestMessage(null);
+
       await meetupService.expressInterest(meetup.id);
-      // TODO: Show success message or update UI
-      console.log('Interest expressed successfully');
-    } catch (err) {
+
+      setIsInterested(true);
+      setInterestMessage('Interest expressed successfully!');
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setInterestMessage(null), 3000);
+    } catch (err: any) {
       console.error('Error expressing interest:', err);
-      // TODO: Show error message
+
+      if (err.message?.includes('Already expressed interest')) {
+        setInterestMessage(
+          'You have already expressed interest in this meetup.'
+        );
+        setIsInterested(true);
+      } else {
+        setInterestMessage('Failed to express interest. Please try again.');
+      }
+
+      // Clear error message after 5 seconds
+      setTimeout(() => setInterestMessage(null), 5000);
+    } finally {
+      setInterestLoading(false);
     }
   };
 
@@ -152,13 +175,32 @@ const MeetupDetailsScreen: React.FC = () => {
           )}
 
           {/* Call to Action Button */}
-          <div className="pb-20">
+          <div className="pb-20 space-y-4">
+            {/* Interest Message */}
+            {interestMessage && (
+              <div
+                className={`text-center p-3 rounded-lg ${
+                  interestMessage.includes('successfully')
+                    ? 'bg-green-50 text-green-700 border border-green-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}
+              >
+                {interestMessage}
+              </div>
+            )}
+
+            {/* Interest Button */}
             <Button
-              variant="primary"
+              variant={isInterested ? 'secondary' : 'primary'}
               onClick={handleImInterested}
               className="w-full py-4 text-lg font-bold"
+              disabled={interestLoading || isInterested}
             >
-              I'm Interested
+              {interestLoading
+                ? 'Processing...'
+                : isInterested
+                ? 'Interest Expressed ✓'
+                : "I'm Interested"}
             </Button>
           </div>
         </div>

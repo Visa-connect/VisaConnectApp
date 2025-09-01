@@ -59,9 +59,9 @@ export interface CreateMeetupRequest {
   description: string;
   location: string;
   meetup_date: string; // ISO string
-  max_participants?: number;
-  photo_url?: string;
-  photo_public_id?: string;
+  max_participants?: number | null;
+  photo_url?: string | null;
+  photo_public_id?: string | null;
 }
 
 export interface UpdateMeetupRequest {
@@ -70,10 +70,10 @@ export interface UpdateMeetupRequest {
   description?: string;
   location?: string;
   meetup_date?: string; // ISO string
-  max_participants?: number;
+  max_participants?: number | null;
   is_active?: boolean;
-  photo_url?: string;
-  photo_public_id?: string;
+  photo_url?: string | null;
+  photo_public_id?: string | null;
 }
 
 export interface SearchMeetupsRequest {

@@ -168,9 +168,9 @@ const PostMeetupScreen: React.FC = () => {
         description: formData.description,
         location: formData.location,
         meetup_date: formData.dateTime,
-        max_participants: undefined, // Optional field
-        photo_url: formData.photo_url || undefined, // Base64 encoded image
-        photo_public_id: formData.photo_public_id || undefined, // Base64 identifier
+        max_participants: null, // Optional field
+        photo_url: formData.photo_url || null, // Cloudinary image URL
+        photo_public_id: formData.photo_public_id || null, // Cloudinary public ID
       };
 
       await meetupService.createMeetup(meetupData);
