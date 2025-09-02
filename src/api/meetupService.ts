@@ -9,7 +9,13 @@ export interface Meetup {
   category_id: number;
   category_name: string;
   creator_id: string;
-  creator_name: string;
+  creator: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email: string;
+    profile_photo_url?: string;
+  };
   created_at: string;
   max_participants?: number;
   current_participants: number;

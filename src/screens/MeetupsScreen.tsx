@@ -142,7 +142,9 @@ const MeetupsScreen: React.FC = () => {
 
                   <div className="text-sm text-gray-500 mb-3">
                     Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
-                    {meetup.creator_name}
+                    {meetup.creator?.first_name && meetup.creator?.last_name
+                      ? `${meetup.creator.first_name} ${meetup.creator.last_name}`
+                      : meetup.creator?.email || 'Unknown User'}
                   </div>
 
                   <h3 className="font-bold text-blue-600 text-xl mb-4">

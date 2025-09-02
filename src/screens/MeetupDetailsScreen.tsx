@@ -125,7 +125,9 @@ const MeetupDetailsScreen: React.FC = () => {
           {/* Posted By Info */}
           <div className="text-sm text-gray-500 mb-4">
             Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
-            {meetup.creator_name}
+            {meetup.creator?.first_name && meetup.creator?.last_name
+              ? `${meetup.creator.first_name} ${meetup.creator.last_name}`
+              : meetup.creator?.email || 'Unknown User'}
           </div>
 
           {/* Meetup Title */}
