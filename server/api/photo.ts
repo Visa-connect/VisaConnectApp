@@ -129,6 +129,29 @@ export default function photoApi(app: Express) {
     }
   );
 
+  // Helper function to delete photo from Cloudinary with error handling
+  const deletePhotoFromCloudinary = async (publicId: string): Promise<void> => {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+    } catch (cloudinaryError) {
+      console.warn('Failed to delete from Cloudinary:', cloudinaryError);
+      // Continue even if Cloudinary deletion fails
+    }
+  };
+
+  // Helper function to validate and extract public ID from request body
+  const validatePublicIdFromBody = (
+    req: Request,
+    res: Response
+  ): string | null => {
+    const { publicId } = req.body;
+    if (!publicId) {
+      res.status(400).json({ error: 'Public ID is required' });
+      return null;
+    }
+    return publicId;
+  };
+
   // Delete profile photo
   app.delete(
     '/api/photo/delete-profile-photo',
@@ -146,12 +169,7 @@ export default function photoApi(app: Express) {
 
         // Delete from Cloudinary if public ID exists
         if (publicId) {
-          try {
-            await cloudinary.uploader.destroy(publicId);
-          } catch (cloudinaryError) {
-            console.warn('Failed to delete from Cloudinary:', cloudinaryError);
-            // Continue with database update even if Cloudinary deletion fails
-          }
+          await deletePhotoFromCloudinary(publicId);
         }
 
         // Update user profile in database to remove photo
@@ -177,18 +195,11 @@ export default function photoApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const { publicId } = req.body;
-        if (!publicId) {
-          return res.status(400).json({ error: 'Public ID is required' });
-        }
+        const publicId = validatePublicIdFromBody(req, res);
+        if (!publicId) return;
 
         // Delete from Cloudinary
-        try {
-          await cloudinary.uploader.destroy(publicId);
-        } catch (cloudinaryError) {
-          console.warn('Failed to delete from Cloudinary:', cloudinaryError);
-          // Continue even if Cloudinary deletion fails
-        }
+        await deletePhotoFromCloudinary(publicId);
 
         res.json({ success: true, message: 'Meetup photo deleted' });
       } catch (error) {
