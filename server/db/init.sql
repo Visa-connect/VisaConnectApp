@@ -1,68 +1,65 @@
--- Initialize VisaConnect database
--- Run this script to create the necessary tables
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(255) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    first_name VARCHAR(255),
+    last_name VARCHAR(255),
+    visa_type VARCHAR(50),
+    current_location JSONB, -- {city, state, country}
+    occupation VARCHAR(255), -- Job title/role
+    employer VARCHAR(255), -- Company name
+    
+    -- Optional profile fields (can be filled in later)
+    interests TEXT[], -- Array of interests
+    nationality VARCHAR(100),
+    languages TEXT[], -- Array of languages
+    first_time_in_us_year INTEGER,
+    first_time_in_us_location VARCHAR(255),
+    first_time_in_us_visa VARCHAR(100),
+    job_discovery_method VARCHAR(255),
+    visa_change_journey TEXT,
+    other_us_jobs TEXT[], -- Array of other US jobs
+    hobbies TEXT[], -- Array of hobbies
+    favorite_state VARCHAR(100),
+    preferred_outings TEXT[], -- Array of preferred outings
+    has_car BOOLEAN,
+    offers_rides BOOLEAN,
+    relationship_status VARCHAR(100),
+    road_trips BOOLEAN,
+    favorite_place VARCHAR(255),
+    travel_tips TEXT,
+    willing_to_guide BOOLEAN,
+    mentorship_interest BOOLEAN,
+    job_boards TEXT[], -- Array of job boards
+    visa_advice TEXT,
+    
+    -- Profile photo fields
+    profile_photo_url VARCHAR(500), -- URL to the profile photo
+    profile_photo_public_id VARCHAR(255), -- Cloudinary public ID for deletion
+    
+    -- Additional profile fields
+    bio TEXT, -- User bio/description
+    
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-        -- Create users table
-        CREATE TABLE IF NOT EXISTS users (
-            id VARCHAR(255) PRIMARY KEY,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            first_name VARCHAR(255),
-            last_name VARCHAR(255),
-            visa_type VARCHAR(50),
-            current_location JSONB, -- {city, state, country}
-            occupation VARCHAR(255), -- Job title/role
-            employer VARCHAR(255), -- Company name
-            
-            -- Optional profile fields (can be filled in later)
-            interests TEXT[], -- Array of interests
-            nationality VARCHAR(100),
-            languages TEXT[], -- Array of languages
-            first_time_in_us_year INTEGER,
-            first_time_in_us_location VARCHAR(255),
-            first_time_in_us_visa VARCHAR(100),
-            job_discovery_method VARCHAR(255),
-            visa_change_journey TEXT,
-            other_us_jobs TEXT[], -- Array of other US jobs
-            hobbies TEXT[], -- Array of hobbies
-            favorite_state VARCHAR(100),
-            preferred_outings TEXT[], -- Array of preferred outings
-            has_car BOOLEAN,
-            offers_rides BOOLEAN,
-            relationship_status VARCHAR(100),
-            road_trips BOOLEAN,
-            favorite_place VARCHAR(255),
-            travel_tips TEXT,
-            willing_to_guide BOOLEAN,
-            mentorship_interest BOOLEAN,
-            job_boards TEXT[], -- Array of job boards
-            visa_advice TEXT,
-            
-            -- Profile photo fields
-            profile_photo_url VARCHAR(500), -- URL to the profile photo
-            profile_photo_public_id VARCHAR(255), -- Cloudinary public ID for deletion
-            
-            -- Additional profile fields
-            bio TEXT, -- User bio/description
-            
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW()
-        );
+-- Create index on email for faster lookups
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
-        -- Create index on email for faster lookups
-        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+-- Create indexes on name fields for searching
+CREATE INDEX IF NOT EXISTS idx_users_first_name ON users(first_name);
+CREATE INDEX IF NOT EXISTS idx_users_last_name ON users(last_name);
 
-        -- Create indexes on name fields for searching
-        CREATE INDEX IF NOT EXISTS idx_users_first_name ON users(first_name);
-        CREATE INDEX IF NOT EXISTS idx_users_last_name ON users(last_name);
+-- Create index on visa_type for filtering
+CREATE INDEX IF NOT EXISTS idx_users_visa_type ON users(visa_type);
 
-        -- Create index on visa_type for filtering
-        CREATE INDEX IF NOT EXISTS idx_users_visa_type ON users(visa_type);
+-- Create index on current_location for geographic queries
+CREATE INDEX IF NOT EXISTS idx_users_location ON users USING GIN(current_location);
 
-        -- Create index on current_location for geographic queries
-        CREATE INDEX IF NOT EXISTS idx_users_location ON users USING GIN(current_location);
-
-        -- Create indexes for new essential fields
-        CREATE INDEX IF NOT EXISTS idx_users_occupation ON users(occupation);
-        CREATE INDEX IF NOT EXISTS idx_users_employer ON users(employer);
+-- Create indexes for new essential fields
+CREATE INDEX IF NOT EXISTS idx_users_occupation ON users(occupation);
+CREATE INDEX IF NOT EXISTS idx_users_employer ON users(employer);
 
 -- Create index on interests for array searches
 CREATE INDEX IF NOT EXISTS idx_users_interests ON users USING GIN(interests);
