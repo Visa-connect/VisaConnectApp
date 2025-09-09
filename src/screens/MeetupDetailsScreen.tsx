@@ -55,10 +55,16 @@ const MeetupDetailsScreen: React.FC = () => {
 
       // Clear success message after 3 seconds
       setTimeout(() => setInterestMessage(null), 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error expressing interest:', err);
 
-      if (err.message?.includes('Already expressed interest')) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'message' in err &&
+        typeof (err as { message?: string }).message === 'string' &&
+        (err as { message: string }).message.includes('Already expressed interest')
+      ) {
         setInterestMessage(
           'You have already expressed interest in this meetup.'
         );
