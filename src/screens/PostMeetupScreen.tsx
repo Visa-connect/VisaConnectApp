@@ -169,8 +169,8 @@ const PostMeetupScreen: React.FC = () => {
         location: formData.location,
         meetup_date: formData.dateTime,
         max_participants: null, // Optional field
-        photo_url: formData.photo_url || null, // Cloudinary image URL
-        photo_public_id: formData.photo_public_id || null, // Cloudinary public ID
+        photo_url: formData.photo_url, // Cloudinary image URL
+        photo_public_id: formData.photo_public_id, // Cloudinary public ID
       };
 
       await meetupService.createMeetup(meetupData);
