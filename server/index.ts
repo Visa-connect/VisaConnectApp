@@ -13,6 +13,7 @@ import authApi from './api/auth';
 import userApi from './api/user';
 import photoApi from './api/photo';
 import chatApi from './api/chat';
+import meetupApi from './api/meetup';
 
 // Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
@@ -106,6 +107,7 @@ authApi(app);
 userApi(app);
 photoApi(app);
 chatApi(app);
+meetupApi(app);
 
 // Only serve static files in production
 if (process.env.NODE_ENV !== 'development') {

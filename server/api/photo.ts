@@ -82,6 +82,76 @@ export default function photoApi(app: Express) {
     }
   );
 
+  // Upload meetup photo with Cloudinary
+  app.post(
+    '/api/photo/upload-meetup-photo',
+    authenticateUser,
+    upload.single('photo'),
+    async (req: Request, res: Response) => {
+      try {
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // Convert buffer to base64 for Cloudinary
+        const fileBuffer = req.file.buffer;
+        const base64File = `data:${
+          req.file.mimetype
+        };base64,${fileBuffer.toString('base64')}`;
+
+        // Upload to Cloudinary with meetup-specific settings
+        const uploadResult = await cloudinary.uploader.upload(base64File, {
+          folder: 'visaconnect/meetup-photos',
+          transformation: [
+            { width: 800, height: 600, crop: 'fill' },
+            { quality: 'auto', fetch_format: 'auto' },
+          ],
+          public_id: `meetup_${userId}_${Date.now()}`,
+        });
+
+        res.json({
+          success: true,
+          url: uploadResult.secure_url,
+          publicId: uploadResult.public_id,
+        });
+      } catch (error) {
+        console.error('Error in meetup photo upload endpoint:', error);
+        res.status(500).json({
+          error: 'Failed to upload meetup photo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
+
+  // Helper function to delete photo from Cloudinary with error handling
+  const deletePhotoFromCloudinary = async (publicId: string): Promise<void> => {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+    } catch (cloudinaryError) {
+      console.warn('Failed to delete from Cloudinary:', cloudinaryError);
+      // Continue even if Cloudinary deletion fails
+    }
+  };
+
+  // Helper function to validate and extract public ID from request body
+  const validatePublicIdFromBody = (
+    req: Request,
+    res: Response
+  ): string | null => {
+    const { publicId } = req.body;
+    if (!publicId) {
+      res.status(400).json({ error: 'Public ID is required' });
+      return null;
+    }
+    return publicId;
+  };
+
   // Delete profile photo
   app.delete(
     '/api/photo/delete-profile-photo',
@@ -99,12 +169,7 @@ export default function photoApi(app: Express) {
 
         // Delete from Cloudinary if public ID exists
         if (publicId) {
-          try {
-            await cloudinary.uploader.destroy(publicId);
-          } catch (cloudinaryError) {
-            console.warn('Failed to delete from Cloudinary:', cloudinaryError);
-            // Continue with database update even if Cloudinary deletion fails
-          }
+          await deletePhotoFromCloudinary(publicId);
         }
 
         // Update user profile in database to remove photo
@@ -118,6 +183,29 @@ export default function photoApi(app: Express) {
         console.error('Error deleting profile photo:', error);
         res.status(500).json({
           error: 'Failed to delete photo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
+
+  // Delete meetup photo
+  app.delete(
+    '/api/photo/delete-meetup-photo',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const publicId = validatePublicIdFromBody(req, res);
+        if (!publicId) return;
+
+        // Delete from Cloudinary
+        await deletePhotoFromCloudinary(publicId);
+
+        res.json({ success: true, message: 'Meetup photo deleted' });
+      } catch (error) {
+        console.error('Error deleting meetup photo:', error);
+        res.status(500).json({
+          error: 'Failed to delete meetup photo',
           details: error instanceof Error ? error.message : 'Unknown error',
         });
       }
