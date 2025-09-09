@@ -503,6 +503,8 @@ class MeetupService {
           meetup_date: row.meetup_date,
           max_participants: row.max_participants,
           is_active: row.is_active,
+          photo_url: row.photo_url,
+          photo_public_id: row.photo_public_id,
           created_at: row.created_at,
           updated_at: row.updated_at,
           category: {
@@ -559,6 +561,8 @@ class MeetupService {
           meetup_date: row.meetup_date,
           max_participants: row.max_participants,
           is_active: row.is_active,
+          photo_url: row.photo_url,
+          photo_public_id: row.photo_public_id,
           created_at: row.created_at,
           updated_at: row.updated_at,
           creator: {
