@@ -416,7 +416,7 @@ class MeetupService {
       );
 
       if (existingResult.rows.length > 0) {
-        throw new Error('Already expressed interest in this meetup');
+        throw new Error('You have already expressed interest in this meetup');
       }
 
       // Add interest
