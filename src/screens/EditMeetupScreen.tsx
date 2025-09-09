@@ -154,6 +154,19 @@ const EditMeetupScreen: React.FC = () => {
       return;
     }
 
+    // Validate required fields
+    if (
+      !formData.category_id ||
+      !formData.title ||
+      !formData.meetup_date ||
+      !formData.meetup_time ||
+      !formData.location ||
+      !formData.description
+    ) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);

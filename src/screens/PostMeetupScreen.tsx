@@ -143,12 +143,8 @@ const PostMeetupScreen: React.FC = () => {
   };
 
   const handlePost = async () => {
-    if (!formData.category_id) {
-      setError('Please select a category');
-      return;
-    }
-
     if (
+      !formData.category_id ||
       !formData.title ||
       !formData.dateTime ||
       !formData.location ||
@@ -163,7 +159,7 @@ const PostMeetupScreen: React.FC = () => {
       setError(null);
 
       const meetupData: CreateMeetupRequest = {
-        category_id: formData.category_id,
+        category_id: formData.category_id!, // We've validated this is not null above
         title: formData.title,
         description: formData.description,
         location: formData.location,
