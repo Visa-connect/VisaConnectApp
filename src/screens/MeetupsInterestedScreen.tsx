@@ -33,7 +33,7 @@ const MeetupsInterestedScreen: React.FC = () => {
   };
 
   const handleMeetupClick = (meetupId: number) => {
-    navigate(`/meetup/${meetupId}`);
+    navigate(`/meetups/${meetupId}`);
   };
 
   return (
