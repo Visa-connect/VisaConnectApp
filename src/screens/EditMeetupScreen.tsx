@@ -181,7 +181,7 @@ const EditMeetupScreen: React.FC = () => {
 
       // Redirect to meetup details after a short delay
       setTimeout(() => {
-        navigate(`/meetup/${meetupId}`);
+        navigate(`/meetups/${meetupId}`);
       }, 1500);
     } catch (err) {
       console.error('Error updating meetup:', err);
