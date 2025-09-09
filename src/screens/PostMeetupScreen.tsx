@@ -313,12 +313,12 @@ const PostMeetupScreen: React.FC = () => {
                   handleInputChange('description', e.target.value)
                 }
                 placeholder="Enter meetup description"
-                maxLength={160}
+                maxLength={1000}
                 rows={4}
                 className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
               />
               <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-                {formData.description.length}/160
+                {formData.description.length}/1000
               </div>
             </div>
           </div>
