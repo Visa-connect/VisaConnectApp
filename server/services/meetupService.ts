@@ -292,14 +292,32 @@ class MeetupService {
       let query = `
         SELECT m.*, 
                c.name as category_name, c.description as category_description,
-               u.first_name, u.last_name, u.email, u.profile_photo_url
+               u.first_name, u.last_name, u.email, u.profile_photo_url,
+               COALESCE(interest_counts.interest_count, 0) as interest_count,
+               CASE WHEN user_interests.meetup_id IS NOT NULL THEN true ELSE false END as is_interested
         FROM meetups m
         LEFT JOIN meetup_categories c ON m.category_id = c.id
         LEFT JOIN users u ON m.creator_id = u.id
+        LEFT JOIN (
+          SELECT meetup_id, COUNT(*) as interest_count
+          FROM meetup_interests
+          GROUP BY meetup_id
+        ) interest_counts ON m.id = interest_counts.meetup_id
+        LEFT JOIN (
+          SELECT DISTINCT meetup_id
+          FROM meetup_interests
+          ${userId ? 'WHERE user_id = $1' : 'WHERE 1=0'}
+        ) user_interests ON m.id = user_interests.meetup_id
         WHERE m.is_active = true
       `;
       const params: any[] = [];
       let paramCount = 0;
+
+      // Add userId parameter if provided
+      if (userId) {
+        paramCount++;
+        params.push(userId);
+      }
 
       // Apply filters
       if (searchParams.category_id) {
@@ -380,21 +398,9 @@ class MeetupService {
           },
         };
 
-        // Get interest count
-        const interestResult = await pool.query(
-          'SELECT COUNT(*) as count FROM meetup_interests WHERE meetup_id = $1',
-          [meetup.id]
-        );
-        meetup.interest_count = parseInt(interestResult.rows[0].count);
-
-        // Check if current user is interested
-        if (userId) {
-          const userInterestResult = await pool.query(
-            'SELECT id FROM meetup_interests WHERE meetup_id = $1 AND user_id = $2',
-            [meetup.id, userId]
-          );
-          meetup.is_interested = userInterestResult.rows.length > 0;
-        }
+        // Interest count and user interest status are now included in the main query
+        meetup.interest_count = parseInt(row.interest_count) || 0;
+        meetup.is_interested = row.is_interested;
 
         meetups.push(meetup);
       }
