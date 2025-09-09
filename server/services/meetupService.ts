@@ -1,4 +1,13 @@
 import pool from '../db/config';
+import {
+  AppError,
+  ErrorCode,
+  MeetupNotFoundError,
+  AlreadyInterestedError,
+  NotInterestedError,
+  MeetupAccessDeniedError,
+  DatabaseError,
+} from '../types/errors';
 
 // TypeScript interfaces
 export interface MeetupCategory {
@@ -289,6 +298,19 @@ class MeetupService {
     userId?: string
   ): Promise<Meetup[]> {
     try {
+      // Build the user interests subquery conditionally
+      const userInterestsSubquery = userId
+        ? `LEFT JOIN (
+             SELECT DISTINCT meetup_id
+             FROM meetup_interests
+             WHERE user_id = $1
+           ) user_interests ON m.id = user_interests.meetup_id`
+        : `LEFT JOIN (
+             SELECT DISTINCT meetup_id
+             FROM meetup_interests
+             WHERE 1=0
+           ) user_interests ON m.id = user_interests.meetup_id`;
+
       let query = `
         SELECT m.*, 
                c.name as category_name, c.description as category_description,
@@ -303,20 +325,16 @@ class MeetupService {
           FROM meetup_interests
           GROUP BY meetup_id
         ) interest_counts ON m.id = interest_counts.meetup_id
-        LEFT JOIN (
-          SELECT DISTINCT meetup_id
-          FROM meetup_interests
-          ${userId ? 'WHERE user_id = $1' : 'WHERE 1=0'}
-        ) user_interests ON m.id = user_interests.meetup_id
+        ${userInterestsSubquery}
         WHERE m.is_active = true
       `;
       const params: any[] = [];
       let paramCount = 0;
 
-      // Add userId parameter if provided
+      // Add userId parameter if provided (this will be $1)
       if (userId) {
-        paramCount++;
         params.push(userId);
+        paramCount = 1; // userId is always $1 when present
       }
 
       // Apply filters
@@ -415,6 +433,16 @@ class MeetupService {
   // Express interest in a meetup
   async expressInterest(meetupId: number, userId: string): Promise<void> {
     try {
+      // Check if meetup exists
+      const meetupResult = await pool.query(
+        'SELECT id, creator_id FROM meetups WHERE id = $1 AND is_active = true',
+        [meetupId]
+      );
+
+      if (meetupResult.rows.length === 0) {
+        throw new MeetupNotFoundError();
+      }
+
       // Check if already interested
       const existingResult = await pool.query(
         'SELECT id FROM meetup_interests WHERE meetup_id = $1 AND user_id = $2',
@@ -422,7 +450,7 @@ class MeetupService {
       );
 
       if (existingResult.rows.length > 0) {
-        throw new Error('You have already expressed interest in this meetup');
+        throw new AlreadyInterestedError();
       }
 
       // Add interest
@@ -435,24 +463,48 @@ class MeetupService {
       // This will be implemented in the notification service
     } catch (error) {
       console.error('Error expressing interest:', error);
-      throw new Error('Failed to express interest');
+
+      // Re-throw custom errors as-is
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      // Wrap unexpected errors
+      throw new DatabaseError('Failed to express interest', error as Error);
     }
   }
 
   // Remove interest in a meetup
   async removeInterest(meetupId: number, userId: string): Promise<void> {
     try {
+      // Check if meetup exists
+      const meetupResult = await pool.query(
+        'SELECT id FROM meetups WHERE id = $1 AND is_active = true',
+        [meetupId]
+      );
+
+      if (meetupResult.rows.length === 0) {
+        throw new MeetupNotFoundError();
+      }
+
       const result = await pool.query(
         'DELETE FROM meetup_interests WHERE meetup_id = $1 AND user_id = $2 RETURNING id',
         [meetupId, userId]
       );
 
       if (result.rows.length === 0) {
-        throw new Error('No interest found for this meetup');
+        throw new NotInterestedError();
       }
     } catch (error) {
       console.error('Error removing interest:', error);
-      throw new Error('Failed to remove interest');
+
+      // Re-throw custom errors as-is
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      // Wrap unexpected errors
+      throw new DatabaseError('Failed to remove interest', error as Error);
     }
   }
 

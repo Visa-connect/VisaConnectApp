@@ -127,7 +127,7 @@ class MeetupService {
   // Express interest in a meetup
   async expressInterest(
     meetupId: number
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; code?: string }> {
     try {
       const response = (await apiPost(
         `/api/meetups/${meetupId}/interest`,
@@ -137,11 +137,14 @@ class MeetupService {
         success: true,
         message: response.message || 'Interest expressed successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         message:
-          error instanceof Error ? error.message : 'Failed to express interest',
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to express interest',
+        code: error?.response?.data?.code,
       };
     }
   }
@@ -149,7 +152,7 @@ class MeetupService {
   // Remove interest from a meetup
   async removeInterest(
     meetupId: number
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{ success: boolean; message: string; code?: string }> {
     try {
       const response = (await apiPost(
         `/api/meetups/${meetupId}/interest/remove`,
@@ -159,11 +162,14 @@ class MeetupService {
         success: true,
         message: response.message || 'Interest removed successfully',
       };
-    } catch (error) {
+    } catch (error: any) {
       return {
         success: false,
         message:
-          error instanceof Error ? error.message : 'Failed to remove interest',
+          error?.response?.data?.message ||
+          error?.message ||
+          'Failed to remove interest',
+        code: error?.response?.data?.code,
       };
     }
   }

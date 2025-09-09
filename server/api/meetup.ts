@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { meetupService } from '../services/meetupService';
+import { AppError, ErrorCode } from '../types/errors';
 
 export default function meetupApi(app: Express) {
   // Get all meetup categories
@@ -214,18 +215,19 @@ export default function meetupApi(app: Express) {
         });
       } catch (error) {
         console.error('Error expressing interest:', error);
-        if (
-          error instanceof Error &&
-          error.message.includes('Already expressed interest')
-        ) {
-          return res.status(400).json({
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
             success: false,
             message: error.message,
+            code: error.code,
           });
         }
+
         res.status(500).json({
           success: false,
           message: 'Failed to express interest',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
         });
       }
     }
@@ -261,18 +263,19 @@ export default function meetupApi(app: Express) {
         });
       } catch (error) {
         console.error('Error removing interest:', error);
-        if (
-          error instanceof Error &&
-          error.message.includes('No interest found')
-        ) {
-          return res.status(400).json({
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
             success: false,
             message: error.message,
+            code: error.code,
           });
         }
+
         res.status(500).json({
           success: false,
           message: 'Failed to remove interest',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
         });
       }
     }
@@ -503,5 +506,4 @@ export default function meetupApi(app: Express) {
       }
     }
   );
-
 }

@@ -55,8 +55,8 @@ const MeetupDetailsScreen: React.FC = () => {
         setInterestMessage(result.message);
       } else {
         setInterestMessage(result.message);
-        // If it's an "already interested" message, update the state
-        if (result.message.includes('already expressed interest')) {
+        // If it's an "already interested" error, update the state
+        if (result.code === 'MEETUP_ALREADY_INTERESTED') {
           setIsInterested(true);
         }
       }
