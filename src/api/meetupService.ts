@@ -125,13 +125,47 @@ class MeetupService {
   }
 
   // Express interest in a meetup
-  async expressInterest(meetupId: number): Promise<void> {
-    await apiPost(`/api/meetups/${meetupId}/interest`, {});
+  async expressInterest(
+    meetupId: number
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = (await apiPost(
+        `/api/meetups/${meetupId}/interest`,
+        {}
+      )) as { message?: string };
+      return {
+        success: true,
+        message: response.message || 'Interest expressed successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : 'Failed to express interest',
+      };
+    }
   }
 
   // Remove interest from a meetup
-  async removeInterest(meetupId: number): Promise<void> {
-    await apiPost(`/api/meetups/${meetupId}/interest/remove`, {});
+  async removeInterest(
+    meetupId: number
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = (await apiPost(
+        `/api/meetups/${meetupId}/interest/remove`,
+        {}
+      )) as { message?: string };
+      return {
+        success: true,
+        message: response.message || 'Interest removed successfully',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : 'Failed to remove interest',
+      };
+    }
   }
 
   // Get user's created meetups

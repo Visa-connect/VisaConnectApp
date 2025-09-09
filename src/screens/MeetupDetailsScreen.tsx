@@ -48,34 +48,24 @@ const MeetupDetailsScreen: React.FC = () => {
       setInterestLoading(true);
       setInterestMessage(null);
 
-      await meetupService.expressInterest(meetup.id);
+      const result = await meetupService.expressInterest(meetup.id);
 
-      setIsInterested(true);
-      setInterestMessage('Interest expressed successfully!');
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setInterestMessage(null), 3000);
-    } catch (err: unknown) {
-      console.error('Error expressing interest:', err);
-
-      if (
-        typeof err === 'object' &&
-        err !== null &&
-        'message' in err &&
-        typeof (err as { message?: string }).message === 'string' &&
-        (err as { message: string }).message.includes(
-          'Already expressed interest'
-        )
-      ) {
-        setInterestMessage(
-          'You have already expressed interest in this meetup.'
-        );
+      if (result.success) {
         setIsInterested(true);
+        setInterestMessage(result.message);
       } else {
-        setInterestMessage('Failed to express interest. Please try again.');
+        setInterestMessage(result.message);
+        // If it's an "already interested" message, update the state
+        if (result.message.includes('already expressed interest')) {
+          setIsInterested(true);
+        }
       }
 
-      // Clear error message after 5 seconds
+      // Clear message after 3 seconds for success, 5 seconds for error
+      setTimeout(() => setInterestMessage(null), result.success ? 3000 : 5000);
+    } catch (err: unknown) {
+      console.error('Error expressing interest:', err);
+      setInterestMessage('An unexpected error occurred. Please try again.');
       setTimeout(() => setInterestMessage(null), 5000);
     } finally {
       setInterestLoading(false);
