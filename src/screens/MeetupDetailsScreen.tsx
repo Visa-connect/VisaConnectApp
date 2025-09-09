@@ -171,7 +171,7 @@ const MeetupDetailsScreen: React.FC = () => {
               <img
                 src={meetup.photo_url}
                 alt="Meetup location"
-                className="w-full h-48 md:h-64 lg:h-80 xl:h-96 object-cover rounded-lg shadow-sm"
+                className="w-full h-full object-contain rounded-lg shadow-sm"
               />
             </div>
           )}

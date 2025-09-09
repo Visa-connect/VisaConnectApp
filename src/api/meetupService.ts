@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './index';
+import { apiGet, apiPost, apiPut } from './index';
 
 export interface Meetup {
   id: number;
@@ -146,6 +146,14 @@ class MeetupService {
       '/api/meetups/user/interested'
     );
     return response.data;
+  }
+
+  // Update a meetup
+  async updateMeetup(
+    meetupId: number,
+    updateData: CreateMeetupRequest
+  ): Promise<void> {
+    await apiPut(`/api/meetups/${meetupId}`, updateData);
   }
 }
 

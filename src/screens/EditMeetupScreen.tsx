@@ -432,7 +432,7 @@ const EditMeetupScreen: React.FC = () => {
                   <img
                     src={formData.photo_url}
                     alt="Meetup preview"
-                    className="w-full h-48 object-cover rounded-lg"
+                    className="w-full h-full object-cover rounded-lg"
                   />
                   <label className="absolute top-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 cursor-pointer shadow-lg transition-colors">
                     {uploading ? (

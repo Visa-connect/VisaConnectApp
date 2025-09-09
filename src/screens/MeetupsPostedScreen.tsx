@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { meetupService, Meetup } from '../api/meetupService';
 import Button from '../components/Button';
 
@@ -34,6 +34,11 @@ const MeetupsPostedScreen: React.FC = () => {
 
   const handleMeetupClick = (meetupId: number) => {
     navigate(`/meetup/${meetupId}`);
+  };
+
+  const handleEditMeetup = (e: React.MouseEvent, meetupId: number) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    navigate(`/edit-meetup/${meetupId}`);
   };
 
   return (
@@ -130,9 +135,19 @@ const MeetupsPostedScreen: React.FC = () => {
                     Posted {new Date(meetup.created_at).toLocaleDateString()}
                   </div>
 
-                  <h3 className="font-bold text-blue-600 text-xl mb-4">
-                    {meetup.title}
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-bold text-blue-600 text-xl">
+                      {meetup.title}
+                    </h3>
+                    <button
+                      onClick={(e) => handleEditMeetup(e, meetup.id)}
+                      className="flex items-center space-x-1 text-gray-600 hover:text-blue-600 transition-colors"
+                      title="Edit meetup"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                      <span className="text-sm">Edit</span>
+                    </button>
+                  </div>
 
                   <div className="space-y-3 text-base">
                     <div>
