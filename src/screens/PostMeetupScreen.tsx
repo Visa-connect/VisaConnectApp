@@ -127,8 +127,8 @@ const PostMeetupScreen: React.FC = () => {
         if (result.success && result.url && result.publicId) {
           setFormData((prev) => ({
             ...prev,
-            photo_url: result.url || null,
-            photo_public_id: result.publicId || null,
+            photo_url: result.url,
+            photo_public_id: result.publicId,
           }));
         } else {
           setError(result.error || 'Failed to upload image');
