@@ -504,5 +504,4 @@ export default function meetupApi(app: Express) {
     }
   );
 
-  // Update a meetup (only by creator)
 }
