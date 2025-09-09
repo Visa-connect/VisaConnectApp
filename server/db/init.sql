@@ -264,3 +264,86 @@ INSERT INTO business_categories (name, description) VALUES
     ('Transportation', 'Logistics and transportation services'),
     ('Entertainment', 'Media, events, and entertainment services')
 ON CONFLICT (name) DO NOTHING;
+
+-- Tips, Trips, and Advice tables
+CREATE TABLE IF NOT EXISTS tips_trips_advice (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    creator_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    post_type VARCHAR(20) NOT NULL CHECK (post_type IN ('tip', 'trip', 'advice')),
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Photos for Tips, Trips, and Advice posts (multiple photos per post)
+CREATE TABLE IF NOT EXISTS tips_trips_advice_photos (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES tips_trips_advice(id) ON DELETE CASCADE,
+    photo_url TEXT NOT NULL,
+    photo_public_id VARCHAR(255) NOT NULL,
+    display_order INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_tips_trips_advice_creator_id ON tips_trips_advice(creator_id);
+CREATE INDEX IF NOT EXISTS idx_tips_trips_advice_post_type ON tips_trips_advice(post_type);
+CREATE INDEX IF NOT EXISTS idx_tips_trips_advice_active ON tips_trips_advice(is_active);
+CREATE INDEX IF NOT EXISTS idx_tips_trips_advice_photos_post_id ON tips_trips_advice_photos(post_id);
+CREATE INDEX IF NOT EXISTS idx_tips_trips_advice_photos_order ON tips_trips_advice_photos(post_id, display_order);
+
+-- Comments for Tips, Trips, and Advice posts
+CREATE TABLE IF NOT EXISTS tips_trips_advice_comments (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES tips_trips_advice(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    comment TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Likes for Tips, Trips, and Advice posts
+CREATE TABLE IF NOT EXISTS tips_trips_advice_likes (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES tips_trips_advice(id) ON DELETE CASCADE,
+    user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, user_id)
+);
+
+-- Indexes for comments and likes
+CREATE INDEX IF NOT EXISTS idx_tips_comments_post_id ON tips_trips_advice_comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_tips_comments_user_id ON tips_trips_advice_comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_tips_likes_post_id ON tips_trips_advice_likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_tips_likes_user_id ON tips_trips_advice_likes(user_id);
+
+-- Update trigger for tips_trips_advice
+CREATE OR REPLACE FUNCTION update_tips_trips_advice_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_tips_trips_advice_updated_at
+    BEFORE UPDATE ON tips_trips_advice
+    FOR EACH ROW
+    EXECUTE FUNCTION update_tips_trips_advice_updated_at();
+
+-- Update trigger for tips_trips_advice_comments
+CREATE OR REPLACE FUNCTION update_tips_comments_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_tips_comments_updated_at
+    BEFORE UPDATE ON tips_trips_advice_comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_tips_comments_updated_at();
