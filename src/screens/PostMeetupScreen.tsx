@@ -19,8 +19,8 @@ interface PostMeetupForm {
   dateTime: string;
   location: string;
   description: string;
-  photo_url: string | null;
-  photo_public_id: string | null;
+  photo_url: string;
+  photo_public_id: string;
 }
 
 const PostMeetupScreen: React.FC = () => {
@@ -31,8 +31,8 @@ const PostMeetupScreen: React.FC = () => {
     dateTime: '',
     location: '',
     description: '',
-    photo_url: null,
-    photo_public_id: null,
+    photo_url: '',
+    photo_public_id: '',
   });
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categories, setCategories] = useState<MeetupCategory[]>([]);
@@ -77,8 +77,8 @@ const PostMeetupScreen: React.FC = () => {
           // Clear from local state
           setFormData((prev) => ({
             ...prev,
-            photo_url: null,
-            photo_public_id: null,
+            photo_url: '',
+            photo_public_id: '',
           }));
         } else {
           setError(result.error || 'Failed to remove image from Cloudinary');
@@ -93,8 +93,8 @@ const PostMeetupScreen: React.FC = () => {
       // If no public ID, just clear local state
       setFormData((prev) => ({
         ...prev,
-        photo_url: null,
-        photo_public_id: null,
+        photo_url: '',
+        photo_public_id: '',
       }));
     }
   };
@@ -127,8 +127,8 @@ const PostMeetupScreen: React.FC = () => {
         if (result.success && result.url && result.publicId) {
           setFormData((prev) => ({
             ...prev,
-            photo_url: result.url,
-            photo_public_id: result.publicId,
+            photo_url: result.url || '',
+            photo_public_id: result.publicId || '',
           }));
         } else {
           setError(result.error || 'Failed to upload image');
@@ -169,8 +169,8 @@ const PostMeetupScreen: React.FC = () => {
         location: formData.location,
         meetup_date: formData.dateTime,
         max_participants: null, // Optional field
-        photo_url: formData.photo_url, // Cloudinary image URL
-        photo_public_id: formData.photo_public_id, // Cloudinary public ID
+        photo_url: formData.photo_url || null, // Cloudinary image URL
+        photo_public_id: formData.photo_public_id || null, // Cloudinary public ID
       };
 
       await meetupService.createMeetup(meetupData);
