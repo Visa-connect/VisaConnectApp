@@ -63,7 +63,9 @@ const MeetupDetailsScreen: React.FC = () => {
         err !== null &&
         'message' in err &&
         typeof (err as { message?: string }).message === 'string' &&
-        (err as { message: string }).message.includes('Already expressed interest')
+        (err as { message: string }).message.includes(
+          'Already expressed interest'
+        )
       ) {
         setInterestMessage(
           'You have already expressed interest in this meetup.'
@@ -131,9 +133,23 @@ const MeetupDetailsScreen: React.FC = () => {
           {/* Posted By Info */}
           <div className="text-sm text-gray-500 mb-4">
             Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
-            {meetup.creator?.first_name && meetup.creator?.last_name
-              ? `${meetup.creator.first_name} ${meetup.creator.last_name}`
-              : meetup.creator?.email || 'Unknown User'}
+            {meetup.creator?.first_name && meetup.creator?.last_name ? (
+              <button
+                onClick={() => navigate(`/public-profile/${meetup.creator.id}`)}
+                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+              >
+                {meetup.creator.first_name} {meetup.creator.last_name}
+              </button>
+            ) : (
+              <button
+                onClick={() =>
+                  navigate(`/public-profile/${meetup.creator?.id}`)
+                }
+                className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+              >
+                {meetup.creator?.email || 'Unknown User'}
+              </button>
+            )}
           </div>
 
           {/* Meetup Title */}

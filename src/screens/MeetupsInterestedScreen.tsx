@@ -129,9 +129,27 @@ const MeetupsInterestedScreen: React.FC = () => {
 
                   <div className="text-sm text-gray-500 mb-3">
                     Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
-                    {meetup.creator?.first_name && meetup.creator?.last_name
-                      ? `${meetup.creator.first_name} ${meetup.creator.last_name}`
-                      : meetup.creator?.email || 'Unknown User'}
+                    {meetup.creator?.first_name && meetup.creator?.last_name ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the card click
+                          navigate(`/public-profile/${meetup.creator.id}`);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        {meetup.creator.first_name} {meetup.creator.last_name}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the card click
+                          navigate(`/public-profile/${meetup.creator?.id}`);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                      >
+                        {meetup.creator?.email || 'Unknown User'}
+                      </button>
+                    )}
                   </div>
 
                   <h3 className="font-bold text-blue-600 text-xl mb-4">

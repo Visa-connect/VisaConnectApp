@@ -126,7 +126,7 @@ const MeetupsPostedScreen: React.FC = () => {
                       <img
                         src={meetup.photo_url}
                         alt={meetup.title}
-                        className="w-full h-48 object-cover rounded-lg"
+                        className="w-full h-full object-contain rounded-lg"
                       />
                     </div>
                   )}
