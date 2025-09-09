@@ -133,6 +133,20 @@ class MeetupService {
   async removeInterest(meetupId: number): Promise<void> {
     await apiPost(`/api/meetups/${meetupId}/interest/remove`, {});
   }
+
+  // Get user's created meetups
+  async getUserCreatedMeetups(): Promise<Meetup[]> {
+    const response: MeetupsResponse = await apiGet('/api/meetups/user/created');
+    return response.data;
+  }
+
+  // Get user's interested meetups
+  async getUserInterestedMeetups(): Promise<Meetup[]> {
+    const response: MeetupsResponse = await apiGet(
+      '/api/meetups/user/interested'
+    );
+    return response.data;
+  }
 }
 
 export const meetupService = new MeetupService();

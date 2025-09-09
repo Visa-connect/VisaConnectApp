@@ -53,11 +53,15 @@ const SettingsScreen: React.FC = () => {
       icon: CameraIcon,
       onClick: () => {},
     },
-    { label: 'Meetups posted', icon: CameraIcon, onClick: () => {} },
+    {
+      label: 'Meetups posted',
+      icon: CameraIcon,
+      onClick: () => navigate('/meetups-posted'),
+    },
     {
       label: "Meetups I'm interested in",
       icon: ArrowRightIcon,
-      onClick: () => {},
+      onClick: () => navigate('/meetups-interested'),
     },
   ];
 
@@ -127,18 +131,30 @@ const SettingsScreen: React.FC = () => {
               Preferences
             </h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {menuItemsPreferences.map((item, idx) => (
-                <button
-                  key={item.label}
-                  className="flex items-center w-full px-4 py-4 text-left gap-3 border-b border-gray-100 last:border-b-0 text-gray-800 opacity-50 cursor-not-allowed transition-colors"
-                  disabled
-                >
-                  <item.icon className="h-5 w-5 text-gray-400" />
-                  <span className="flex-1 text-base font-medium">
-                    {item.label}
-                  </span>
-                </button>
-              ))}
+              {menuItemsPreferences.map((item, idx) => {
+                const isMeetupsPosted = item.label === 'Meetups posted';
+                const isMeetupsInterested =
+                  item.label === "Meetups I'm interested in";
+                const isEnabled = isMeetupsPosted || isMeetupsInterested;
+
+                return (
+                  <button
+                    key={item.label}
+                    className={`flex items-center w-full px-4 py-4 text-left gap-3 border-b border-gray-100 last:border-b-0 transition-colors ${
+                      isEnabled
+                        ? 'text-gray-800 hover:bg-gray-50 cursor-pointer'
+                        : 'text-gray-800 opacity-50 cursor-not-allowed'
+                    }`}
+                    onClick={isEnabled ? item.onClick : undefined}
+                    disabled={!isEnabled}
+                  >
+                    <item.icon className="h-5 w-5 text-gray-400" />
+                    <span className="flex-1 text-base font-medium">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

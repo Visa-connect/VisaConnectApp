@@ -10,10 +10,6 @@ export const getToken = () => {
 
 const defaultHeaders = () => {
   const token = getToken();
-  console.log(
-    'Setting Authorization header with token:',
-    token ? 'Bearer [token]' : 'No token'
-  );
   return {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
