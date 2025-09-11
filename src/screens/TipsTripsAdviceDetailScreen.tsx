@@ -1,0 +1,247 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeftIcon,
+  HeartIcon,
+  ChatBubbleLeftIcon,
+  ShareIcon,
+} from '@heroicons/react/24/outline';
+import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import Button from '../components/Button';
+import {
+  tipsTripsAdviceService,
+  TipsTripsAdvicePost,
+} from '../api/tipsTripsAdviceService';
+
+const TipsTripsAdviceDetailScreen: React.FC = () => {
+  const navigate = useNavigate();
+  const { postId } = useParams<{ postId: string }>();
+  const [post, setPost] = useState<TipsTripsAdvicePost | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
+  const [liking, setLiking] = useState(false);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!postId) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        const postData = await tipsTripsAdviceService.getPostById(
+          parseInt(postId)
+        );
+        setPost(postData);
+        setIsLiked(postData.is_liked || false);
+        setLikesCount(postData.likes_count || 0);
+        setComments(postData.comments || []);
+      } catch (err) {
+        console.error('Error fetching post:', err);
+        setError('Failed to load post. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPost();
+  }, [postId]);
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const handleLike = async () => {
+    if (!post || liking) return;
+
+    try {
+      setLiking(true);
+      const result = await tipsTripsAdviceService.toggleLike(post.id);
+      setIsLiked(result.liked);
+      setLikesCount((prev) => (result.liked ? prev + 1 : prev - 1));
+    } catch (err) {
+      console.error('Error toggling like:', err);
+    } finally {
+      setLiking(false);
+    }
+  };
+
+  const handleComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!post || !newComment.trim() || submittingComment) return;
+
+    try {
+      setSubmittingComment(true);
+      const newCommentData = await tipsTripsAdviceService.addComment(
+        post.id,
+        newComment.trim()
+      );
+      setComments((prev) => [...prev, newCommentData]);
+      setNewComment('');
+    } catch (err) {
+      console.error('Error adding comment:', err);
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  const handleChat = () => {
+    // TODO: Implement chat functionality
+    console.log('Opening chat for post:', post?.id);
+  };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
+
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours === 1) return '1 hour ago';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays === 1) return '1 day ago';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+
+    const diffInWeeks = Math.floor(diffInDays / 7);
+    if (diffInWeeks === 1) return '1 week ago';
+    return `${diffInWeeks} weeks ago`;
+  };
+
+  const getPostTypeColor = (postType: string) => {
+    switch (postType) {
+      case 'tip':
+        return 'bg-green-100 text-green-800';
+      case 'trip':
+        return 'bg-blue-100 text-blue-800';
+      case 'advice':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading post...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error || 'Post not found'}</p>
+          <Button onClick={handleBack} className="bg-blue-600 text-white">
+            Go Back
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Main Content Area */}
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        {/* Back Button */}
+        <div className="mb-6">
+          <button
+            onClick={handleBack}
+            className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeftIcon className="h-5 w-5 mr-2" />
+            Back
+          </button>
+        </div>
+
+        {/* Post Card */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* User Profile Section */}
+          <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="flex items-center space-x-3">
+              <img
+                src={
+                  post.creator.profile_photo_url ||
+                  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+                }
+                alt={`${post.creator.first_name} ${post.creator.last_name}`}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+              <div>
+                <h3 className="font-semibold text-gray-900">
+                  {post.creator.first_name} {post.creator.last_name}
+                </h3>
+                <div className="flex items-center space-x-2">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${getPostTypeColor(
+                      post.post_type
+                    )}`}
+                  >
+                    {post.post_type.charAt(0).toUpperCase() +
+                      post.post_type.slice(1)}
+                  </span>
+                  <span className="text-sm text-gray-500">
+                    {formatTimeAgo(post.created_at)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Post Content */}
+          <div className="px-6 py-6">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+              {post.title}
+            </h1>
+            <div className="prose prose-gray max-w-none">
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {post.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Post Images */}
+          {post.photos && post.photos.length > 0 && (
+            <div className="space-y-4 px-6 pb-6">
+              {post.photos.map((photo, index) => (
+                <div key={photo.id} className="relative">
+                  <img
+                    src={photo.photo_url}
+                    alt={`${post.title} - Image ${index + 1}`}
+                    className="w-full h-96 object-cover rounded-lg"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="px-6 py-4 border-t border-gray-100">
+            <div className="flex items-center justify-between">
+              <Button
+                onClick={handleChat}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+              >
+                Chat
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TipsTripsAdviceDetailScreen;

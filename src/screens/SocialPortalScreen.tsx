@@ -20,8 +20,7 @@ const SocialPortalScreen: React.FC = () => {
   };
 
   const handleTripsClick = () => {
-    // TODO: Navigate to trips section
-    console.log('Navigate to trips');
+    navigate('/tips-trips-advice');
   };
 
   return (
