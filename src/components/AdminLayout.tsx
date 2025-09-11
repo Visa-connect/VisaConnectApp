@@ -8,7 +8,9 @@ import {
   ChartBarIcon,
   Bars3Icon,
   XMarkIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/24/outline';
+import { useAdminAuth } from '../hooks/useAdminAuth';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -18,9 +20,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { logout } = useAdminAuth();
 
   const navigationItems = [
-    { name: 'Dashboard', href: '/admin', icon: ChartBarIcon },
+    { name: 'Dashboard', href: '/admin/dashboard', icon: ChartBarIcon },
     { name: 'Users', href: '/admin/users', icon: UserGroupIcon },
     { name: 'Employers', href: '/admin/employers', icon: BuildingOfficeIcon },
     {
@@ -32,6 +35,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   ];
 
   const isCurrentPath = (path: string) => {
+    if (path === '/admin/dashboard') {
+      return (
+        location.pathname === '/admin' ||
+        location.pathname === '/admin/dashboard'
+      );
+    }
     return location.pathname === path;
   };
 
@@ -93,6 +102,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               );
             })}
           </nav>
+
+          {/* Logout Button */}
+          <div className="p-6 border-t border-gray-200">
+            <button
+              onClick={() => {
+                logout();
+                navigate('/');
+              }}
+              className="w-full flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-colors"
+            >
+              <ArrowRightOnRectangleIcon className="mr-3 h-5 w-5" />
+              Logout
+            </button>
+          </div>
         </div>
       </div>
 

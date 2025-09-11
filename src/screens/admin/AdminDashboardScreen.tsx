@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UserGroupIcon,
   BuildingOfficeIcon,
@@ -14,6 +14,7 @@ import {
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [recentPosts, setRecentPosts] = useState<TipsTripsAdvicePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -24,6 +25,12 @@ const AdminDashboardScreen: React.FC = () => {
   });
 
   useEffect(() => {
+    // Redirect from /admin to /admin/dashboard
+    if (location.pathname === '/admin') {
+      navigate('/admin/dashboard', { replace: true });
+      return;
+    }
+
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
@@ -49,7 +56,7 @@ const AdminDashboardScreen: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [location.pathname, navigate]);
 
   const quickActions = [
     {

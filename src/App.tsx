@@ -25,6 +25,8 @@ import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen'
 import TipsTripsAdviceScreen from './screens/TipsTripsAdviceScreen';
 import TipsTripsAdviceDetailScreen from './screens/TipsTripsAdviceDetailScreen';
 import AdminLayout from './components/AdminLayout';
+import AdminRoute from './components/AdminRoute';
+import AdminLoginScreen from './screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
 import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
@@ -265,44 +267,45 @@ function App() {
         />
 
         {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLoginScreen />} />
         <Route
-          path="/admin"
+          path="/admin/dashboard"
           element={
-            <AuthenticatedRoute>
+            <AdminRoute>
               <AdminLayout>
                 <AdminDashboardScreen />
               </AdminLayout>
-            </AuthenticatedRoute>
+            </AdminRoute>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice"
           element={
-            <AuthenticatedRoute>
+            <AdminRoute>
               <AdminLayout>
                 <TipsTripsAdviceListScreen />
               </AdminLayout>
-            </AuthenticatedRoute>
+            </AdminRoute>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice/create"
           element={
-            <AuthenticatedRoute>
+            <AdminRoute>
               <AdminLayout>
                 <PostTipsTripsAdviceScreen />
               </AdminLayout>
-            </AuthenticatedRoute>
+            </AdminRoute>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice/edit/:postId"
           element={
-            <AuthenticatedRoute>
+            <AdminRoute>
               <AdminLayout>
                 <EditTipsTripsAdviceScreen />
               </AdminLayout>
-            </AuthenticatedRoute>
+            </AdminRoute>
           }
         />
       </Routes>

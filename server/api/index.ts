@@ -5,6 +5,7 @@ import photoApi from './photo';
 import chatApi from './chat';
 import meetupApi from './meetup';
 import tipsTripsAdviceApi from './tipsTripsAdvice';
+import adminAuthApi from './adminAuth';
 
 /**
  * Centralized API service registration
@@ -20,9 +21,18 @@ export function registerApiRoutes(app: Express): void {
   chatApi(app);
   meetupApi(app);
   tipsTripsAdviceApi(app);
+  adminAuthApi(app);
 
   console.log('✅ All API routes registered successfully');
 }
 
 // Export individual API functions for direct use if needed
-export { authApi, userApi, photoApi, chatApi, meetupApi, tipsTripsAdviceApi };
+export {
+  authApi,
+  userApi,
+  photoApi,
+  chatApi,
+  meetupApi,
+  tipsTripsAdviceApi,
+  adminAuthApi,
+};
