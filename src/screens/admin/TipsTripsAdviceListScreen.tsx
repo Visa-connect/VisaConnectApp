@@ -95,7 +95,7 @@ const TipsTripsAdviceListScreen: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">
-            Tips Trips & Advice
+            Tips, Trips & Advice
           </h1>
           <button
             onClick={handleCreateNew}
