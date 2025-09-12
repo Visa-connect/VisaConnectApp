@@ -94,7 +94,9 @@ const TipsTripsAdviceListScreen: React.FC = () => {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Tips Tricks</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Tips Trips & Advice
+          </h1>
           <button
             onClick={handleCreateNew}
             className="bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"

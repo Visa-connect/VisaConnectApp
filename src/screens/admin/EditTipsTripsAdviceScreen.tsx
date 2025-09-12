@@ -7,10 +7,10 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '../../components/Button';
 import {
-  tipsTripsAdviceService,
+  adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
-  UpdateTipsTripsAdviceRequest,
-} from '../../api/tipsTripsAdviceService';
+  UpdatePostData,
+} from '../../api/adminTipsTripsAdviceService';
 
 const EditTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -35,9 +35,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
 
       try {
         setLoadingPost(true);
-        const postData = await tipsTripsAdviceService.getPostById(
-          parseInt(postId)
-        );
+        const postData = await adminTipsTripsAdviceService.getPostById(postId);
         setPost(postData);
         setFormData({
           title: postData.title,
@@ -45,10 +43,10 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
           post_type: postData.post_type,
         });
         setExistingPhotos(
-          postData.photos.map((photo) => ({
-            id: photo.id,
-            url: photo.photo_url,
-            public_id: photo.photo_public_id,
+          (postData.photos || []).map((photo) => ({
+            id: parseInt(photo.id),
+            url: photo.url,
+            public_id: photo.public_id,
           }))
         );
       } catch (err) {
@@ -115,25 +113,14 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
 
       // TODO: Implement photo upload/delete to Cloudinary
       // For now, we'll update the post without photo changes
-      const updateData: UpdateTipsTripsAdviceRequest = {
+      const updateData: UpdatePostData = {
         title: formData.title,
         description: formData.description,
         post_type: formData.post_type,
-        photos: [
-          ...existingPhotos.map((photo) => ({
-            photo_url: photo.url,
-            photo_public_id: photo.public_id,
-            display_order: 1,
-          })),
-          ...photos.map((photo, index) => ({
-            photo_url: photo.preview, // This should be the Cloudinary URL
-            photo_public_id: `temp_${Date.now()}_${index}`, // This should be the Cloudinary public ID
-            display_order: existingPhotos.length + index + 1,
-          })),
-        ],
+        photos: photos.map((photo) => photo.file),
       };
 
-      await tipsTripsAdviceService.updatePost(parseInt(postId), updateData);
+      await adminTipsTripsAdviceService.updatePost(postId, updateData);
       navigate('/admin/tipsTripsAndAdvice');
     } catch (err) {
       console.error('Error updating post:', err);

@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import { config } from '../config/env';
 import { AppError, ErrorCode } from '../types/errors';
+import userService from './userService';
 
 export interface AdminAuthResponse {
   success: boolean;
@@ -28,6 +29,44 @@ export class AdminAuthServiceSimple {
     } catch (error) {
       console.error('Error checking admin status:', error);
       return false;
+    }
+  }
+
+  // Ensure admin user has a record in the users table
+  private async ensureAdminUserRecord(
+    uid: string,
+    email: string
+  ): Promise<void> {
+    try {
+      // Check if user record already exists
+      const existingUser = await userService.getUserById(uid);
+      if (existingUser) {
+        console.log(`Admin user record already exists for ${email}`);
+        return;
+      }
+
+      // Create user record for admin
+      console.log(`Creating user record for admin: ${email}`);
+      await userService.createUser({
+        id: uid,
+        email: email,
+        first_name: 'Admin',
+        last_name: 'User',
+        visa_type: 'admin',
+        current_location: {
+          city: 'Admin',
+          state: 'Admin',
+          country: 'Admin',
+        },
+        occupation: 'Administrator',
+        employer: 'VisaConnect',
+      });
+
+      console.log(`✅ Created user record for admin: ${email}`);
+    } catch (error) {
+      console.error('Error ensuring admin user record:', error);
+      // Don't throw error here as it's not critical for login
+      // The admin can still log in, but might have issues creating posts
     }
   }
 
@@ -92,6 +131,9 @@ export class AdminAuthServiceSimple {
           403
         );
       }
+
+      // 2.5. Ensure admin user has a record in the users table
+      await this.ensureAdminUserRecord(firebaseUid, loginData.email);
 
       // 3. Ensure user has admin claims set in their user record
       await admin.auth().setCustomUserClaims(firebaseUid, {

@@ -7,9 +7,9 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '../../components/Button';
 import {
-  tipsTripsAdviceService,
-  CreateTipsTripsAdviceRequest,
-} from '../../api/tipsTripsAdviceService';
+  adminTipsTripsAdviceService,
+  CreatePostData,
+} from '../../api/adminTipsTripsAdviceService';
 
 const PostTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -66,18 +66,14 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
 
       // TODO: Implement photo upload to Cloudinary
       // For now, we'll create the post without photos
-      const postData: CreateTipsTripsAdviceRequest = {
+      const postData: CreatePostData = {
         title: formData.title,
         description: formData.description,
         post_type: formData.post_type,
-        photos: photos.map((photo, index) => ({
-          photo_url: photo.preview, // This should be the Cloudinary URL
-          photo_public_id: `temp_${Date.now()}_${index}`, // This should be the Cloudinary public ID
-          display_order: index + 1,
-        })),
+        photos: photos.map((photo) => photo.file),
       };
 
-      await tipsTripsAdviceService.createPost(postData);
+      await adminTipsTripsAdviceService.createPost(postData);
       navigate('/admin/tipsTripsAndAdvice');
     } catch (err) {
       console.error('Error creating post:', err);
