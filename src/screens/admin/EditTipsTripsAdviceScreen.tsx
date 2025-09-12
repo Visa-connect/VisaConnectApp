@@ -244,7 +244,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                   <div key={photo.id} className="relative group">
                     <img
                       src={photo.url}
-                      alt={`Existing photo ${index + 1}`}
+                      alt={`Existing content ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg"
                     />
                     <button
@@ -296,7 +296,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                     <div key={index} className="relative group">
                       <img
                         src={photo.preview}
-                        alt={`New photo ${index + 1}`}
+                        alt={`New content ${index + 1}`}
                         className="w-full h-24 object-cover rounded-lg"
                       />
                       <button
