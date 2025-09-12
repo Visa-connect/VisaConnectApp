@@ -22,15 +22,10 @@ import ConnectScreen from './screens/ConnectScreen';
 import ChatScreen from './screens/ChatScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
-import TipsTripsAdviceScreen from './screens/TipsTripsAdviceScreen';
-import TipsTripsAdviceDetailScreen from './screens/TipsTripsAdviceDetailScreen';
 import AdminLayout from './components/AdminLayout';
 import AdminRoute from './components/AdminRoute';
 import AdminLoginScreen from './screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
-import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
-import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
-import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import AuthenticatedLayout from './components/AuthenticatedLayout';
@@ -101,26 +96,6 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <SocialPortalScreen />
-              </AuthenticatedLayout>
-            </AuthenticatedRoute>
-          }
-        />
-        <Route
-          path="/tips-trips-advice"
-          element={
-            <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <TipsTripsAdviceScreen />
-              </AuthenticatedLayout>
-            </AuthenticatedRoute>
-          }
-        />
-        <Route
-          path="/tips-trips-advice/:postId"
-          element={
-            <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <TipsTripsAdviceDetailScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
@@ -274,36 +249,6 @@ function App() {
             <AdminRoute>
               <AdminLayout>
                 <AdminDashboardScreen />
-              </AdminLayout>
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/tipsTripsAndAdvice"
-          element={
-            <AdminRoute>
-              <AdminLayout>
-                <TipsTripsAdviceListScreen />
-              </AdminLayout>
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/tipsTripsAndAdvice/create"
-          element={
-            <AdminRoute>
-              <AdminLayout>
-                <PostTipsTripsAdviceScreen />
-              </AdminLayout>
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/tipsTripsAndAdvice/edit/:postId"
-          element={
-            <AdminRoute>
-              <AdminLayout>
-                <EditTipsTripsAdviceScreen />
               </AdminLayout>
             </AdminRoute>
           }

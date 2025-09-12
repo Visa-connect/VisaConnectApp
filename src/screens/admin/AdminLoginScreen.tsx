@@ -15,6 +15,12 @@ const AdminLoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Clear any existing admin token when component mounts
+  React.useEffect(() => {
+    localStorage.removeItem('adminToken');
+    console.log('Cleared admin token on component mount');
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -34,6 +40,10 @@ const AdminLoginScreen: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Clear any existing admin token before login
+      localStorage.removeItem('adminToken');
+      console.log('Cleared existing admin token');
 
       const success = await login(formData.email, formData.password);
       console.log('Login success:', success);
@@ -159,12 +169,27 @@ const AdminLoginScreen: React.FC = () => {
             </h3>
             <div className="text-xs text-gray-600 space-y-1">
               <div>
-                <strong>Email:</strong> admin@visaconnect.com
+                <strong>Email:</strong> arron@thecreativebomb.com
               </div>
               <div>
-                <strong>Password:</strong> admin123
+                <strong>Password:</strong> (your password)
               </div>
             </div>
+          </div>
+
+          {/* Clear Token Button */}
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.removeItem('adminToken');
+                console.log('Manually cleared admin token');
+                setError(null);
+              }}
+              className="w-full text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Clear Admin Token (if having issues)
+            </button>
           </div>
         </div>
       </div>

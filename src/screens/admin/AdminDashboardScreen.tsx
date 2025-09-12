@@ -8,9 +8,9 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline';
 import {
-  tipsTripsAdviceService,
+  adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
-} from '../../api/tipsTripsAdviceService';
+} from '../../api/adminTipsTripsAdviceService';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -35,11 +35,16 @@ const AdminDashboardScreen: React.FC = () => {
       try {
         setLoading(true);
         // Fetch recent posts
-        const posts = await tipsTripsAdviceService.searchPosts({ limit: 5 });
-        setRecentPosts(posts);
+        const postsResponse = await adminTipsTripsAdviceService.searchPosts({
+          limit: 5,
+        });
+        setRecentPosts(postsResponse.data);
 
         // Calculate stats
-        const allPosts = await tipsTripsAdviceService.searchPosts({});
+        const allPostsResponse = await adminTipsTripsAdviceService.searchPosts(
+          {}
+        );
+        const allPosts = allPostsResponse.data;
         const activePosts = allPosts.filter((post) => post.is_active);
 
         setStats({

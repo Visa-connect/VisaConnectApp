@@ -2,9 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import {
-  tipsTripsAdviceService,
+  adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
-} from '../../api/tipsTripsAdviceService';
+} from '../../api/adminTipsTripsAdviceService';
 
 const TipsTripsAdviceListScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -16,8 +16,8 @@ const TipsTripsAdviceListScreen: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await tipsTripsAdviceService.searchPosts({});
-      setPosts(response);
+      const response = await adminTipsTripsAdviceService.searchPosts({});
+      setPosts(response.data);
     } catch (err) {
       console.error('Error fetching posts:', err);
       setError('Failed to load posts. Please try again.');
@@ -34,14 +34,14 @@ const TipsTripsAdviceListScreen: React.FC = () => {
     navigate('/admin/tipsTripsAndAdvice/create');
   };
 
-  const handleEdit = (postId: number) => {
+  const handleEdit = (postId: string) => {
     navigate(`/admin/tipsTripsAndAdvice/edit/${postId}`);
   };
 
-  const handleDelete = async (postId: number) => {
+  const handleDelete = async (postId: string) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
       try {
-        await tipsTripsAdviceService.deletePost(postId);
+        await adminTipsTripsAdviceService.deletePost(postId);
         await fetchPosts(); // Refresh the list
       } catch (err) {
         console.error('Error deleting post:', err);
@@ -50,7 +50,7 @@ const TipsTripsAdviceListScreen: React.FC = () => {
     }
   };
 
-  const handleView = (postId: number) => {
+  const handleView = (postId: string) => {
     navigate(`/tips-trips-advice/${postId}`);
   };
 
