@@ -15,7 +15,7 @@
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '../.env' });
 
 // Database connection
 const pool = new Pool(

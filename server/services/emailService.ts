@@ -20,6 +20,8 @@ export class EmailService {
   private sendGrid: any;
 
   constructor() {
+    console.log('  - SENDGRID_API_KEY:', SENDGRID_API_KEY ? 'Set' : 'Not set');
+
     if (!SENDGRID_API_KEY) {
       console.warn(
         '⚠️  SENDGRID_API_KEY not found. Email notifications will be disabled.'
@@ -66,11 +68,12 @@ export class EmailService {
       await this.sendGrid.send(msg);
       console.log(`✅ Business submission notification sent to ${ADMIN_EMAIL}`);
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error(
         '❌ Failed to send business submission notification:',
         error
       );
+
       return false;
     }
   }

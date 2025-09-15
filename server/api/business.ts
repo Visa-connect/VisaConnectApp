@@ -5,6 +5,26 @@ import {
 } from '../services/businessService';
 import { emailService } from '../services/emailService';
 import { authenticateUser } from '../middleware/auth';
+import pool from '../db/config';
+
+// Helper function to check if user is admin
+const checkAdminStatus = async (userId: string): Promise<boolean> => {
+  try {
+    const client = await pool.connect();
+    try {
+      const result = await client.query(
+        'SELECT admin FROM users WHERE id = $1',
+        [userId]
+      );
+      return result.rows.length > 0 && result.rows[0].admin === true;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
 
 export const businessApi = (app: any) => {
   /**
@@ -60,33 +80,35 @@ export const businessApi = (app: any) => {
           });
         }
 
-         const business = await businessService.submitBusiness(
-           userId,
-           businessData
-         );
+        const business = await businessService.submitBusiness(
+          userId,
+          businessData
+        );
 
-         // Send email notification to admin
-         try {
-           await emailService.sendBusinessSubmissionNotification({
-             businessName: businessData.businessName,
-             ownerName: businessData.ownerName,
-             yearFormed: businessData.yearFormed,
-             businessAddress: businessData.businessAddress,
-             missionStatement: businessData.missionStatement,
-             submittedAt: business.submitted_at,
-             userEmail: req.user?.email || '',
-             userName: `${req.user?.first_name || ''} ${req.user?.last_name || ''}`.trim(),
-           });
-         } catch (emailError) {
-           console.error('Failed to send email notification:', emailError);
-           // Don't fail the request if email fails
-         }
+        // Send email notification to admin
+        try {
+          await emailService.sendBusinessSubmissionNotification({
+            businessName: businessData.businessName,
+            ownerName: businessData.ownerName,
+            yearFormed: businessData.yearFormed,
+            businessAddress: businessData.businessAddress,
+            missionStatement: businessData.missionStatement,
+            submittedAt: business.submitted_at,
+            userEmail: req.user?.email || '',
+            userName: `${req.user?.first_name || ''} ${
+              req.user?.last_name || ''
+            }`.trim(),
+          });
+        } catch (emailError) {
+          console.error('Failed to send email notification:', emailError);
+          // Don't fail the request if email fails
+        }
 
-         res.status(201).json({
-           success: true,
-           message: 'Business submitted successfully for verification',
-           data: business,
-         });
+        res.status(201).json({
+          success: true,
+          message: 'Business submitted successfully for verification',
+          data: business,
+        });
       } catch (error) {
         console.error('Error submitting business:', error);
         res.status(500).json({
@@ -157,7 +179,15 @@ export const businessApi = (app: any) => {
 
         // Check if user owns the business or is admin
         const userId = req.user?.uid;
-        if (business.user_id !== userId && !req.user?.admin) {
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'User not authenticated',
+          });
+        }
+
+        const isAdmin = await checkAdminStatus(userId);
+        if (business.user_id !== userId && !isAdmin) {
           return res.status(403).json({
             success: false,
             message: 'Access denied',
@@ -332,8 +362,17 @@ export const businessApi = (app: any) => {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'User not authenticated',
+          });
+        }
+
         // Check if user is admin
-        if (!req.user?.admin) {
+        const isAdmin = await checkAdminStatus(userId);
+        if (!isAdmin) {
           return res.status(403).json({
             success: false,
             message: 'Admin access required',
@@ -365,8 +404,17 @@ export const businessApi = (app: any) => {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'User not authenticated',
+          });
+        }
+
         // Check if user is admin
-        if (!req.user?.admin) {
+        const isAdmin = await checkAdminStatus(userId);
+        if (!isAdmin) {
           return res.status(403).json({
             success: false,
             message: 'Admin access required',
@@ -389,34 +437,34 @@ export const businessApi = (app: any) => {
           });
         }
 
-         const business = await businessService.updateBusinessStatus(
-           businessId,
-           status,
-           adminNotes
-         );
+        const business = await businessService.updateBusinessStatus(
+          businessId,
+          status,
+          adminNotes
+        );
 
-         // Send email notification to user
-         try {
-           // Get user email from the business data (includes user info from join)
-           const userEmail = (business as any).email;
-           if (userEmail) {
-             await emailService.sendBusinessStatusUpdate(
-               userEmail,
-               business.name,
-               status,
-               adminNotes
-             );
-           }
-         } catch (emailError) {
-           console.error('Failed to send status update email:', emailError);
-           // Don't fail the request if email fails
-         }
+        // Send email notification to user
+        try {
+          // Get user email from the business data (includes user info from join)
+          const userEmail = (business as any).email;
+          if (userEmail) {
+            await emailService.sendBusinessStatusUpdate(
+              userEmail,
+              business.name,
+              status,
+              adminNotes
+            );
+          }
+        } catch (emailError) {
+          console.error('Failed to send status update email:', emailError);
+          // Don't fail the request if email fails
+        }
 
-         res.json({
-           success: true,
-           message: `Business ${status} successfully`,
-           data: business,
-         });
+        res.json({
+          success: true,
+          message: `Business ${status} successfully`,
+          data: business,
+        });
       } catch (error) {
         console.error('Error updating business status:', error);
         if (error instanceof Error && error.message === 'Business not found') {

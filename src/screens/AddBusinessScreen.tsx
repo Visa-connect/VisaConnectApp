@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
+import { BusinessApiService, BusinessSubmission } from '../api/businessApi';
+import { uploadBusinessLogo } from '../api/cloudinary';
 
 const AddBusinessScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -87,19 +89,49 @@ const AddBusinessScreen: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // TODO: Implement business creation API call
-      console.log('Submitting business data:', {
-        ...formData,
-        logoFile,
-      });
+      let logoUrl = '';
+      let logoPublicId = '';
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Upload logo if provided
+      if (logoFile) {
+        const uploadResult = await uploadBusinessLogo(logoFile);
+        if (!uploadResult.success) {
+          setErrors({ logo: uploadResult.error || 'Failed to upload logo' });
+          return;
+        }
+        logoUrl = uploadResult.url || '';
+        logoPublicId = uploadResult.publicId || '';
+      }
 
-      // Navigate back to edit profile
-      navigate('/edit-profile');
+      // Prepare business submission data
+      const businessData: BusinessSubmission = {
+        businessName: formData.businessName.trim(),
+        yearFormed: parseInt(formData.yearFormed),
+        ownerName: formData.ownerName.trim(),
+        businessAddress: formData.businessAddress.trim() || undefined,
+        missionStatement: formData.missionStatement.trim(),
+        logoUrl: logoUrl || undefined,
+        logoPublicId: logoPublicId || undefined,
+      };
+
+      // Submit business to backend
+      const response = await BusinessApiService.submitBusiness(businessData);
+
+      if (response.success) {
+        // Show success message and navigate back
+        alert(
+          'Business submitted successfully! It will be reviewed by our admin team.'
+        );
+        navigate('/edit-profile');
+      } else {
+        throw new Error(response.message || 'Failed to submit business');
+      }
     } catch (error) {
       console.error('Error submitting business:', error);
+      setErrors({
+        submit:
+          error instanceof Error ? error.message : 'Failed to submit business',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -140,6 +172,13 @@ const AddBusinessScreen: React.FC = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Submit Error */}
+          {errors.submit && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{errors.submit}</p>
+            </div>
+          )}
+
           {/* Business Name */}
           <div>
             <label
@@ -156,8 +195,9 @@ const AddBusinessScreen: React.FC = () => {
               onChange={handleInputChange}
               className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                 errors.businessName ? 'border-red-300' : 'border-gray-300'
-              }`}
+              } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               placeholder="Enter business name"
+              disabled={isSubmitting}
             />
             {errors.businessName && (
               <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>

@@ -4,6 +4,7 @@ import { EyeIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
 import { uploadProfilePhoto } from '../api/cloudinary';
+import { BusinessApiService, Business } from '../api/businessApi';
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -21,18 +22,37 @@ const EditProfileScreen: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string>('');
 
-  // Business state - for now using mock data, will be replaced with real data later
-  const [hasBusiness, setHasBusiness] = useState(false); // Mock: user has a business
-  const [businessData, setBusinessData] = useState({
-    name: 'Miamis Best Sushi',
-    businessName: "Raphael's Cafe",
-    address: '123 S Main St. Miami, FL 33131',
-    website: 'www.RaphaelsCafe.com',
-    verified: true,
-  });
+  // Business state
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
+  const [businessError, setBusinessError] = useState<string>('');
 
   // Track if there are unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Load user's businesses
+  const loadBusinesses = async () => {
+    try {
+      setIsLoadingBusinesses(true);
+      setBusinessError('');
+      const response = await BusinessApiService.getUserBusinesses();
+      if (response.success && response.data) {
+        setBusinesses(response.data);
+      } else {
+        setBusinessError('Failed to load businesses');
+      }
+    } catch (error) {
+      console.error('Error loading businesses:', error);
+      setBusinessError('Failed to load businesses');
+    } finally {
+      setIsLoadingBusinesses(false);
+    }
+  };
+
+  // Load businesses on component mount
+  useEffect(() => {
+    loadBusinesses();
+  }, []);
 
   // Reset unsaved changes when user data changes
   useEffect(() => {
@@ -122,9 +142,26 @@ const EditProfileScreen: React.FC = () => {
     navigate('/add-business');
   };
 
-  const handleUpdateBusiness = () => {
-    // TODO: Navigate to update business screen or open modal
-    console.log('Update business clicked');
+  const handleUpdateBusiness = (businessId: number) => {
+    // TODO: Navigate to edit business screen
+    console.log('Update business:', businessId);
+  };
+
+  const handleDeleteBusiness = async (businessId: number) => {
+    if (window.confirm('Are you sure you want to delete this business?')) {
+      try {
+        const response = await BusinessApiService.deleteBusiness(businessId);
+        if (response.success) {
+          // Reload businesses
+          await loadBusinesses();
+        } else {
+          alert('Failed to delete business: ' + response.message);
+        }
+      } catch (error) {
+        console.error('Error deleting business:', error);
+        alert('Failed to delete business');
+      }
+    }
   };
 
   return (
@@ -177,7 +214,25 @@ const EditProfileScreen: React.FC = () => {
         </div>
 
         {/* Business Call-to-Action Section */}
-        {!hasBusiness && (
+        {/* Business Section */}
+        {isLoadingBusinesses ? (
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+              <div className="h-10 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        ) : businessError ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <p className="text-sm text-red-600">{businessError}</p>
+            <button
+              onClick={loadBusinesses}
+              className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+            >
+              Try again
+            </button>
+          </div>
+        ) : businesses.length === 0 ? (
           <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
             <h2 className="font-bold text-gray-900 mb-3">
               Do you have a business?
@@ -189,37 +244,90 @@ const EditProfileScreen: React.FC = () => {
               Add Business
             </button>
           </div>
-        )}
+        ) : (
+          <div className="space-y-4 mb-4">
+            {businesses.map((business) => (
+              <div
+                key={business.id}
+                className="bg-white rounded-lg p-4 shadow-sm"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-bold text-gray-900">{business.name}</h2>
+                  <div className="flex items-center space-x-2">
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        business.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : business.status === 'rejected'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}
+                    >
+                      {business.status}
+                    </span>
+                    {business.verified && (
+                      <span className="text-blue-600 text-sm font-medium">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-        {/* Business Listing Section */}
-        {hasBusiness && (
-          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-gray-900">{businessData.name}</h2>
-              {businessData.verified && (
-                <span className="text-blue-600 text-sm font-medium">
-                  Verified
-                </span>
-              )}
-            </div>
+                <div className="space-y-2 mb-4">
+                  {business.owner_name && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Owner:</span>{' '}
+                      {business.owner_name}
+                    </div>
+                  )}
+                  {business.year_formed && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Year Formed:</span>{' '}
+                      {business.year_formed}
+                    </div>
+                  )}
+                  {business.address && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Address:</span>{' '}
+                      {business.address}
+                    </div>
+                  )}
+                  {business.website && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Website:</span>{' '}
+                      {business.website}
+                    </div>
+                  )}
+                  {business.mission_statement && (
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">Mission:</span>{' '}
+                      {business.mission_statement}
+                    </div>
+                  )}
+                </div>
 
-            <div className="space-y-2 mb-4">
-              <div className="text-sm text-gray-700">
-                {businessData.businessName}
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleUpdateBusiness(business.id)}
+                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Update Business
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBusiness(business.id)}
+                    className="bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-              <div className="text-sm text-gray-700">
-                {businessData.address}
-              </div>
-              <div className="text-sm text-gray-700">
-                {businessData.website}
-              </div>
-            </div>
+            ))}
 
             <button
-              onClick={handleUpdateBusiness}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              onClick={handleAddBusiness}
+              className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors border-2 border-dashed border-gray-300"
             >
-              Update Profile
+              + Add Another Business
             </button>
           </div>
         )}

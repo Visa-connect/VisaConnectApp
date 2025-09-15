@@ -301,7 +301,7 @@ export class BusinessService {
       `;
 
       const result = await client.query(query, [businessId, userId]);
-      return result.rowCount > 0;
+      return (result.rowCount ?? 0) > 0;
     } finally {
       client.release();
     }
