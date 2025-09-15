@@ -135,20 +135,44 @@ export class BusinessService {
     const client = await pool.connect();
 
     try {
+      // Use the helper function for consistency
+      const { whereClause, queryParams } = this.buildWhereClause({
+        status: 'pending',
+      });
+
       const query = `
         SELECT b.*, bc.name as category_name, u.first_name, u.last_name, u.email
         FROM businesses b
         LEFT JOIN business_categories bc ON b.category_id = bc.id
         LEFT JOIN users u ON b.user_id = u.id
-        WHERE b.status = 'pending'
+        ${whereClause}
         ORDER BY b.submitted_at ASC
       `;
 
-      const result = await client.query(query);
+      const result = await client.query(query, queryParams);
       return result.rows;
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Helper function to build WHERE clause and parameters for business queries
+   */
+  private buildWhereClause(options?: {
+    status?: 'pending' | 'approved' | 'rejected';
+  }): { whereClause: string; queryParams: any[] } {
+    const queryParams: any[] = [];
+    let paramCount = 0;
+
+    if (options?.status) {
+      paramCount++;
+      queryParams.push(options.status);
+    }
+
+    const whereClause = paramCount > 0 ? `WHERE b.status = $${paramCount}` : '';
+
+    return { whereClause, queryParams };
   }
 
   /**
@@ -172,16 +196,8 @@ export class BusinessService {
         orderDirection = 'DESC',
       } = options || {};
 
-      // Build WHERE clause
-      let whereClause = '';
-      const queryParams: any[] = [];
-      let paramCount = 0;
-
-      if (status) {
-        paramCount++;
-        whereClause = `WHERE b.status = $${paramCount}`;
-        queryParams.push(status);
-      }
+      // Build WHERE clause and parameters
+      const { whereClause, queryParams } = this.buildWhereClause({ status });
 
       // Count query for total
       const countQuery = `
@@ -193,13 +209,8 @@ export class BusinessService {
       const countResult = await client.query(countQuery, queryParams);
       const total = parseInt(countResult.rows[0].total);
 
-      // Main query
-      paramCount = 0;
-      if (status) {
-        paramCount++;
-        whereClause = `WHERE b.status = $${paramCount}`;
-      }
-
+      // Main query with additional parameters for LIMIT and OFFSET
+      const mainQueryParams = [...queryParams, limit, offset];
       const mainQuery = `
         SELECT b.*, bc.name as category_name, u.first_name, u.last_name, u.email
         FROM businesses b
@@ -207,11 +218,10 @@ export class BusinessService {
         LEFT JOIN users u ON b.user_id = u.id
         ${whereClause}
         ORDER BY b.${orderBy} ${orderDirection}
-        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+        LIMIT $${mainQueryParams.length - 1} OFFSET $${mainQueryParams.length}
       `;
 
-      queryParams.push(limit, offset);
-      const result = await client.query(mainQuery, queryParams);
+      const result = await client.query(mainQuery, mainQueryParams);
 
       return {
         businesses: result.rows,

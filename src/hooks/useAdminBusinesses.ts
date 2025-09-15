@@ -43,10 +43,10 @@ export const useAdminBusinesses = () => {
 
       dispatch(
         adminActions.setCounts({
-          all: allResponse.data?.length || 0,
-          pending: pendingResponse.data?.length || 0,
-          approved: approvedResponse.data?.length || 0,
-          rejected: rejectedResponse.data?.length || 0,
+          all: allResponse.pagination?.total || 0,
+          pending: pendingResponse.pagination?.total || 0,
+          approved: approvedResponse.pagination?.total || 0,
+          rejected: rejectedResponse.pagination?.total || 0,
         })
       );
     } catch (error) {

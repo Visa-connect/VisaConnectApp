@@ -10,11 +10,17 @@ import {
 import { BusinessApiService, Business } from '../../api/businessApi';
 import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 
+type BusinessFilter = 'all' | 'pending' | 'approved' | 'rejected';
+
+interface Tab {
+  key: BusinessFilter;
+  label: string;
+  count: number;
+}
+
 const BusinessListScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [filter, setFilter] = useState<
-    'all' | 'pending' | 'approved' | 'rejected'
-  >('all');
+  const [filter, setFilter] = useState<BusinessFilter>('all');
 
   // Use admin store for business data
   const {
@@ -109,6 +115,14 @@ const BusinessListScreen: React.FC = () => {
   // Use filtered businesses for display
   const displayBusinesses = filteredBusinesses;
 
+  // Define tabs with proper typing
+  const tabs: Tab[] = [
+    { key: 'all', label: 'All', count: businessCounts.all },
+    { key: 'pending', label: 'Pending', count: businessCounts.pending },
+    { key: 'approved', label: 'Approved', count: businessCounts.approved },
+    { key: 'rejected', label: 'Rejected', count: businessCounts.rejected },
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -134,23 +148,10 @@ const BusinessListScreen: React.FC = () => {
       {/* Filter Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          {[
-            { key: 'all', label: 'All', count: businessCounts.all },
-            { key: 'pending', label: 'Pending', count: businessCounts.pending },
-            {
-              key: 'approved',
-              label: 'Approved',
-              count: businessCounts.approved,
-            },
-            {
-              key: 'rejected',
-              label: 'Rejected',
-              count: businessCounts.rejected,
-            },
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setFilter(tab.key as any)}
+              onClick={() => setFilter(tab.key)}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 filter === tab.key
                   ? 'border-blue-500 text-blue-600'
