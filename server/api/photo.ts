@@ -28,6 +28,33 @@ const upload = multer({
   },
 });
 
+// Helper functions for photo operations
+async function uploadPhotoToCloudinary(
+  buffer: Buffer,
+  folder: string,
+  publicIdPrefix?: string
+): Promise<{ secure_url: string; public_id: string }> {
+  const base64File = `data:image/jpeg;base64,${buffer.toString('base64')}`;
+
+  const uploadResult = await cloudinary.uploader.upload(base64File, {
+    folder,
+    transformation: [
+      { width: 1200, height: 800, crop: 'limit', quality: 'auto' },
+      { fetch_format: 'auto' },
+    ],
+    public_id: publicIdPrefix ? `${publicIdPrefix}_${Date.now()}` : undefined,
+  });
+
+  return {
+    secure_url: uploadResult.secure_url,
+    public_id: uploadResult.public_id,
+  };
+}
+
+async function deletePhotoFromCloudinary(publicId: string): Promise<void> {
+  await cloudinary.uploader.destroy(publicId);
+}
+
 export default function photoApi(app: Express) {
   // Upload profile photo with Cloudinary
   app.post(
@@ -206,6 +233,87 @@ export default function photoApi(app: Express) {
         console.error('Error deleting meetup photo:', error);
         res.status(500).json({
           error: 'Failed to delete meetup photo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
+
+  // Upload Tips, Trips, Advice photo
+  app.post(
+    '/api/photo/upload-tips-photo',
+    authenticateUser,
+    upload.single('photo'),
+    async (req: Request, res: Response) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({
+            error: 'No photo provided',
+            details: 'Please select a photo to upload',
+          });
+        }
+
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            details: 'User not authenticated',
+          });
+        }
+
+        // Upload to Cloudinary
+        const result = await uploadPhotoToCloudinary(
+          req.file.buffer,
+          'tips-trips-advice'
+        );
+
+        res.json({
+          success: true,
+          url: result.secure_url,
+          publicId: result.public_id,
+          message: 'Tips photo uploaded successfully',
+        });
+      } catch (error) {
+        console.error('Error uploading tips photo:', error);
+        res.status(500).json({
+          error: 'Failed to upload tips photo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
+
+  // Delete Tips, Trips, Advice photo
+  app.delete(
+    '/api/photo/delete-tips-photo',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const { publicId } = req.body;
+
+        if (!publicId) {
+          return res.status(400).json({
+            error: 'Missing publicId',
+            details: 'Photo public ID is required',
+          });
+        }
+
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            details: 'User not authenticated',
+          });
+        }
+
+        // Delete from Cloudinary
+        await deletePhotoFromCloudinary(publicId);
+
+        res.json({ success: true, message: 'Tips photo deleted' });
+      } catch (error) {
+        console.error('Error deleting tips photo:', error);
+        res.status(500).json({
+          error: 'Failed to delete tips photo',
           details: error instanceof Error ? error.message : 'Unknown error',
         });
       }

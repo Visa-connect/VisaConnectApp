@@ -9,11 +9,7 @@ import WebSocketService from './services/websocketService';
 // Database connection
 import pool from './db/config';
 // Register API routes
-import authApi from './api/auth';
-import userApi from './api/user';
-import photoApi from './api/photo';
-import chatApi from './api/chat';
-import meetupApi from './api/meetup';
+import { registerApiRoutes } from './api';
 
 // Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
@@ -103,11 +99,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 // Register API routes
-authApi(app);
-userApi(app);
-photoApi(app);
-chatApi(app);
-meetupApi(app);
+registerApiRoutes(app);
 
 // Only serve static files in production
 if (process.env.NODE_ENV !== 'development') {
