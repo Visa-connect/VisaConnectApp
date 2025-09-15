@@ -131,11 +131,7 @@ const EditProfileScreen: React.FC = () => {
   };
 
   const handleViewPublicProfile = () => {
-    if (user?.uid) {
-      navigate(`/public-profile/${user.uid}`);
-    } else {
-      navigate('/public-profile');
-    }
+    navigate('/public-profile');
   };
 
   const handleAddBusiness = () => {
