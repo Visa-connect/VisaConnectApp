@@ -58,6 +58,12 @@ jobs:
           heroku_email: ${{ secrets.HEROKU_EMAIL }}
           branch: main
 
+      - name: Run Database Migrations
+        run: |
+          echo "Running database migrations on production..."
+          heroku run "cd server && npm run migrate" --app ${{ env.HEROKU_APP_NAME }}
+          echo "✅ Migrations completed successfully!"
+
       - name: Run production health check
         run: |
           sleep 30
