@@ -2,7 +2,10 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+// Only load .env file in development
+if (process.env.NODE_ENV !== 'development') {
+  dotenv.config({ path: path.join(__dirname, '../../.env') });
+}
 
 interface Config {
   database: {

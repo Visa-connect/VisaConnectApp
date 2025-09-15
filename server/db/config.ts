@@ -3,8 +3,10 @@ import { config } from '../config/env';
 
 // Database configuration
 let dbConfig: PoolConfig;
+
 if (config.database.url) {
   // Production: Use Heroku DATABASE_URL
+  console.log('Using DATABASE_URL for database connection');
   dbConfig = {
     connectionString: config.database.url,
     ssl: {
@@ -17,6 +19,7 @@ if (config.database.url) {
   };
 } else {
   // Development: Use local environment variables
+  console.log('Using individual database environment variables');
   dbConfig = {
     user: config.database.user,
     host: config.database.host,
