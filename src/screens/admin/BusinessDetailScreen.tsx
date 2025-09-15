@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { 
+import {
   ArrowLeftIcon,
-  CheckCircleIcon, 
+  CheckCircleIcon,
   XCircleIcon,
   BuildingOfficeIcon,
   CalendarIcon,
   UserIcon,
   MapPinIcon,
   GlobeAltIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline';
 import { BusinessApiService, Business } from '../../api/businessApi';
 
@@ -25,11 +25,13 @@ const BusinessDetailScreen: React.FC = () => {
   useEffect(() => {
     const fetchBusiness = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         setError(null);
-        const response = await BusinessApiService.getBusinessById(parseInt(id));
+        const response = await BusinessApiService.getBusinessByIdAdmin(
+          parseInt(id)
+        );
         if (response.success && response.data) {
           setBusiness(response.data);
           setAdminNotes(response.data.admin_notes || '');
@@ -49,7 +51,7 @@ const BusinessDetailScreen: React.FC = () => {
 
   const handleApprove = async () => {
     if (!business) return;
-    
+
     try {
       setActionLoading(true);
       const response = await BusinessApiService.updateBusinessStatus(
@@ -58,7 +60,11 @@ const BusinessDetailScreen: React.FC = () => {
         adminNotes || undefined
       );
       if (response.success) {
-        setBusiness({ ...business, status: 'approved', admin_notes: adminNotes });
+        setBusiness({
+          ...business,
+          status: 'approved',
+          admin_notes: adminNotes,
+        });
         alert('Business approved successfully!');
       } else {
         alert('Failed to approve business. Please try again.');
@@ -73,12 +79,12 @@ const BusinessDetailScreen: React.FC = () => {
 
   const handleReject = async () => {
     if (!business) return;
-    
+
     if (!adminNotes.trim()) {
       alert('Please provide a reason for rejection.');
       return;
     }
-    
+
     try {
       setActionLoading(true);
       const response = await BusinessApiService.updateBusinessStatus(
@@ -87,7 +93,11 @@ const BusinessDetailScreen: React.FC = () => {
         adminNotes
       );
       if (response.success) {
-        setBusiness({ ...business, status: 'rejected', admin_notes: adminNotes });
+        setBusiness({
+          ...business,
+          status: 'rejected',
+          admin_notes: adminNotes,
+        });
         alert('Business rejected successfully!');
       } else {
         alert('Failed to reject business. Please try again.');
@@ -138,7 +148,9 @@ const BusinessDetailScreen: React.FC = () => {
     return (
       <div className="text-center py-12">
         <BuildingOfficeIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Business not found</h3>
+        <h3 className="mt-2 text-sm font-medium text-gray-900">
+          Business not found
+        </h3>
         <p className="mt-1 text-sm text-gray-500">{error}</p>
         <div className="mt-6">
           <button
@@ -171,8 +183,13 @@ const BusinessDetailScreen: React.FC = () => {
               </h2>
               <div className="mt-1 flex items-center">
                 {getStatusIcon(business.status)}
-                <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(business.status)}`}>
-                  {business.status.charAt(0).toUpperCase() + business.status.slice(1)}
+                <span
+                  className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                    business.status
+                  )}`}
+                >
+                  {business.status.charAt(0).toUpperCase() +
+                    business.status.slice(1)}
                 </span>
               </div>
             </div>
@@ -198,7 +215,9 @@ const BusinessDetailScreen: React.FC = () => {
                 </div>
               )}
               <div className="flex-1">
-                <h3 className="text-lg font-medium text-gray-900">{business.name}</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  {business.name}
+                </h3>
                 <div className="mt-2 space-y-1">
                   <div className="flex items-center text-sm text-gray-500">
                     <UserIcon className="h-4 w-4 mr-2" />
@@ -211,9 +230,9 @@ const BusinessDetailScreen: React.FC = () => {
                   {business.website && (
                     <div className="flex items-center text-sm text-gray-500">
                       <GlobeAltIcon className="h-4 w-4 mr-2" />
-                      <a 
-                        href={business.website} 
-                        target="_blank" 
+                      <a
+                        href={business.website}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-600 hover:text-blue-800"
                       >
@@ -229,7 +248,9 @@ const BusinessDetailScreen: React.FC = () => {
           {/* Address */}
           {business.address && (
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Address</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                Address
+              </h3>
               <div className="flex items-start">
                 <MapPinIcon className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
                 <p className="text-sm text-gray-700">{business.address}</p>
@@ -240,17 +261,23 @@ const BusinessDetailScreen: React.FC = () => {
           {/* Mission Statement */}
           {business.mission_statement && (
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-3">Mission Statement</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">
+                Mission Statement
+              </h3>
               <div className="flex items-start">
                 <DocumentTextIcon className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
-                <p className="text-sm text-gray-700">{business.mission_statement}</p>
+                <p className="text-sm text-gray-700">
+                  {business.mission_statement}
+                </p>
               </div>
             </div>
           )}
 
           {/* Submission Details */}
           <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Submission Details</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-3">
+              Submission Details
+            </h3>
             <dl className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
               <div>
                 <dt className="text-sm font-medium text-gray-500">Submitted</dt>
@@ -259,7 +286,9 @@ const BusinessDetailScreen: React.FC = () => {
                 </dd>
               </div>
               <div>
-                <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                <dt className="text-sm font-medium text-gray-500">
+                  Last Updated
+                </dt>
                 <dd className="text-sm text-gray-900">
                   {new Date(business.updated_at).toLocaleString()}
                 </dd>
@@ -272,7 +301,9 @@ const BusinessDetailScreen: React.FC = () => {
         <div className="space-y-6">
           {/* Admin Notes */}
           <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Admin Notes</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-3">
+              Admin Notes
+            </h3>
             <textarea
               value={adminNotes}
               onChange={(e) => setAdminNotes(e.target.value)}
@@ -285,7 +316,9 @@ const BusinessDetailScreen: React.FC = () => {
           {/* Actions */}
           {business.status === 'pending' && (
             <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Actions</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                Actions
+              </h3>
               <div className="space-y-3">
                 <button
                   onClick={handleApprove}
@@ -309,17 +342,26 @@ const BusinessDetailScreen: React.FC = () => {
 
           {/* Current Status */}
           <div className="bg-white shadow rounded-lg p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-3">Current Status</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-3">
+              Current Status
+            </h3>
             <div className="flex items-center">
               {getStatusIcon(business.status)}
-              <span className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(business.status)}`}>
-                {business.status.charAt(0).toUpperCase() + business.status.slice(1)}
+              <span
+                className={`ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
+                  business.status
+                )}`}
+              >
+                {business.status.charAt(0).toUpperCase() +
+                  business.status.slice(1)}
               </span>
             </div>
             {business.admin_notes && (
               <div className="mt-3">
                 <p className="text-sm text-gray-500">Previous admin notes:</p>
-                <p className="text-sm text-gray-700 mt-1">{business.admin_notes}</p>
+                <p className="text-sm text-gray-700 mt-1">
+                  {business.admin_notes}
+                </p>
               </div>
             )}
           </div>

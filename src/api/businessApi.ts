@@ -109,6 +109,15 @@ export class BusinessApiService {
   }
 
   /**
+   * Admin: Get business by ID
+   */
+  static async getBusinessByIdAdmin(
+    businessId: number
+  ): Promise<ApiResponse<Business>> {
+    return adminApiGet<ApiResponse<Business>>(`/api/business/${businessId}`);
+  }
+
+  /**
    * Admin: Update business status
    */
   static async updateBusinessStatus(
