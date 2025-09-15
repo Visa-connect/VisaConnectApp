@@ -140,7 +140,10 @@ async function runMigrations(dryRun = false) {
           // Try to create the database by connecting to the default database
           const { Pool } = require('pg');
           const defaultDbConfig = process.env.DATABASE_URL
-            ? { connectionString: process.env.DATABASE_URL, database: 'postgres' }
+            ? {
+                connectionString: process.env.DATABASE_URL,
+                database: 'postgres',
+              }
             : {
                 user: process.env.DB_USER,
                 host: process.env.DB_HOST,
@@ -157,6 +160,7 @@ async function runMigrations(dryRun = false) {
             defaultDbClient.release();
             await defaultDbPool.end();
           }
+        } catch (createError) {
           console.error('❌ Failed to create database:', createError.message);
           console.log('💡 Please create the database manually:');
           console.log('   createdb visaconnect');
