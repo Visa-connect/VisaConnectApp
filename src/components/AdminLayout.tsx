@@ -45,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
@@ -120,7 +120,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64 flex-1">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile header */}
         <div className="lg:hidden flex items-center justify-between h-16 px-4 bg-white border-b border-gray-200">
           <button
@@ -134,7 +134,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
 
         {/* Page content */}
-        <main className="min-h-screen bg-gray-50">
+        <main className="flex-1 overflow-y-auto bg-gray-50">
           <div className="p-6">{children}</div>
         </main>
       </div>

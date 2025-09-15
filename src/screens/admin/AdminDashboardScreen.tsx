@@ -136,7 +136,7 @@ const AdminDashboardScreen: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="mt-2 text-gray-600">
           Welcome to the VisaConnect admin panel. Manage your community and
@@ -145,7 +145,7 @@ const AdminDashboardScreen: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
