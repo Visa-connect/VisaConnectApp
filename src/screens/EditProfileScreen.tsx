@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { EyeIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
 import { uploadProfilePhoto } from '../api/cloudinary';
@@ -20,9 +21,28 @@ const EditProfileScreen: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string>('');
 
+  // Business state - for now using mock data, will be replaced with real data later
+  const [hasBusiness, setHasBusiness] = useState(false); // Mock: user has a business
+  const [businessData, setBusinessData] = useState({
+    name: 'Miamis Best Sushi',
+    businessName: "Raphael's Cafe",
+    address: '123 S Main St. Miami, FL 33131',
+    website: 'www.RaphaelsCafe.com',
+    verified: true,
+  });
+
+  // Track if there are unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Reset unsaved changes when user data changes
+  useEffect(() => {
+    setHasUnsavedChanges(false);
+  }, [user]);
+
   const handlePhotoChange = (file: File) => {
     setSelectedPhoto(file);
     setUploadError('');
+    setHasUnsavedChanges(true);
     // Create preview URL for immediate display
     const previewUrl = URL.createObjectURL(file);
     setPhotoPreviewUrl(previewUrl);
@@ -35,10 +55,16 @@ const EditProfileScreen: React.FC = () => {
       setSelectedPhoto(null);
       setPhotoPreviewUrl(undefined);
       setUploadError('');
+      setHasUnsavedChanges(true);
     } catch (error) {
       console.error('Error removing photo:', error);
       setUploadError('Failed to remove photo');
     }
+  };
+
+  const handleBioChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setBio(e.target.value);
+    setHasUnsavedChanges(true);
   };
 
   const handleSaveProfile = async () => {
@@ -71,6 +97,7 @@ const EditProfileScreen: React.FC = () => {
       });
 
       setIsUploading(false);
+      setHasUnsavedChanges(false);
       navigate('/settings');
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -89,6 +116,15 @@ const EditProfileScreen: React.FC = () => {
     } else {
       navigate('/public-profile');
     }
+  };
+
+  const handleAddBusiness = () => {
+    navigate('/add-business');
+  };
+
+  const handleUpdateBusiness = () => {
+    // TODO: Navigate to update business screen or open modal
+    console.log('Update business clicked');
   };
 
   return (
@@ -128,7 +164,7 @@ const EditProfileScreen: React.FC = () => {
           <div className="relative">
             <textarea
               value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              onChange={handleBioChange}
               maxLength={160}
               className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={3}
@@ -140,18 +176,68 @@ const EditProfileScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Update Button */}
-        <button
-          onClick={handleSaveProfile}
-          disabled={isUploading}
-          className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm ${
-            isUploading
-              ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          {isUploading ? 'Uploading...' : 'Update'}
-        </button>
+        {/* Business Call-to-Action Section */}
+        {!hasBusiness && (
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+            <h2 className="font-bold text-gray-900 mb-3">
+              Do you have a business?
+            </h2>
+            <button
+              onClick={handleAddBusiness}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Add Business
+            </button>
+          </div>
+        )}
+
+        {/* Business Listing Section */}
+        {hasBusiness && (
+          <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-bold text-gray-900">{businessData.name}</h2>
+              {businessData.verified && (
+                <span className="text-blue-600 text-sm font-medium">
+                  Verified
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <div className="text-sm text-gray-700">
+                {businessData.businessName}
+              </div>
+              <div className="text-sm text-gray-700">
+                {businessData.address}
+              </div>
+              <div className="text-sm text-gray-700">
+                {businessData.website}
+              </div>
+            </div>
+
+            <button
+              onClick={handleUpdateBusiness}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Update Profile
+            </button>
+          </div>
+        )}
+
+        {/* Global Update Button - Only show when there are unsaved changes */}
+        {hasUnsavedChanges && (
+          <button
+            onClick={handleSaveProfile}
+            disabled={isUploading}
+            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm ${
+              isUploading
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {isUploading ? 'Uploading...' : 'Update'}
+          </button>
+        )}
 
         {/* Upload Error Display */}
         {uploadError && (
@@ -161,31 +247,13 @@ const EditProfileScreen: React.FC = () => {
         )}
       </div>
 
-      {/* View Public Profile Button - Fixed in top right */}
+      {/* View Public Profile Icon - Fixed in top right */}
       <button
         onClick={handleViewPublicProfile}
         className="fixed top-20 right-4 z-40 bg-black text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors"
         aria-label="View Public Profile"
       >
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-          />
-        </svg>
+        <EyeIcon className="w-5 h-5" />
       </button>
     </div>
   );

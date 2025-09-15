@@ -10,6 +10,7 @@ import DashboardScreen from './screens/DashboardScreen';
 import SignInScreen from './screens/LoginScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
+import AddBusinessScreen from './screens/AddBusinessScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
@@ -69,6 +70,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <EditProfileScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/add-business"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <AddBusinessScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
