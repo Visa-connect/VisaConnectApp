@@ -109,6 +109,33 @@ export class BusinessApiService {
   }
 
   /**
+   * Admin: Get all businesses with filtering
+   */
+  static async getAllBusinesses(options?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    limit?: number;
+    offset?: number;
+    orderBy?: 'submitted_at' | 'updated_at' | 'name';
+    orderDirection?: 'ASC' | 'DESC';
+  }): Promise<ApiResponse<Business[]>> {
+    const params = new URLSearchParams();
+
+    if (options?.status) params.append('status', options.status);
+    if (options?.limit) params.append('limit', options.limit.toString());
+    if (options?.offset) params.append('offset', options.offset.toString());
+    if (options?.orderBy) params.append('orderBy', options.orderBy);
+    if (options?.orderDirection)
+      params.append('orderDirection', options.orderDirection);
+
+    const queryString = params.toString();
+    const url = `/api/business/admin/all${
+      queryString ? `?${queryString}` : ''
+    }`;
+
+    return adminApiGet<ApiResponse<Business[]>>(url);
+  }
+
+  /**
    * Admin: Get business by ID
    */
   static async getBusinessByIdAdmin(

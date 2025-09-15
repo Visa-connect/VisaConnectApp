@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   EyeIcon,
@@ -8,37 +8,33 @@ import {
   BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
 import { BusinessApiService, Business } from '../../api/businessApi';
+import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 
 const BusinessListScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<
     'all' | 'pending' | 'approved' | 'rejected'
   >('all');
 
-  const fetchBusinesses = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await BusinessApiService.getPendingBusinesses();
-      if (response.success && response.data) {
-        setBusinesses(response.data);
-      } else {
-        setError(response.message || 'Failed to load businesses');
-      }
-    } catch (err) {
-      console.error('Error fetching businesses:', err);
-      setError('Failed to load businesses. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Use admin store for business data
+  const {
+    businesses,
+    businessCounts,
+    loading,
+    error,
+    fetchBusinesses,
+    refreshData,
+  } = useAdminBusinesses();
 
+  // Filter businesses based on current filter
+  const filteredBusinesses = businesses.filter(
+    (business: Business) => filter === 'all' || business.status === filter
+  );
+
+  // Refresh data when filter changes
   useEffect(() => {
-    fetchBusinesses();
-  }, [fetchBusinesses]);
+    refreshData();
+  }, [refreshData]);
 
   const handleView = (businessId: number) => {
     navigate(`/admin/businesses/${businessId}`);
@@ -110,9 +106,8 @@ const BusinessListScreen: React.FC = () => {
     }
   };
 
-  const filteredBusinesses = businesses.filter(
-    (business) => filter === 'all' || business.status === filter
-  );
+  // Use filtered businesses for display
+  const displayBusinesses = filteredBusinesses;
 
   if (loading) {
     return (
@@ -140,21 +135,17 @@ const BusinessListScreen: React.FC = () => {
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {[
-            { key: 'all', label: 'All', count: businesses.length },
-            {
-              key: 'pending',
-              label: 'Pending',
-              count: businesses.filter((b) => b.status === 'pending').length,
-            },
+            { key: 'all', label: 'All', count: businessCounts.all },
+            { key: 'pending', label: 'Pending', count: businessCounts.pending },
             {
               key: 'approved',
               label: 'Approved',
-              count: businesses.filter((b) => b.status === 'approved').length,
+              count: businessCounts.approved,
             },
             {
               key: 'rejected',
               label: 'Rejected',
-              count: businesses.filter((b) => b.status === 'rejected').length,
+              count: businessCounts.rejected,
             },
           ].map((tab) => (
             <button
@@ -195,7 +186,7 @@ const BusinessListScreen: React.FC = () => {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {filteredBusinesses.map((business) => (
+            {displayBusinesses.map((business: Business) => (
               <li key={business.id}>
                 <div className="px-4 py-4 flex items-center justify-between">
                   <div className="flex items-center">

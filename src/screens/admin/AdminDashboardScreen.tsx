@@ -11,6 +11,7 @@ import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../../api/adminTipsTripsAdviceService';
+import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ const AdminDashboardScreen: React.FC = () => {
     totalUsers: 0,
     totalEmployers: 0,
   });
+
+  // Use admin business hook for employer data
+  const { businessCounts } = useAdminBusinesses();
 
   useEffect(() => {
     // Redirect from /admin to /admin/dashboard
@@ -51,7 +55,7 @@ const AdminDashboardScreen: React.FC = () => {
           totalPosts: allPosts.length,
           activePosts: activePosts.length,
           totalUsers: 0, // TODO: Implement when user API is available
-          totalEmployers: 0, // TODO: Implement when employer API is available
+          totalEmployers: businessCounts.all, // Use business counts from admin store
         });
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -61,7 +65,7 @@ const AdminDashboardScreen: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, businessCounts.all]);
 
   const quickActions = [
     {

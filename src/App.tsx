@@ -25,6 +25,7 @@ import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
 import AdminLayout from './components/AdminLayout';
 import AdminRoute from './components/AdminRoute';
+import { AdminProvider } from './stores/adminStore';
 import AdminLoginScreen from './screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
 import BusinessListScreen from './screens/admin/BusinessListScreen';
@@ -262,61 +263,73 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <AdminDashboardScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <AdminDashboardScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <TipsTripsAdviceListScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <TipsTripsAdviceListScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice/create"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <PostTipsTripsAdviceScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <PostTipsTripsAdviceScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice/edit/:postId"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <EditTipsTripsAdviceScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <EditTipsTripsAdviceScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/businesses"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <BusinessListScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <BusinessListScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/businesses/:id"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <BusinessDetailScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <BusinessDetailScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
       </Routes>

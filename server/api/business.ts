@@ -373,6 +373,79 @@ export const businessApi = (app: any) => {
   );
 
   /**
+   * Admin: Get all businesses with filtering
+   * GET /api/business/admin/all
+   */
+  app.get(
+    '/api/business/admin/all',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const { status, limit, offset, orderBy, orderDirection } = req.query;
+
+        const options: any = {};
+
+        if (
+          status &&
+          ['pending', 'approved', 'rejected'].includes(status as string)
+        ) {
+          options.status = status as 'pending' | 'approved' | 'rejected';
+        }
+
+        if (limit) {
+          const parsedLimit = parseInt(limit as string);
+          if (!isNaN(parsedLimit) && parsedLimit > 0) {
+            options.limit = parsedLimit;
+          }
+        }
+
+        if (offset) {
+          const parsedOffset = parseInt(offset as string);
+          if (!isNaN(parsedOffset) && parsedOffset >= 0) {
+            options.offset = parsedOffset;
+          }
+        }
+
+        if (
+          orderBy &&
+          ['submitted_at', 'updated_at', 'name'].includes(orderBy as string)
+        ) {
+          options.orderBy = orderBy as 'submitted_at' | 'updated_at' | 'name';
+        }
+
+        if (
+          orderDirection &&
+          ['ASC', 'DESC'].includes((orderDirection as string).toUpperCase())
+        ) {
+          options.orderDirection = (orderDirection as string).toUpperCase() as
+            | 'ASC'
+            | 'DESC';
+        }
+
+        const result = await businessService.getAllBusinesses(options);
+
+        res.json({
+          success: true,
+          data: result.businesses,
+          pagination: {
+            total: result.total,
+            limit: options.limit || 50,
+            offset: options.offset || 0,
+            hasMore:
+              (options.offset || 0) + (options.limit || 50) < result.total,
+          },
+        });
+      } catch (error) {
+        console.error('Error fetching all businesses:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to fetch businesses',
+        });
+      }
+    }
+  );
+
+  /**
    * Admin: Update business status
    * PUT /api/business/admin/:id/status
    */

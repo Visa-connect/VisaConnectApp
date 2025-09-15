@@ -161,6 +161,77 @@ export class BusinessService {
   }
 
   /**
+   * Get all businesses with optional filtering
+   */
+  async getAllBusinesses(options?: {
+    status?: 'pending' | 'approved' | 'rejected';
+    limit?: number;
+    offset?: number;
+    orderBy?: 'submitted_at' | 'updated_at' | 'name';
+    orderDirection?: 'ASC' | 'DESC';
+  }): Promise<{ businesses: Business[]; total: number }> {
+    const client = await pool.connect();
+
+    try {
+      const {
+        status,
+        limit = 50,
+        offset = 0,
+        orderBy = 'submitted_at',
+        orderDirection = 'DESC',
+      } = options || {};
+
+      // Build WHERE clause
+      let whereClause = '';
+      const queryParams: any[] = [];
+      let paramCount = 0;
+
+      if (status) {
+        paramCount++;
+        whereClause = `WHERE b.status = $${paramCount}`;
+        queryParams.push(status);
+      }
+
+      // Count query for total
+      const countQuery = `
+        SELECT COUNT(*) as total
+        FROM businesses b
+        ${whereClause}
+      `;
+
+      const countResult = await client.query(countQuery, queryParams);
+      const total = parseInt(countResult.rows[0].total);
+
+      // Main query
+      paramCount = 0;
+      if (status) {
+        paramCount++;
+        whereClause = `WHERE b.status = $${paramCount}`;
+      }
+
+      const mainQuery = `
+        SELECT b.*, bc.name as category_name, u.first_name, u.last_name, u.email
+        FROM businesses b
+        LEFT JOIN business_categories bc ON b.category_id = bc.id
+        LEFT JOIN users u ON b.user_id = u.id
+        ${whereClause}
+        ORDER BY b.${orderBy} ${orderDirection}
+        LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
+      `;
+
+      queryParams.push(limit, offset);
+      const result = await client.query(mainQuery, queryParams);
+
+      return {
+        businesses: result.rows,
+        total,
+      };
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Update business status (admin only)
    */
   async updateBusinessStatus(
