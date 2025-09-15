@@ -1,4 +1,5 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './index';
+import { adminApiGet, adminApiPut } from './adminApi';
 
 // Business types
 export interface BusinessSubmission {
@@ -104,7 +105,7 @@ export class BusinessApiService {
    * Admin: Get pending businesses
    */
   static async getPendingBusinesses(): Promise<ApiResponse<Business[]>> {
-    return apiGet<ApiResponse<Business[]>>('/api/business/admin/pending');
+    return adminApiGet<ApiResponse<Business[]>>('/api/business/admin/pending');
   }
 
   /**
@@ -115,7 +116,7 @@ export class BusinessApiService {
     status: 'approved' | 'rejected',
     adminNotes?: string
   ): Promise<ApiResponse<Business>> {
-    return apiPut<ApiResponse<Business>>(
+    return adminApiPut<ApiResponse<Business>>(
       `/api/business/admin/${businessId}/status`,
       {
         status,

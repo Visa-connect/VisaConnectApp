@@ -37,10 +37,19 @@ export const useAdminAuth = (): AdminAuthState => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       console.log('useAdminAuth: Attempting login for', email);
+
+      // Clear all existing tokens and user information
+      localStorage.clear();
+      console.log('useAdminAuth: Cleared all localStorage data');
+
       const response = await adminAuthService.login(email, password);
       console.log('useAdminAuth: Login response', response);
       if (response.success && response.token) {
+        // Store admin token and user info
         localStorage.setItem('adminToken', response.token);
+        if (response.user) {
+          localStorage.setItem('adminUser', JSON.stringify(response.user));
+        }
         setIsAuthenticated(true);
         console.log(
           'useAdminAuth: Login successful, isAuthenticated set to true'
@@ -61,8 +70,12 @@ export const useAdminAuth = (): AdminAuthState => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('adminToken');
+      // Clear all localStorage data on logout
+      localStorage.clear();
       setIsAuthenticated(false);
+      console.log(
+        'useAdminAuth: Logout complete, cleared all localStorage data'
+      );
     }
   };
 

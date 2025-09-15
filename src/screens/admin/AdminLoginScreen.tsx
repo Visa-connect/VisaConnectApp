@@ -15,10 +15,10 @@ const AdminLoginScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Clear any existing admin token when component mounts
+  // Clear all existing tokens and user information when component mounts
   React.useEffect(() => {
-    localStorage.removeItem('adminToken');
-    console.log('Cleared admin token on component mount');
+    localStorage.clear();
+    console.log('Cleared all localStorage data on admin login screen mount');
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,9 +41,9 @@ const AdminLoginScreen: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // Clear any existing admin token before login
-      localStorage.removeItem('adminToken');
-      console.log('Cleared existing admin token');
+      // Clear all existing tokens and user information before login
+      localStorage.clear();
+      console.log('Cleared all localStorage data before admin login');
 
       const success = await login(formData.email, formData.password);
       console.log('Login success:', success);

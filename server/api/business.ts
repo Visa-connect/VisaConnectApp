@@ -5,21 +5,15 @@ import {
 } from '../services/businessService';
 import { emailService } from '../services/emailService';
 import { authenticateUser } from '../middleware/auth';
-import pool from '../db/config';
+import { authenticateAdmin } from '../middleware/adminAuth';
+import admin from 'firebase-admin';
 
-// Helper function to check if user is admin
+// Helper function to check if user is admin using Firebase claims
 const checkAdminStatus = async (userId: string): Promise<boolean> => {
   try {
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'SELECT admin FROM users WHERE id = $1',
-        [userId]
-      );
-      return result.rows.length > 0 && result.rows[0].admin === true;
-    } finally {
-      client.release();
-    }
+    const userRecord = await admin.auth().getUser(userId);
+    const customClaims = userRecord.customClaims;
+    return !!(customClaims?.admin && customClaims?.role === 'admin');
   } catch (error) {
     console.error('Error checking admin status:', error);
     return false;
@@ -359,26 +353,9 @@ export const businessApi = (app: any) => {
    */
   app.get(
     '/api/business/admin/pending',
-    authenticateUser,
+    authenticateAdmin,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.uid;
-        if (!userId) {
-          return res.status(401).json({
-            success: false,
-            message: 'User not authenticated',
-          });
-        }
-
-        // Check if user is admin
-        const isAdmin = await checkAdminStatus(userId);
-        if (!isAdmin) {
-          return res.status(403).json({
-            success: false,
-            message: 'Admin access required',
-          });
-        }
-
         const businesses = await businessService.getPendingBusinesses();
 
         res.json({
@@ -401,26 +378,9 @@ export const businessApi = (app: any) => {
    */
   app.put(
     '/api/business/admin/:id/status',
-    authenticateUser,
+    authenticateAdmin,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.uid;
-        if (!userId) {
-          return res.status(401).json({
-            success: false,
-            message: 'User not authenticated',
-          });
-        }
-
-        // Check if user is admin
-        const isAdmin = await checkAdminStatus(userId);
-        if (!isAdmin) {
-          return res.status(403).json({
-            success: false,
-            message: 'Admin access required',
-          });
-        }
-
         const businessId = parseInt(req.params.id);
         if (isNaN(businessId)) {
           return res.status(400).json({

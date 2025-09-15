@@ -27,6 +27,8 @@ import AdminLayout from './components/AdminLayout';
 import AdminRoute from './components/AdminRoute';
 import AdminLoginScreen from './screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
+import BusinessListScreen from './screens/admin/BusinessListScreen';
+import BusinessDetailScreen from './screens/admin/BusinessDetailScreen';
 import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
 import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
@@ -293,6 +295,26 @@ function App() {
             <AdminRoute>
               <AdminLayout>
                 <EditTipsTripsAdviceScreen />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/businesses"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <BusinessListScreen />
+              </AdminLayout>
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/businesses/:id"
+          element={
+            <AdminRoute>
+              <AdminLayout>
+                <BusinessDetailScreen />
               </AdminLayout>
             </AdminRoute>
           }

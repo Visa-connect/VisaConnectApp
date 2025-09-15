@@ -65,18 +65,18 @@ const AdminDashboardScreen: React.FC = () => {
 
   const quickActions = [
     {
+      name: 'Business Verifications',
+      href: '/admin/businesses',
+      icon: BuildingOfficeIcon,
+      color: 'bg-green-500',
+      description: 'Review and manage business submissions',
+    },
+    {
       name: 'Manage Users',
       href: '/admin/users',
       icon: UserGroupIcon,
       color: 'bg-blue-500',
       description: 'View and manage user accounts',
-    },
-    {
-      name: 'Manage Employers',
-      href: '/admin/employers',
-      icon: BuildingOfficeIcon,
-      color: 'bg-green-500',
-      description: 'View and manage employer accounts',
     },
     {
       name: 'Tips, Trips & Advice',
