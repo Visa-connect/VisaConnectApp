@@ -55,12 +55,6 @@ jobs:
           # For PRs, use the source branch. For pushes, use the current branch
           branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
 
-      - name: Run Database Migrations
-        run: |
-          echo "Running database migrations on staging..."
-          heroku run "cd server && npm run migrate" --app ${{ env.HEROKU_APP_NAME }}
-          echo "✅ Migrations completed successfully!"
-
       - name: Health check
         run: |
           echo "Waiting for deployment to complete..."
