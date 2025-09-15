@@ -132,10 +132,26 @@ async function runMigrations(dryRun = false) {
       if (error.message.includes('does not exist')) {
         console.log('💡 Database does not exist. Attempting to create it...');
         try {
-          // Try to create the database
-          await client.query('CREATE DATABASE visaconnect');
-          console.log('✅ Database "visaconnect" created successfully');
-        } catch (createError) {
+          // Try to create the database by connecting to the default database
+          const { Pool } = require('pg');
+          const defaultDbConfig = process.env.DATABASE_URL
+            ? { connectionString: process.env.DATABASE_URL, database: 'postgres' }
+            : {
+                user: process.env.DB_USER,
+                host: process.env.DB_HOST,
+                database: 'postgres',
+                password: process.env.DB_PASSWORD,
+                port: process.env.DB_PORT || 5431,
+              };
+          const defaultDbPool = new Pool(defaultDbConfig);
+          const defaultDbClient = await defaultDbPool.connect();
+          try {
+            await defaultDbClient.query('CREATE DATABASE visaconnect');
+            console.log('✅ Database "visaconnect" created successfully');
+          } finally {
+            defaultDbClient.release();
+            await defaultDbPool.end();
+          }
           console.error('❌ Failed to create database:', createError.message);
           console.log('💡 Please create the database manually:');
           console.log('   createdb visaconnect');
