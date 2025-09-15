@@ -84,7 +84,11 @@ const EditProfileScreen: React.FC = () => {
   };
 
   const handleViewPublicProfile = () => {
-    navigate('/public-profile');
+    if (user?.uid) {
+      navigate(`/public-profile/${user.uid}`);
+    } else {
+      navigate('/public-profile');
+    }
   };
 
   return (

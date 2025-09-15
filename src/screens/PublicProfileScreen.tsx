@@ -149,23 +149,61 @@ const PublicProfileScreen: React.FC = () => {
   // Fetch profile user data
   useEffect(() => {
     const fetchProfileUser = async () => {
-      if (!userId) return;
-
       try {
         const token = useUserStore.getState().getToken();
-        const response = await fetch(`/api/user/${userId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            setProfileUser(result.data);
+        // If no userId provided, use current user's data
+        if (!userId) {
+          if (currentUser) {
+            // Convert current user to ProfileUser format
+            const profileUserData: ProfileUser = {
+              id: currentUser.uid,
+              first_name: currentUser.first_name || '',
+              last_name: currentUser.last_name || '',
+              visa_type: currentUser.visa_type || '',
+              current_location: {
+                city: currentUser.current_location?.city || '',
+                state: currentUser.current_location?.state || '',
+                country: currentUser.current_location?.country || '',
+              },
+              occupation: currentUser.occupation || '',
+              profile_photo_url: currentUser.profile_photo_url,
+              bio: currentUser.bio,
+              nationality: currentUser.nationality,
+              languages: currentUser.languages,
+              hobbies: currentUser.hobbies,
+              favorite_state: currentUser.favorite_state,
+              preferred_outings: currentUser.preferred_outings,
+              has_car: currentUser.has_car,
+              offers_rides: currentUser.offers_rides,
+              relationship_status: currentUser.relationship_status,
+              road_trips: currentUser.road_trips,
+              favorite_place: currentUser.favorite_place,
+              travel_tips: currentUser.travel_tips,
+              willing_to_guide: currentUser.willing_to_guide,
+              mentorship_interest: currentUser.mentorship_interest,
+              created_at: new Date(), // Use current date as fallback
+            };
+            setProfileUser(profileUserData);
             // Calculate similarities after setting profile user
-            calculateSimilarities(result.data);
+            calculateSimilarities(profileUserData);
+          }
+        } else {
+          // Fetch other user's profile
+          const response = await fetch(`/api/user/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              setProfileUser(result.data);
+              // Calculate similarities after setting profile user
+              calculateSimilarities(result.data);
+            }
           }
         }
       } catch (error) {
@@ -176,10 +214,15 @@ const PublicProfileScreen: React.FC = () => {
     };
 
     fetchProfileUser();
-  }, [userId, calculateSimilarities]);
+  }, [userId, currentUser, calculateSimilarities]);
 
   const handleChatClick = async () => {
     if (!profileUser || !currentUser) return;
+
+    // Don't allow chatting with yourself
+    if (profileUser.id === currentUser.uid) {
+      return;
+    }
 
     try {
       // Create or get existing conversation with this user
@@ -281,33 +324,35 @@ const PublicProfileScreen: React.FC = () => {
             {profileUser.first_name} {profileUser.last_name}
           </h1>
 
-          {/* Chat Icon - Right side */}
-          <button
-            onClick={handleChatClick}
-            className="w-12 h-12 rounded-full bg-transparent text-black hover:bg-gray-100 transition-colors flex items-center justify-center"
-            aria-label="Start chat with this user"
-            title="Start chat"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="black"
-              viewBox="0 0 24 24"
+          {/* Chat Icon - Right side (only show if not viewing own profile) */}
+          {profileUser && currentUser && profileUser.id !== currentUser.uid && (
+            <button
+              onClick={handleChatClick}
+              className="w-12 h-12 rounded-full bg-transparent text-black hover:bg-gray-100 transition-colors flex items-center justify-center"
+              aria-label="Start chat with this user"
+              title="Start chat"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 18l-4-4h8l-4 4z"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="black"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 18l-4-4h8l-4 4z"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
