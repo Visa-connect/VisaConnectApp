@@ -176,6 +176,41 @@ export class BusinessService {
   }
 
   /**
+   * Validate and sanitize orderBy and orderDirection parameters
+   */
+  private validateOrderParams(
+    orderBy?: string,
+    orderDirection?: string
+  ): {
+    orderBy: string;
+    orderDirection: string;
+  } {
+    // Whitelist of allowed orderBy fields
+    const allowedOrderByFields = [
+      'submitted_at',
+      'updated_at',
+      'name',
+      'created_at',
+    ];
+    const sanitizedOrderBy = allowedOrderByFields.includes(orderBy || '')
+      ? orderBy!
+      : 'submitted_at';
+
+    // Whitelist of allowed order directions
+    const allowedDirections = ['ASC', 'DESC'];
+    const sanitizedDirection = allowedDirections.includes(
+      (orderDirection || '').toUpperCase()
+    )
+      ? (orderDirection || 'DESC').toUpperCase()
+      : 'DESC';
+
+    return {
+      orderBy: sanitizedOrderBy,
+      orderDirection: sanitizedDirection,
+    };
+  }
+
+  /**
    * Get all businesses with optional filtering
    */
   async getAllBusinesses(options?: {
@@ -192,9 +227,13 @@ export class BusinessService {
         status,
         limit = 50,
         offset = 0,
-        orderBy = 'submitted_at',
-        orderDirection = 'DESC',
+        orderBy,
+        orderDirection,
       } = options || {};
+
+      // Validate and sanitize order parameters to prevent SQL injection
+      const { orderBy: sanitizedOrderBy, orderDirection: sanitizedDirection } =
+        this.validateOrderParams(orderBy, orderDirection);
 
       // Build WHERE clause and parameters
       const { whereClause, queryParams } = this.buildWhereClause({ status });
@@ -217,7 +256,7 @@ export class BusinessService {
         LEFT JOIN business_categories bc ON b.category_id = bc.id
         LEFT JOIN users u ON b.user_id = u.id
         ${whereClause}
-        ORDER BY b.${orderBy} ${orderDirection}
+        ORDER BY b.${sanitizedOrderBy} ${sanitizedDirection}
         LIMIT $${mainQueryParams.length - 1} OFFSET $${mainQueryParams.length}
       `;
 
