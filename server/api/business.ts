@@ -240,16 +240,16 @@ export const businessApi = (app: any) => {
         };
 
         // Remove undefined values
-        Object.keys(updateData).forEach((key) => {
-          if (updateData[key as keyof BusinessSubmission] === undefined) {
-            delete updateData[key as keyof BusinessSubmission];
-          }
-        });
+        const filteredUpdateData = Object.fromEntries(
+          Object.entries(updateData).filter(([_, value]) => value !== undefined)
+        );
+
+        // Use filteredUpdateData instead of updateData below
 
         const business = await businessService.updateBusiness(
           businessId,
           userId,
-          updateData
+          filteredUpdateData
         );
 
         res.json({
