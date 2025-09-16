@@ -139,8 +139,7 @@ const EditProfileScreen: React.FC = () => {
   };
 
   const handleUpdateBusiness = (businessId: number) => {
-    // TODO: Navigate to edit business screen
-    console.log('Update business:', businessId);
+    navigate(`/edit-business/${businessId}`);
   };
 
   const handleDeleteBusiness = async (businessId: number) => {

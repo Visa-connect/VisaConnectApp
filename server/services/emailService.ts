@@ -20,8 +20,6 @@ export class EmailService {
   private sendGrid: any;
 
   constructor() {
-    console.log('  - SENDGRID_API_KEY:', SENDGRID_API_KEY ? 'Set' : 'Not set');
-
     if (!SENDGRID_API_KEY) {
       console.warn(
         '⚠️  SENDGRID_API_KEY not found. Email notifications will be disabled.'
@@ -57,21 +55,30 @@ export class EmailService {
       const htmlContent = this.generateBusinessSubmissionEmailHTML(data);
       const textContent = this.generateBusinessSubmissionEmailText(data);
 
+      // Support multiple recipients via comma-separated list in ADMIN_EMAIL
+      const adminRecipients = String(ADMIN_EMAIL)
+        .split(',')
+        .map((email) => email.trim())
+        .filter((email) => email.length > 0);
+
       const msg = {
-        to: ADMIN_EMAIL,
+        to: adminRecipients,
         from: FROM_EMAIL,
         subject: subject,
         text: textContent,
         html: htmlContent,
       };
-
       await this.sendGrid.send(msg);
-      console.log(`✅ Business submission notification sent to ${ADMIN_EMAIL}`);
+      console.log(
+        `✅ Business submission notification sent to ${adminRecipients.join(
+          ', '
+        )}`
+      );
       return true;
     } catch (error: any) {
       console.error(
         '❌ Failed to send business submission notification:',
-        error
+        error.response
       );
 
       return false;

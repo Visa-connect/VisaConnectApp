@@ -11,6 +11,7 @@ import SignInScreen from './screens/LoginScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import AddBusinessScreen from './screens/AddBusinessScreen';
+import EditBusinessScreen from './screens/EditBusinessScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
@@ -83,6 +84,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <AddBusinessScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/edit-business/:id"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <EditBusinessScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
