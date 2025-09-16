@@ -229,6 +229,13 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+-- Drop existing triggers if they exist to avoid conflicts
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+DROP TRIGGER IF EXISTS update_meetups_updated_at ON meetups;
+DROP TRIGGER IF EXISTS update_meetup_reports_updated_at ON meetup_reports;
+DROP TRIGGER IF EXISTS update_businesses_updated_at ON businesses;
+DROP TRIGGER IF EXISTS update_business_categories_updated_at ON business_categories;
+
 -- Create triggers to automatically update updated_at
 CREATE TRIGGER update_users_updated_at 
     BEFORE UPDATE ON users 
@@ -264,6 +271,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS trigger_update_tips_trips_advice_updated_at ON tips_trips_advice;
+
 CREATE TRIGGER trigger_update_tips_trips_advice_updated_at
     BEFORE UPDATE ON tips_trips_advice
     FOR EACH ROW
@@ -277,6 +287,9 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS trigger_update_tips_comments_updated_at ON tips_trips_advice_comments;
 
 CREATE TRIGGER trigger_update_tips_comments_updated_at
     BEFORE UPDATE ON tips_trips_advice_comments
