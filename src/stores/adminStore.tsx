@@ -14,16 +14,13 @@ interface AdminState {
   error: string | null;
 }
 
-interface AdminAction {
-  type:
-    | 'SET_LOADING'
-    | 'SET_ERROR'
-    | 'SET_BUSINESSES'
-    | 'SET_COUNTS'
-    | 'UPDATE_BUSINESS'
-    | 'CLEAR_ERROR';
-  payload?: any;
-}
+type AdminAction =
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'SET_BUSINESSES'; payload: Business[] }
+  | { type: 'SET_COUNTS'; payload: AdminState['businessCounts'] }
+  | { type: 'UPDATE_BUSINESS'; payload: Partial<Business> & { id: number } }
+  | { type: 'CLEAR_ERROR' };
 
 // Initial state
 const initialState: AdminState = {
