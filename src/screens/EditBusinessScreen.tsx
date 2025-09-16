@@ -198,6 +198,37 @@ const EditBusinessScreen: React.FC = () => {
     navigate('/edit-profile');
   };
 
+  const handleDelete = async () => {
+    if (!id) return;
+
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this business? This action cannot be undone.'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsSubmitting(true);
+      const response = await BusinessApiService.deleteBusiness(parseInt(id));
+
+      if (response.success) {
+        navigate('/edit-profile');
+      } else {
+        setErrors({
+          submit: response.message || 'Failed to delete business',
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting business:', error);
+      setErrors({
+        submit:
+          error instanceof Error ? error.message : 'Failed to delete business',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -471,8 +502,8 @@ const EditBusinessScreen: React.FC = () => {
             )}
           </div>
 
-          {/* Submit Button */}
-          <div className="pt-4">
+          {/* Action Buttons */}
+          <div className="pt-4 space-y-3">
             <Button
               type="submit"
               variant="primary"
@@ -481,6 +512,15 @@ const EditBusinessScreen: React.FC = () => {
             >
               {isSubmitting ? 'Updating...' : 'Update Business'}
             </Button>
+
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+              className="w-full py-3 px-6 text-lg font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete Business'}
+            </button>
           </div>
         </form>
       </div>

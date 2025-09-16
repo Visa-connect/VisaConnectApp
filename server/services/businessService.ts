@@ -31,6 +31,12 @@ export interface Business {
   submitted_at: Date;
 }
 
+export interface BusinessWithUser extends Business {
+  user_email: string;
+  user_first_name?: string;
+  user_last_name?: string;
+}
+
 export interface BusinessCategory {
   id: number;
   name: string;
@@ -278,15 +284,19 @@ export class BusinessService {
     businessId: number,
     status: 'approved' | 'rejected',
     adminNotes?: string
-  ): Promise<Business> {
+  ): Promise<BusinessWithUser> {
     const client = await pool.connect();
 
     try {
       const query = `
         UPDATE businesses 
         SET status = $1, admin_notes = $2, verified = $3, updated_at = NOW()
-        WHERE id = $4
-        RETURNING *
+        FROM users
+        WHERE businesses.user_id = users.id AND businesses.id = $4
+        RETURNING businesses.*, 
+                 users.email as user_email,
+                 users.first_name as user_first_name,
+                 users.last_name as user_last_name
       `;
 
       const verified = status === 'approved';

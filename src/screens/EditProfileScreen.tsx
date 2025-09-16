@@ -142,23 +142,6 @@ const EditProfileScreen: React.FC = () => {
     navigate(`/edit-business/${businessId}`);
   };
 
-  const handleDeleteBusiness = async (businessId: number) => {
-    if (window.confirm('Are you sure you want to delete this business?')) {
-      try {
-        const response = await BusinessApiService.deleteBusiness(businessId);
-        if (response.success) {
-          // Reload businesses
-          await loadBusinesses();
-        } else {
-          alert('Failed to delete business: ' + response.message);
-        }
-      } catch (error) {
-        console.error('Error deleting business:', error);
-        alert('Failed to delete business');
-      }
-    }
-  };
-
   return (
     <div>
       {/* Main Content */}
@@ -304,15 +287,9 @@ const EditProfileScreen: React.FC = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => handleUpdateBusiness(business.id)}
-                    className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     Update Business
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBusiness(business.id)}
-                    className="bg-red-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-red-700 transition-colors"
-                  >
-                    Delete
                   </button>
                 </div>
               </div>
