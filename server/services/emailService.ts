@@ -349,9 +349,9 @@ ${
 
 ${
   status === 'approved'
-    ? `View Your Business: ${process.env.APP_URL || 'https://visaconnect.com'}`
+    ? `View Your Business: ${config.email.appUrl || 'https://visaconnect.com'}`
     : `Update Your Business: ${
-        process.env.APP_URL || 'https://visaconnect.com'
+        config.email.appUrl || 'https://visaconnect.com'
       }/edit-profile`
 }
 
