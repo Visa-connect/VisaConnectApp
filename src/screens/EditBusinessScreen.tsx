@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
-import {
-  BusinessApiService,
-  BusinessSubmission,
-  Business,
-} from '../api/businessApi';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { BusinessApiService, BusinessSubmission } from '../api/businessApi';
 import { uploadBusinessLogo } from '../api/cloudinary';
 
 const EditBusinessScreen: React.FC = () => {
@@ -28,6 +25,7 @@ const EditBusinessScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Load business data on component mount
   useEffect(() => {
@@ -198,14 +196,12 @@ const EditBusinessScreen: React.FC = () => {
     navigate('/edit-profile');
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
     if (!id) return;
-
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this business? This action cannot be undone.'
-    );
-
-    if (!confirmed) return;
 
     try {
       setIsSubmitting(true);
@@ -226,7 +222,12 @@ const EditBusinessScreen: React.FC = () => {
       });
     } finally {
       setIsSubmitting(false);
+      setShowDeleteModal(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
   };
 
   // Loading state
@@ -515,15 +516,28 @@ const EditBusinessScreen: React.FC = () => {
 
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={handleDeleteClick}
               disabled={isSubmitting}
               className="w-full py-3 px-6 text-lg font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? 'Deleting...' : 'Delete Business'}
+              Delete Business
             </button>
           </div>
         </form>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Business"
+        message="Are you sure you want to delete this business? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        isLoading={isSubmitting}
+      />
     </div>
   );
 };
