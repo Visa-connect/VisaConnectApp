@@ -479,7 +479,7 @@ export const businessApi = (app: any) => {
         // Send email notification to user
         try {
           // Get user email from the business data (includes user info from join)
-          const userEmail = (business as any).email;
+          const userEmail = business.user_email;
           if (userEmail) {
             await emailService.sendBusinessStatusUpdate(
               userEmail,

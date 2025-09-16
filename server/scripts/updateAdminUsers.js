@@ -1,12 +1,20 @@
 const { Pool } = require('pg');
+require('dotenv').config({ path: '../.env' });
 
-// Database configuration - Staging Database
+// Database configuration
 const pool = new Pool({
-  connectionString:
-    'postgres://ud3490vsimps0l:pc52265fbf2064bb15a8c846189bd727a831c6e9c030c8d6a7b8653af37f85c98@c3v5n5ajfopshl.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d4k000avb1spk6',
-  ssl: {
-    rejectUnauthorized: false,
+  connectionString: process.env.DATABASE_URL || {
+    host: process.env.DB_HOST || 'localhost',
+    port: process.env.DB_PORT || 5431,
+    database: process.env.DB_NAME || 'visaconnect',
+    user: process.env.DB_USER || 'arronlinton',
+    password: process.env.DB_PASSWORD || '',
   },
+  ssl:
+    process.env.DATABASE_URL &&
+    process.env.DATABASE_URL.includes('amazonaws.com')
+      ? { rejectUnauthorized: false }
+      : false,
 });
 
 const adminEmails = [
@@ -14,6 +22,15 @@ const adminEmails = [
   'raphael.sagna@hotmail.fr',
   'markesedev+1@gmail.com',
 ];
+
+// Validate environment variables
+if (!process.env.DATABASE_URL && !process.env.DB_HOST) {
+  console.error('❌ Database configuration missing!');
+  console.error(
+    'Please set either DATABASE_URL or DB_HOST, DB_NAME, DB_USER, DB_PASSWORD'
+  );
+  process.exit(1);
+}
 
 async function updateAdminUsers() {
   const client = await pool.connect();
