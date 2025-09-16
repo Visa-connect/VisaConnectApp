@@ -232,17 +232,6 @@ const EditProfileScreen: React.FC = () => {
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-bold text-gray-900">{business.name}</h2>
                   <div className="flex items-center space-x-2">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${
-                        business.status === 'approved'
-                          ? 'bg-green-100 text-green-800'
-                          : business.status === 'rejected'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {business.status}
-                    </span>
                     {business.verified && (
                       <span className="text-blue-600 text-sm font-medium">
                         Verified
