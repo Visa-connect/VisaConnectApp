@@ -25,9 +25,6 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
           parseInt(postId)
         );
         setPost(postData);
-        setIsLiked(postData.is_liked || false);
-        setLikesCount(postData.likes_count || 0);
-        setComments(postData.comments || []);
       } catch (err) {
         console.error('Error fetching post:', err);
         setError('Failed to load post. Please try again.');

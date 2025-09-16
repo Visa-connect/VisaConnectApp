@@ -112,8 +112,6 @@ const BusinessListScreen: React.FC = () => {
     }
   };
 
-  // Use filtered businesses for display
-
   // Define tabs with proper typing
   const tabs: Tab[] = [
     { key: 'all', label: 'All', count: businessCounts.all },
@@ -186,7 +184,7 @@ const BusinessListScreen: React.FC = () => {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {displayBusinesses.map((business: Business) => (
+            {filteredBusinesses.map((business: Business) => (
               <li key={business.id}>
                 <div className="px-4 py-4 flex items-center justify-between">
                   <div className="flex items-center">
