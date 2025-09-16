@@ -113,7 +113,6 @@ const BusinessListScreen: React.FC = () => {
   };
 
   // Use filtered businesses for display
-  const displayBusinesses = filteredBusinesses;
 
   // Define tabs with proper typing
   const tabs: Tab[] = [
