@@ -24,13 +24,25 @@ const BusinessDetailScreen: React.FC = () => {
 
   useEffect(() => {
     const fetchBusiness = async () => {
-      if (!id) return;
+      if (!id) {
+        setError('Business ID is required');
+        setLoading(false);
+        return;
+      }
+
+      // Validate that id is a valid number
+      const businessId = parseInt(id, 10);
+      if (isNaN(businessId) || businessId <= 0) {
+        setError('Invalid business ID');
+        setLoading(false);
+        return;
+      }
 
       try {
         setLoading(true);
         setError(null);
         const response = await BusinessApiService.getBusinessByIdAdmin(
-          parseInt(id)
+          businessId
         );
         if (response.success && response.data) {
           setBusiness(response.data);
