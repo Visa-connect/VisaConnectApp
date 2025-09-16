@@ -36,11 +36,19 @@ if (config.database.url) {
 // Create connection pool
 const pool = new Pool(dbConfig);
 
-// Test database connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
-});
+// Test database connection once
+pool
+  .connect()
+  .then((client) => {
+    console.log('Connected to PostgreSQL database');
+    client.release();
+  })
+  .catch((err) => {
+    console.error('Failed to connect to PostgreSQL database:', err);
+    process.exit(-1);
+  });
 
+// Handle pool errors
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
   process.exit(-1);
