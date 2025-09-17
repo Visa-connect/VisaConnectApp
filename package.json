@@ -38,7 +38,7 @@
     "eject": "react-scripts eject",
     "dev": "concurrently \"react-scripts start\" \"cd server && nodemon index.ts\"",
     "postinstall": "npm run build",
-    "heroku-postbuild": "npm run build && cd server && npm install"
+    "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate"
   },
   "eslintConfig": {
     "extends": [

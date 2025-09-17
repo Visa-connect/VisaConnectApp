@@ -6,14 +6,27 @@ import {
   TipsTripsAdvicePost,
 } from '../api/tipsTripsAdviceService';
 
+type FilterType = 'all' | 'tip' | 'trip' | 'advice';
+
+interface FilterTab {
+  key: FilterType;
+  label: string;
+}
+
 const TipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
   const [posts, setPosts] = useState<TipsTripsAdvicePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedFilter, setSelectedFilter] = useState<
-    'all' | 'tip' | 'trip' | 'advice'
-  >('all');
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
+
+  // Define filters with proper typing
+  const filters: FilterTab[] = [
+    { key: 'all', label: 'All' },
+    { key: 'tip', label: 'Tips' },
+    { key: 'trip', label: 'Trips' },
+    { key: 'advice', label: 'Advice' },
+  ];
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -123,15 +136,10 @@ const TipsTripsAdviceScreen: React.FC = () => {
         {/* Filter Tabs */}
         <div className="mb-8">
           <div className="flex justify-center space-x-4">
-            {[
-              { key: 'all', label: 'All' },
-              { key: 'tip', label: 'Tips' },
-              { key: 'trip', label: 'Trips' },
-              { key: 'advice', label: 'Advice' },
-            ].map((filter) => (
+            {filters.map((filter) => (
               <button
                 key={filter.key}
-                onClick={() => setSelectedFilter(filter.key as any)}
+                onClick={() => setSelectedFilter(filter.key)}
                 className={`px-6 py-3 rounded-full text-sm font-medium transition-colors ${
                   selectedFilter === filter.key
                     ? 'bg-blue-600 text-white'

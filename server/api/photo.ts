@@ -319,4 +319,89 @@ export default function photoApi(app: Express) {
       }
     }
   );
+
+  // Upload Business Logo
+  app.post(
+    '/api/photo/upload-business-logo',
+    authenticateUser,
+    upload.single('photo'),
+    async (req: Request, res: Response) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({
+            error: 'No photo provided',
+            details: 'Please select a logo to upload',
+          });
+        }
+
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            details: 'User not authenticated',
+          });
+        }
+
+        // Upload to Cloudinary
+        const result = await uploadPhotoToCloudinary(
+          req.file.buffer,
+          'business-logos',
+          `business_logo_${userId}`
+        );
+
+        res.json({
+          success: true,
+          url: result.secure_url,
+          publicId: result.public_id,
+          message: 'Business logo uploaded successfully',
+        });
+      } catch (error) {
+        console.error('Error uploading business logo:', error);
+        res.status(500).json({
+          error: 'Failed to upload business logo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
+
+  // Delete Business Logo
+  app.delete(
+    '/api/photo/delete-business-logo',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const { publicId } = req.body;
+
+        if (!publicId) {
+          return res.status(400).json({
+            error: 'Missing publicId',
+            details: 'Logo public ID is required',
+          });
+        }
+
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            error: 'Unauthorized',
+            details: 'User not authenticated',
+          });
+        }
+
+        // Delete from Cloudinary
+        await cloudinary.uploader.destroy(publicId);
+
+        res.json({
+          success: true,
+          message: 'Business logo deleted successfully',
+        });
+      } catch (error) {
+        console.error('Error deleting business logo:', error);
+        res.status(500).json({
+          error: 'Failed to delete business logo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
 }

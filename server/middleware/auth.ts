@@ -9,6 +9,9 @@ declare global {
         uid: string;
         email: string;
         emailVerified: boolean;
+        first_name?: string;
+        last_name?: string;
+        admin?: boolean;
       };
     }
   }

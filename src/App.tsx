@@ -10,6 +10,8 @@ import DashboardScreen from './screens/DashboardScreen';
 import SignInScreen from './screens/LoginScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
+import AddBusinessScreen from './screens/AddBusinessScreen';
+import EditBusinessScreen from './screens/EditBusinessScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
@@ -24,8 +26,11 @@ import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
 import AdminLayout from './components/AdminLayout';
 import AdminRoute from './components/AdminRoute';
+import { AdminProvider } from './stores/adminStore';
 import AdminLoginScreen from './screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
+import BusinessListScreen from './screens/admin/BusinessListScreen';
+import BusinessDetailScreen from './screens/admin/BusinessDetailScreen';
 import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
 import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
@@ -69,6 +74,26 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <EditProfileScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/add-business"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <AddBusinessScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/edit-business/:id"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <EditBusinessScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
@@ -249,41 +274,73 @@ function App() {
         <Route
           path="/admin/dashboard"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <AdminDashboardScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <AdminDashboardScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <TipsTripsAdviceListScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <TipsTripsAdviceListScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice/create"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <PostTipsTripsAdviceScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <PostTipsTripsAdviceScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
         <Route
           path="/admin/tipsTripsAndAdvice/edit/:postId"
           element={
-            <AdminRoute>
-              <AdminLayout>
-                <EditTipsTripsAdviceScreen />
-              </AdminLayout>
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <EditTipsTripsAdviceScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/businesses"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <BusinessListScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/businesses/:id"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <BusinessDetailScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
           }
         />
       </Routes>

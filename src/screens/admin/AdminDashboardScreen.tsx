@@ -11,6 +11,7 @@ import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../../api/adminTipsTripsAdviceService';
+import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -23,6 +24,9 @@ const AdminDashboardScreen: React.FC = () => {
     totalUsers: 0,
     totalEmployers: 0,
   });
+
+  // Use admin business hook for employer data
+  const { businessCounts } = useAdminBusinesses();
 
   useEffect(() => {
     // Redirect from /admin to /admin/dashboard
@@ -51,7 +55,7 @@ const AdminDashboardScreen: React.FC = () => {
           totalPosts: allPosts.length,
           activePosts: activePosts.length,
           totalUsers: 0, // TODO: Implement when user API is available
-          totalEmployers: 0, // TODO: Implement when employer API is available
+          totalEmployers: businessCounts.all, // Use business counts from admin store
         });
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -61,22 +65,22 @@ const AdminDashboardScreen: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, businessCounts.all]);
 
   const quickActions = [
+    {
+      name: 'Business Verifications',
+      href: '/admin/businesses',
+      icon: BuildingOfficeIcon,
+      color: 'bg-green-500',
+      description: 'Review and manage business submissions',
+    },
     {
       name: 'Manage Users',
       href: '/admin/users',
       icon: UserGroupIcon,
       color: 'bg-blue-500',
       description: 'View and manage user accounts',
-    },
-    {
-      name: 'Manage Employers',
-      href: '/admin/employers',
-      icon: BuildingOfficeIcon,
-      color: 'bg-green-500',
-      description: 'View and manage employer accounts',
     },
     {
       name: 'Tips, Trips & Advice',
@@ -136,7 +140,7 @@ const AdminDashboardScreen: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="mt-2 text-gray-600">
           Welcome to the VisaConnect admin panel. Manage your community and
@@ -145,7 +149,7 @@ const AdminDashboardScreen: React.FC = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (

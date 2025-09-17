@@ -3,8 +3,10 @@ import { config } from '../config/env';
 
 // Database configuration
 let dbConfig: PoolConfig;
+
 if (config.database.url) {
   // Production: Use Heroku DATABASE_URL
+  console.log('Using DATABASE_URL for database connection');
   dbConfig = {
     connectionString: config.database.url,
     ssl: {
@@ -17,6 +19,7 @@ if (config.database.url) {
   };
 } else {
   // Development: Use local environment variables
+  console.log('Using individual database environment variables');
   dbConfig = {
     user: config.database.user,
     host: config.database.host,
@@ -33,11 +36,19 @@ if (config.database.url) {
 // Create connection pool
 const pool = new Pool(dbConfig);
 
-// Test database connection
-pool.on('connect', () => {
-  console.log('Connected to PostgreSQL database');
-});
+// Test database connection once
+pool
+  .connect()
+  .then((client) => {
+    console.log('Connected to PostgreSQL database');
+    client.release();
+  })
+  .catch((err) => {
+    console.error('Failed to connect to PostgreSQL database:', err);
+    process.exit(-1);
+  });
 
+// Handle pool errors
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
   process.exit(-1);

@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Load .env file if it exists (dotenv is safe to call in production)
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 interface Config {
@@ -26,6 +27,13 @@ interface Config {
     apiKey: string | undefined;
     apiSecret: string | undefined;
   };
+  email: {
+    sendGridApiKey: string | undefined;
+    adminEmail: string | undefined;
+    fromEmail: string | undefined;
+    adminDashboardUrl: string | undefined;
+    appUrl: string | undefined;
+  };
 }
 
 export const config: Config = {
@@ -49,5 +57,12 @@ export const config: Config = {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
+  },
+  email: {
+    sendGridApiKey: process.env.SENDGRID_API_KEY,
+    adminEmail: process.env.ADMIN_EMAIL,
+    fromEmail: process.env.FROM_EMAIL,
+    adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL,
+    appUrl: process.env.APP_URL,
   },
 };

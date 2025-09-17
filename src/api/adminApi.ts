@@ -3,12 +3,10 @@ import config from '../config';
 // Backend API base URL
 const API_BASE_URL = config.apiUrl;
 
-// Get admin token from localStorage
-const getAdminToken = () => {
+export const getAdminToken = () => {
   return localStorage.getItem('adminToken');
 };
 
-// Headers for admin API calls
 const adminHeaders = () => {
   const token = getAdminToken();
   return {
@@ -17,7 +15,6 @@ const adminHeaders = () => {
   };
 };
 
-// Admin-specific API functions
 export async function adminApiGet<T>(url: string): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${url}`, {
     headers: adminHeaders(),

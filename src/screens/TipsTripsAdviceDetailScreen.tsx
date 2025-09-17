@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  ArrowLeftIcon,
-  HeartIcon,
-  ChatBubbleLeftIcon,
-  ShareIcon,
-} from '@heroicons/react/24/outline';
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import {
   tipsTripsAdviceService,
@@ -19,12 +13,6 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
   const [post, setPost] = useState<TipsTripsAdvicePost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [comments, setComments] = useState<any[]>([]);
-  const [newComment, setNewComment] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [liking, setLiking] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -37,9 +25,6 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
           parseInt(postId)
         );
         setPost(postData);
-        setIsLiked(postData.is_liked || false);
-        setLikesCount(postData.likes_count || 0);
-        setComments(postData.comments || []);
       } catch (err) {
         console.error('Error fetching post:', err);
         setError('Failed to load post. Please try again.');
@@ -53,40 +38,6 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
 
   const handleBack = () => {
     navigate(-1);
-  };
-
-  const handleLike = async () => {
-    if (!post || liking) return;
-
-    try {
-      setLiking(true);
-      const result = await tipsTripsAdviceService.toggleLike(post.id);
-      setIsLiked(result.liked);
-      setLikesCount((prev) => (result.liked ? prev + 1 : prev - 1));
-    } catch (err) {
-      console.error('Error toggling like:', err);
-    } finally {
-      setLiking(false);
-    }
-  };
-
-  const handleComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!post || !newComment.trim() || submittingComment) return;
-
-    try {
-      setSubmittingComment(true);
-      const newCommentData = await tipsTripsAdviceService.addComment(
-        post.id,
-        newComment.trim()
-      );
-      setComments((prev) => [...prev, newCommentData]);
-      setNewComment('');
-    } catch (err) {
-      console.error('Error adding comment:', err);
-    } finally {
-      setSubmittingComment(false);
-    }
   };
 
   const handleChat = () => {
@@ -219,7 +170,7 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
                 <div key={photo.id} className="relative">
                   <img
                     src={photo.photo_url}
-                    alt={`${post.title} - Image ${index + 1}`}
+                    alt={`${post.title} - ${index + 1}`}
                     className="w-full h-96 object-cover rounded-lg"
                   />
                 </div>
