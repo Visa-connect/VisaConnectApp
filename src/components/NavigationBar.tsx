@@ -18,7 +18,7 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', key: 'dashboard', enabled: true },
-    { name: 'Work', path: '/work', key: 'work', enabled: false },
+    { name: 'Work', path: '/work', key: 'work', enabled: true },
     { name: 'Social', path: '/social', key: 'social', enabled: true },
     { name: 'Chat', path: '/chat', key: 'chat', enabled: true },
     { name: 'Settings', path: '/settings', key: 'settings', enabled: true },

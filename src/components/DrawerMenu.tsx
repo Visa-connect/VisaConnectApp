@@ -10,7 +10,7 @@ interface DrawerMenuProps {
 
 const menuItems = [
   { label: 'Dashboard', route: '/dashboard', key: 'dashboard', enabled: true },
-  { label: 'Work', route: '/work', key: 'work', enabled: false },
+  { label: 'Work', route: '/work', key: 'work', enabled: true },
   { label: 'Social', route: '/social', key: 'social', enabled: true },
   { label: 'Chat', route: '/chat', key: 'chat', enabled: true },
   { label: 'Settings', route: '/settings', key: 'settings', enabled: true },

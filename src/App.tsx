@@ -14,6 +14,7 @@ import AddBusinessScreen from './screens/AddBusinessScreen';
 import EditBusinessScreen from './screens/EditBusinessScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
+import WorkPortalScreen from './screens/WorkPortalScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
 import MeetupDetailsScreen from './screens/MeetupDetailsScreen';
 import PostMeetupScreen from './screens/PostMeetupScreen';
@@ -124,6 +125,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <SocialPortalScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/work"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <WorkPortalScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }

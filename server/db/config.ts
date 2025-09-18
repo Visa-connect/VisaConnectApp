@@ -15,7 +15,7 @@ if (config.database.url) {
     // Connection pool settings
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-    connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+    connectionTimeoutMillis: 2000, // Return an error after 10 seconds if connection could not be established
   };
 } else {
   // Development: Use local environment variables
@@ -29,24 +29,40 @@ if (config.database.url) {
     // Connection pool settings
     max: 20, // Maximum number of clients in the pool
     idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-    connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+    connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
   };
 }
 
 // Create connection pool
 const pool = new Pool(dbConfig);
 
-// Test database connection once
-pool
-  .connect()
-  .then((client) => {
-    console.log('Connected to PostgreSQL database');
-    client.release();
-  })
-  .catch((err) => {
-    console.error('Failed to connect to PostgreSQL database:', err);
-    process.exit(-1);
-  });
+// Test database connection with retry logic
+const testConnection = async (retries = 3, delay = 2000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const client = await pool.connect();
+      console.log('Connected to PostgreSQL database');
+      client.release();
+      return;
+    } catch (err) {
+      const error = err as Error;
+      console.error(
+        `Connection attempt ${i + 1}/${retries} failed:`,
+        error.message
+      );
+      if (i === retries - 1) {
+        console.error(
+          'Failed to connect to PostgreSQL database after all retries'
+        );
+        process.exit(-1);
+      }
+      console.log(`Retrying in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+};
+
+testConnection();
 
 // Handle pool errors
 pool.on('error', (err) => {
