@@ -15,6 +15,7 @@ import EditBusinessScreen from './screens/EditBusinessScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
 import WorkPortalScreen from './screens/WorkPortalScreen';
+import PostJobScreen from './screens/PostJobScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
 import MeetupDetailsScreen from './screens/MeetupDetailsScreen';
 import PostMeetupScreen from './screens/PostMeetupScreen';
@@ -135,6 +136,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <WorkPortalScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/post-job"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <PostJobScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
