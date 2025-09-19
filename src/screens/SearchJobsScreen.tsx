@@ -108,8 +108,7 @@ const SearchJobsScreen: React.FC = () => {
 
   // Handle job click
   const handleJobClick = (jobId: number) => {
-    // TODO: Navigate to job details page
-    console.log('Navigate to job:', jobId);
+    navigate(`/job/${jobId}`);
   };
 
   // Format salary display
