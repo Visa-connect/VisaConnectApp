@@ -1,7 +1,7 @@
 import admin from 'firebase-admin';
 import { config } from '../config/env';
 import { AppError, ErrorCode } from '../types/errors';
-import userService from './userService';
+import { userService } from './userService';
 
 export interface AdminAuthResponse {
   success: boolean;
@@ -269,4 +269,3 @@ export class AdminAuthServiceSimple {
 
 // Export singleton instance
 export const adminAuthServiceSimple = new AdminAuthServiceSimple();
-export default adminAuthServiceSimple;

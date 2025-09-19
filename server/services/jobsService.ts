@@ -44,7 +44,7 @@ export interface JobFilters {
   order_direction?: 'ASC' | 'DESC';
 }
 
-export class JobsService {
+class JobsService {
   /**
    * Create a new job posting
    */
@@ -311,4 +311,4 @@ export class JobsService {
   }
 }
 
-export default new JobsService();
+export const jobsService = new JobsService();

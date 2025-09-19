@@ -1,11 +1,9 @@
 import { Express, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { chatService } from '../services/chatService';
-import { UserService } from '../services/userService';
+import { userService } from '../services/userService';
 
 export default function chatApi(app: Express) {
-  const userService = new UserService();
-
   // Get user's conversations with user details
   app.get(
     '/api/chat/conversations',

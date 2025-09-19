@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { authenticateAdmin } from '../middleware/adminAuth';
-import JobsService, {
+import {
+  jobsService,
   JobSubmission,
   JobFilters,
 } from '../services/jobsService';
@@ -106,7 +107,7 @@ router.post('/', authenticateUser, async (req: Request, res: Response) => {
       business_logo_url,
     };
 
-    const job = await JobsService.createJob(jobData);
+    const job = await jobsService.createJob(jobData);
 
     res.status(201).json({
       success: true,
@@ -149,7 +150,7 @@ router.get('/', async (req: Request, res: Response) => {
       order_direction: order_direction as 'ASC' | 'DESC',
     };
 
-    const result = await JobsService.getAllJobs(filters);
+    const result = await jobsService.getAllJobs(filters);
 
     res.json({
       success: true,
@@ -183,7 +184,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
-    const job = await JobsService.getJobById(jobId);
+    const job = await jobsService.getJobById(jobId);
     if (!job) {
       return res.status(404).json({
         success: false,
@@ -237,7 +238,7 @@ router.get('/business/:businessId', async (req: Request, res: Response) => {
       order_direction: order_direction as 'ASC' | 'DESC',
     };
 
-    const result = await JobsService.getJobsByBusiness(businessId, filters);
+    const result = await jobsService.getJobsByBusiness(businessId, filters);
 
     res.json({
       success: true,
@@ -279,7 +280,7 @@ router.put('/:id', authenticateUser, async (req: Request, res: Response) => {
     }
 
     // Check ownership
-    const isOwner = await JobsService.checkJobOwnership(
+    const isOwner = await jobsService.checkJobOwnership(
       jobId,
       parseInt(userId)
     );
@@ -291,7 +292,7 @@ router.put('/:id', authenticateUser, async (req: Request, res: Response) => {
     }
 
     const updateData = req.body;
-    const job = await JobsService.updateJob(jobId, updateData);
+    const job = await jobsService.updateJob(jobId, updateData);
 
     if (!job) {
       return res.status(404).json({
@@ -346,7 +347,7 @@ router.put(
       }
 
       // Check ownership
-      const isOwner = await JobsService.checkJobOwnership(
+      const isOwner = await jobsService.checkJobOwnership(
         jobId,
         parseInt(userId)
       );
@@ -357,7 +358,7 @@ router.put(
         });
       }
 
-      const job = await JobsService.updateJobStatus(jobId, status);
+      const job = await jobsService.updateJobStatus(jobId, status);
 
       if (!job) {
         return res.status(404).json({
@@ -402,7 +403,7 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
     }
 
     // Check ownership
-    const isOwner = await JobsService.checkJobOwnership(
+    const isOwner = await jobsService.checkJobOwnership(
       jobId,
       parseInt(userId)
     );
@@ -413,7 +414,7 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
       });
     }
 
-    const deleted = await JobsService.deleteJob(jobId);
+    const deleted = await jobsService.deleteJob(jobId);
 
     if (!deleted) {
       return res.status(404).json({
@@ -448,7 +449,7 @@ router.get(
         ? parseInt(business_id as string)
         : undefined;
 
-      const stats = await JobsService.getJobStats(businessId);
+      const stats = await jobsService.getJobStats(businessId);
 
       res.json({
         success: true,

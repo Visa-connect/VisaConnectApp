@@ -4,7 +4,7 @@ import cors from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { config } from './config/env';
-import WebSocketService from './services/websocketService';
+import { WebSocketService } from './services/websocketService';
 
 // Database connection
 import pool from './db/config';
@@ -143,7 +143,7 @@ const server = app.listen(PORT, () => {
 });
 
 // Initialize WebSocket service for real-time chat
-const wsService = new WebSocketService(server);
+new WebSocketService(server);
 console.log('✅ WebSocket service initialized for real-time chat');
 
 // Graceful shutdown

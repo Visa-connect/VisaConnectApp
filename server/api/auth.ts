@@ -1,6 +1,6 @@
 import { Express, Request, Response } from 'express';
-import authService from '../services/authService';
-import userService from '../services/userService';
+import { authService } from '../services/authService';
+import { userService } from '../services/userService';
 import { authenticateUser, requireEmailVerification } from '../middleware/auth';
 
 export default function authApi(app: Express) {

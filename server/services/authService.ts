@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import userService from './userService';
+import { userService } from './userService';
 import { BasicUserData, CreateUserData, User } from './userService';
 import { config } from '../config/env';
 
@@ -253,4 +253,4 @@ export class AuthService {
   }
 }
 
-export default new AuthService();
+export const authService = new AuthService();
