@@ -33,8 +33,11 @@ export enum ErrorCode {
   // General errors
   VALIDATION_ERROR = 'VALIDATION_ERROR',
   INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+  INTERNAL_ERROR = 'INTERNAL_ERROR',
   BAD_REQUEST = 'BAD_REQUEST',
   NOT_FOUND = 'NOT_FOUND',
+  FORBIDDEN = 'FORBIDDEN',
+  CONFLICT = 'CONFLICT',
 }
 
 export class AppError extends Error {
