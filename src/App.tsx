@@ -17,6 +17,7 @@ import SocialPortalScreen from './screens/SocialPortalScreen';
 import WorkPortalScreen from './screens/WorkPortalScreen';
 import SearchJobsScreen from './screens/SearchJobsScreen';
 import JobDetailsScreen from './screens/JobDetailsScreen';
+import ApplyToJobScreen from './screens/ApplyToJobScreen';
 import PostJobScreen from './screens/PostJobScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
 import MeetupDetailsScreen from './screens/MeetupDetailsScreen';
@@ -158,6 +159,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <JobDetailsScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/apply/:jobId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <ApplyToJobScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }

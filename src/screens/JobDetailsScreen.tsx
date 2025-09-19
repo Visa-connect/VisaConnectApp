@@ -60,30 +60,9 @@ const JobDetailsScreen: React.FC = () => {
   }, [jobId]);
 
   // Handle apply button click
-  const handleApply = async () => {
+  const handleApply = () => {
     if (!job) return;
-
-    setIsApplying(true);
-    try {
-      // TODO: Implement actual application logic
-      // This could involve:
-      // 1. Opening a contact form
-      // 2. Redirecting to business contact info
-      // 3. Sending application via email
-      // 4. Creating an application record in the database
-
-      console.log('Applying to job:', job.id);
-
-      // For now, show a success message
-      alert(
-        'Application submitted successfully! The employer will contact you soon.'
-      );
-    } catch (err) {
-      console.error('Error applying to job:', err);
-      alert('Failed to submit application. Please try again.');
-    } finally {
-      setIsApplying(false);
-    }
+    navigate(`/apply/${job.id}`);
   };
 
   // Format salary display
