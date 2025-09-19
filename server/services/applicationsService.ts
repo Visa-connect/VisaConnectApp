@@ -1,4 +1,5 @@
 import pool from '../db/config';
+import { emailService, JobApplicationEmailData } from './emailService';
 
 export interface JobApplication {
   id: number;
@@ -73,7 +74,14 @@ export class ApplicationsService {
     ];
 
     const result = await pool.query(query, values);
-    return result.rows[0];
+    const application = result.rows[0];
+
+    // Send email notifications asynchronously
+    this.sendApplicationEmails(application).catch((error) => {
+      console.error('Failed to send application emails:', error);
+    });
+
+    return application;
   }
 
   /**
@@ -342,6 +350,82 @@ export class ApplicationsService {
       accepted: parseInt(stats.accepted),
       rejected: parseInt(stats.rejected),
     };
+  }
+
+  /**
+   * Send email notifications for a job application
+   */
+  private async sendApplicationEmails(
+    application: JobApplication
+  ): Promise<void> {
+    try {
+      // Get job and business details
+      const jobQuery = `
+        SELECT 
+          j.title as job_title,
+          j.description as job_description,
+          b.name as business_name,
+          b.owner_name as business_owner_name,
+          b.owner_email as business_owner_email
+        FROM jobs j
+        JOIN businesses b ON j.business_id = b.id
+        WHERE j.id = $1
+      `;
+
+      const jobResult = await pool.query(jobQuery, [application.job_id]);
+      if (jobResult.rows.length === 0) {
+        console.error('Job not found for application:', application.job_id);
+        return;
+      }
+
+      const job = jobResult.rows[0];
+
+      // Get user details
+      const userQuery = `
+        SELECT first_name, last_name, email
+        FROM users
+        WHERE firebase_uid = $1
+      `;
+
+      const userResult = await pool.query(userQuery, [application.user_id]);
+      if (userResult.rows.length === 0) {
+        console.error('User not found for application:', application.user_id);
+        return;
+      }
+
+      const user = userResult.rows[0];
+      const applicantName =
+        `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+        'Unknown User';
+
+      // Prepare email data
+      const emailData: JobApplicationEmailData = {
+        jobTitle: job.job_title,
+        businessName: job.business_name,
+        businessOwnerEmail: job.business_owner_email,
+        businessOwnerName: job.business_owner_name,
+        applicantName: applicantName,
+        applicantEmail: user.email,
+        qualifications: application.qualifications,
+        location: application.location,
+        visaType: application.visa_type || undefined,
+        startDate: application.start_date,
+        resumeUrl: application.resume_url || undefined,
+        resumeFilename: application.resume_filename || undefined,
+        appliedAt: application.created_at,
+        jobId: application.job_id,
+      };
+
+      // Send emails in parallel
+      await Promise.all([
+        emailService.sendJobApplicationNotificationToBusiness(emailData),
+        emailService.sendJobApplicationConfirmationToApplicant(emailData),
+      ]);
+
+      console.log(`✅ Application emails sent for job ${application.job_id}`);
+    } catch (error) {
+      console.error('Error sending application emails:', error);
+    }
   }
 }
 
