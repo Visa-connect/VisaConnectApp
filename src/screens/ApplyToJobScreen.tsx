@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
+import { CloudArrowUpIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
+import Modal from '../components/Modal';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 import {
   ApplicationsApiService,
@@ -26,6 +27,7 @@ const ApplyToJobScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<ApplicationFormData>({
     qualifications: '',
     location: '',
@@ -39,6 +41,11 @@ const ApplyToJobScreen: React.FC = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate(`/job/${jobId}`);
   };
 
   // Fetch job details
@@ -134,11 +141,7 @@ const ApplyToJobScreen: React.FC = () => {
       );
 
       if (response.success) {
-        alert(
-          'Application submitted successfully! The employer will review your application and contact you soon.'
-        );
-        // Navigate back to job details
-        navigate(`/job/${jobId}`);
+        setShowSuccessModal(true);
       } else {
         throw new Error('Failed to submit application');
       }
@@ -370,6 +373,44 @@ const ApplyToJobScreen: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        showCloseButton={false}
+        size="md"
+        className="text-center"
+      >
+        <div className="py-4">
+          {/* Title */}
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            Thank you for applying for a job on Visa Connect!
+          </h3>
+
+          {/* Icon */}
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <HandRaisedIcon className="w-8 h-8 text-blue-600" />
+            </div>
+          </div>
+
+          {/* Message */}
+          <p className="text-gray-700 text-sm leading-relaxed mb-6">
+            Your application has been emailed to the employer. If they are
+            interested they will contact you via email address.
+          </p>
+
+          {/* Done Button */}
+          <Button
+            onClick={handleCloseSuccessModal}
+            variant="primary"
+            className="w-full py-3 text-base font-medium"
+          >
+            Done
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
-import ConfirmationModal from '../components/ConfirmationModal';
+import Modal from '../components/Modal';
 import { BusinessApiService, BusinessSubmission } from '../api/businessApi';
 import { uploadBusinessLogo } from '../api/cloudinary';
 
@@ -527,17 +527,60 @@ const EditBusinessScreen: React.FC = () => {
       </div>
 
       {/* Confirmation Modal */}
-      <ConfirmationModal
+      <Modal
         isOpen={showDeleteModal}
         onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
         title="Delete Business"
-        message="Are you sure you want to delete this business? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        confirmVariant="danger"
-        isLoading={isSubmitting}
-      />
+        size="md"
+        className="text-center"
+      >
+        <div className="py-4">
+          {/* Icon */}
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                />
+              </svg>
+            </div>
+          </div>
+
+          {/* Message */}
+          <p className="text-gray-600 text-sm leading-relaxed mb-6">
+            Are you sure you want to delete this business? This action cannot be
+            undone.
+          </p>
+
+          {/* Buttons */}
+          <div className="flex space-x-3">
+            <Button
+              onClick={handleDeleteCancel}
+              variant="secondary"
+              className="flex-1 py-2"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              variant="primary"
+              className="flex-1 py-2 bg-red-600 hover:bg-red-700"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
