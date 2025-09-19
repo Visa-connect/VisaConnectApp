@@ -4,6 +4,10 @@ import { CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
+import {
+  ApplicationsApiService,
+  ApplicationSubmission,
+} from '../api/applicationsApi';
 import { visaTypes, startDateOptions } from '../utils/visaTypes';
 
 interface ApplicationFormData {
@@ -112,29 +116,37 @@ const ApplyToJobScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // TODO: Implement actual application submission logic
-      // This could involve:
-      // 1. Creating an application record in the database
-      // 2. Sending email notifications to the employer
-      // 3. Uploading resume file to cloud storage
-      // 4. Sending confirmation to the applicant
+      // TODO: Handle resume file upload to cloud storage
+      // For now, we'll skip the resume upload and just submit the form data
 
-      console.log('Submitting application for job:', job.id);
-      console.log('Application data:', formData);
+      const applicationData: ApplicationSubmission = {
+        job_id: job.id,
+        qualifications: formData.qualifications,
+        location: formData.location,
+        visa_type: formData.visa || undefined,
+        start_date: formData.startDate,
+        // resume_url: formData.resume ? 'uploaded_url_here' : undefined,
+        // resume_filename: formData.resume?.name,
+      };
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Success message
-      alert(
-        'Application submitted successfully! The employer will review your application and contact you soon.'
+      const response = await ApplicationsApiService.submitApplication(
+        applicationData
       );
 
-      // Navigate back to job details or search
-      navigate(`/job/${jobId}`);
-    } catch (err) {
+      if (response.success) {
+        alert(
+          'Application submitted successfully! The employer will review your application and contact you soon.'
+        );
+        // Navigate back to job details
+        navigate(`/job/${jobId}`);
+      } else {
+        throw new Error('Failed to submit application');
+      }
+    } catch (err: any) {
       console.error('Error submitting application:', err);
-      alert('Failed to submit application. Please try again.');
+      const errorMessage =
+        err.message || 'Failed to submit application. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -165,7 +165,7 @@ const JobDetailsScreen: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 pb-24">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
         {/* Job Header */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex items-start justify-between mb-4">
@@ -297,7 +297,7 @@ const JobDetailsScreen: React.FC = () => {
         </div>
 
         {/* Additional Information */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">
             Additional Information
           </h3>
@@ -315,11 +315,9 @@ const JobDetailsScreen: React.FC = () => {
             </p>
           </div>
         </div>
-      </div>
 
-      {/* Fixed Apply Button */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20">
-        <div className="max-w-4xl mx-auto">
+        {/* Apply Button */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <Button
             onClick={handleApply}
             disabled={isApplying}
