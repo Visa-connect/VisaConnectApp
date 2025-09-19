@@ -7,6 +7,7 @@ import meetupApi from './meetup';
 import tipsTripsAdviceApi from './tipsTripsAdvice';
 import adminAuthApi from './adminAuth';
 import { businessApi } from './business';
+import jobsApi from './jobs';
 
 /**
  * Centralized API service registration
@@ -24,6 +25,7 @@ export function registerApiRoutes(app: Express): void {
   tipsTripsAdviceApi(app);
   adminAuthApi(app);
   businessApi(app);
+  app.use('/api/jobs', jobsApi);
 
   console.log('✅ All API routes registered successfully');
 }
@@ -38,4 +40,5 @@ export {
   tipsTripsAdviceApi,
   adminAuthApi,
   businessApi,
+  jobsApi,
 };

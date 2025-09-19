@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
 import { BusinessApiService, Business } from '../api/businessApi';
+import { JobsApiService, JobSubmission } from '../api/jobsApi';
 import { uploadBusinessLogo } from '../api/cloudinary';
 
 interface JobFormData {
@@ -81,7 +82,11 @@ const PostJobScreen: React.FC = () => {
 
   const handleBusinessSelect = (business: Business) => {
     setSelectedBusiness(business);
-    setFormData((prev) => ({ ...prev, businessId: business.id }));
+    setFormData((prev) => ({
+      ...prev,
+      businessId: business.id,
+      businessLogo: business.logo_url || undefined,
+    }));
   };
 
   const handleLogoUpload = async (file: File) => {
@@ -112,15 +117,29 @@ const PostJobScreen: React.FC = () => {
       setIsSubmitting(true);
       setSubmitError('');
 
-      // TODO: Implement job posting API call
-      console.log('Submitting job:', formData);
+      const jobData: JobSubmission = {
+        business_id: formData.businessId,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        job_type: formData.jobType,
+        rate_from: formData.rateFrom ? parseFloat(formData.rateFrom) : null,
+        rate_to: formData.rateTo ? parseFloat(formData.rateTo) : null,
+        business_logo_url: formData.businessLogo,
+      };
 
-      // For now, just show success message
-      alert('Job posted successfully!');
-      navigate('/work');
-    } catch (error) {
+      const response = await JobsApiService.createJob(jobData);
+
+      if (response.success) {
+        // Show success message and navigate back to work portal
+        alert('Job posted successfully!');
+        navigate('/work');
+      } else {
+        setSubmitError('Failed to post job. Please try again.');
+      }
+    } catch (error: any) {
       console.error('Error posting job:', error);
-      setSubmitError('Failed to post job. Please try again.');
+      setSubmitError(error.message || 'Failed to post job. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -231,38 +250,71 @@ const PostJobScreen: React.FC = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Business Logo
+                  Business Logo
                 </label>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    const input = document.createElement('input');
-                    input.type = 'file';
-                    input.accept = 'image/*';
-                    input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) handleLogoUpload(file);
-                    };
-                    input.click();
-                  }}
-                  className="w-full justify-center"
-                >
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                {selectedBusiness?.logo_url ? (
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={selectedBusiness.logo_url}
+                      alt="Business logo"
+                      className="w-16 h-16 object-cover rounded-lg border border-gray-300"
                     />
-                  </svg>
-                  Upload Business Logo
-                </Button>
+                    <div>
+                      <p className="text-sm text-gray-600">
+                        Using existing logo
+                      </p>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e) => {
+                            const file = (e.target as HTMLInputElement)
+                              .files?.[0];
+                            if (file) handleLogoUpload(file);
+                          };
+                          input.click();
+                        }}
+                      >
+                        Change Logo
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      const input = document.createElement('input');
+                      input.type = 'file';
+                      input.accept = 'image/*';
+                      input.onchange = (e) => {
+                        const file = (e.target as HTMLInputElement).files?.[0];
+                        if (file) handleLogoUpload(file);
+                      };
+                      input.click();
+                    }}
+                    className="w-full justify-center"
+                  >
+                    <svg
+                      className="w-5 h-5 mr-2"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                      />
+                    </svg>
+                    Upload Business Logo
+                  </Button>
+                )}
               </div>
             </div>
           </div>
