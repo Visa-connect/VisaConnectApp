@@ -38,6 +38,8 @@ const WorkPortalScreen: React.FC = () => {
   const handleExplore = (feature: string) => {
     if (feature === 'Post Jobs - Approved') {
       navigate('/post-job');
+    } else if (feature === 'Search Jobs') {
+      navigate('/search-jobs');
     } else {
       // TODO: Implement navigation to other feature screens
       console.log(`Exploring ${feature}`);
