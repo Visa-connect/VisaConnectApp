@@ -25,6 +25,8 @@ import PostMeetupScreen from './screens/PostMeetupScreen';
 import MeetupsPostedScreen from './screens/MeetupsPostedScreen';
 import MeetupsInterestedScreen from './screens/MeetupsInterestedScreen';
 import EditMeetupScreen from './screens/EditMeetupScreen';
+import JobsAppliedScreen from './screens/JobsAppliedScreen';
+import JobsPostedScreen from './screens/JobsPostedScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ChatScreen from './screens/ChatScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
@@ -229,6 +231,26 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <MeetupsInterestedScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/jobs-applied"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <JobsAppliedScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/jobs-posted"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <JobsPostedScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
