@@ -101,7 +101,7 @@ export class ApplicationsService {
       FROM job_applications ja
       JOIN jobs j ON ja.job_id = j.id
       JOIN businesses b ON j.business_id = b.id
-      LEFT JOIN users u ON ja.user_id = u.firebase_uid
+      LEFT JOIN users u ON ja.user_id = u.id
       WHERE ja.id = $1
     `;
 
@@ -187,7 +187,7 @@ export class ApplicationsService {
       FROM job_applications ja
       JOIN jobs j ON ja.job_id = j.id
       JOIN businesses b ON j.business_id = b.id
-      LEFT JOIN users u ON ja.user_id = u.firebase_uid
+      LEFT JOIN users u ON ja.user_id = u.id
       ${whereClause}
       ORDER BY ja.${validOrderBy} ${validOrderDirection}
       LIMIT $${++paramCount} OFFSET $${++paramCount}
@@ -384,7 +384,7 @@ export class ApplicationsService {
       const userQuery = `
         SELECT first_name, last_name, email
         FROM users
-        WHERE firebase_uid = $1
+        WHERE user_id = $1
       `;
 
       const userResult = await pool.query(userQuery, [application.user_id]);
