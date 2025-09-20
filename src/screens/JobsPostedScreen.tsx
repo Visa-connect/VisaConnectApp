@@ -155,7 +155,7 @@ const JobsPostedScreen: React.FC = () => {
   };
 
   const handleEditJob = (jobId: number) => {
-    navigate(`/edit-job/${jobId}`);
+    navigate(`/post-job?edit=${jobId}`);
   };
 
   const handleViewJob = (jobId: number) => {
@@ -281,22 +281,27 @@ const JobsPostedScreen: React.FC = () => {
               profile, then create your first job posting to start attracting
               talent!
             </p>
-            <Button onClick={() => navigate('/post-job')} variant="primary">
+            <Button
+              onClick={() => navigate('/post-job')}
+              variant="primary"
+              className="inline-flex"
+            >
               Post a Job
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-gray-600">
+            <div className="text-center mb-6">
+              <p className="text-gray-600 mb-4">
                 You have posted {jobs.length} job{jobs.length !== 1 ? 's' : ''}
               </p>
               <Button
                 onClick={() => navigate('/post-job')}
                 variant="primary"
-                className="flex items-center text-sm px-4 py-2"
+                className="text-sm px-4 py-2 flex items-center"
+                size="sm"
               >
-                <PlusIcon className="w-4 h-4 mr-1" />
+                <PlusIcon className="w-4 h-4 mr-2" />
                 Post New Job
               </Button>
             </div>
@@ -359,6 +364,7 @@ const JobsPostedScreen: React.FC = () => {
                       onClick={() => handleViewJob(job.id)}
                       variant="secondary"
                       className="flex items-center text-sm"
+                      size="sm"
                     >
                       <EyeIcon className="w-4 h-4 mr-1" />
                       View Job
@@ -367,6 +373,7 @@ const JobsPostedScreen: React.FC = () => {
                       onClick={() => handleViewApplications(job.id)}
                       variant="secondary"
                       className="flex items-center text-sm"
+                      size="sm"
                     >
                       <BriefcaseIcon className="w-4 h-4 mr-1" />
                       View Applications ({applicationCounts[job.id] || 0})
@@ -375,6 +382,7 @@ const JobsPostedScreen: React.FC = () => {
                       onClick={() => handleEditJob(job.id)}
                       variant="secondary"
                       className="flex items-center text-sm"
+                      size="sm"
                     >
                       <PencilIcon className="w-4 h-4 mr-1" />
                       Edit

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { JobsApiService, JobSubmission } from '../api/jobsApi';
@@ -18,6 +18,7 @@ interface JobFormData {
 
 const PostJobScreen: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
@@ -25,6 +26,9 @@ const PostJobScreen: React.FC = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [jobId, setJobId] = useState<number | null>(null);
+  const [isLoadingJob, setIsLoadingJob] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<JobFormData>({
@@ -36,6 +40,40 @@ const PostJobScreen: React.FC = () => {
     rateFrom: '',
     rateTo: '',
   });
+
+  // Load job data for editing
+  const loadJobData = async (jobId: number) => {
+    try {
+      setIsLoadingJob(true);
+      const response = await JobsApiService.getJobById(jobId);
+      if (response.success) {
+        const job = response.data;
+        setFormData({
+          businessId: job.business_id,
+          title: job.title,
+          description: job.description,
+          location: job.location,
+          jobType: job.job_type,
+          rateFrom: job.rate_from?.toString() || '',
+          rateTo: job.rate_to?.toString() || '',
+          businessLogo: job.business_logo_url || undefined,
+        });
+
+        // Find and set the selected business
+        const business = businesses.find((b) => b.id === job.business_id);
+        if (business) {
+          setSelectedBusiness(business);
+        }
+      } else {
+        setSubmitError('Failed to load job data for editing');
+      }
+    } catch (error) {
+      console.error('Error loading job data:', error);
+      setSubmitError('Failed to load job data for editing');
+    } finally {
+      setIsLoadingJob(false);
+    }
+  };
 
   // Load user's verified businesses
   const loadBusinesses = async () => {
@@ -65,9 +103,27 @@ const PostJobScreen: React.FC = () => {
     }
   };
 
+  // Load businesses on component mount and check for edit mode
   useEffect(() => {
     loadBusinesses();
-  }, []);
+
+    // Check if we're in edit mode
+    const editJobId = searchParams.get('edit');
+    if (editJobId) {
+      const jobIdNum = parseInt(editJobId);
+      if (!isNaN(jobIdNum)) {
+        setIsEditMode(true);
+        setJobId(jobIdNum);
+      }
+    }
+  }, [searchParams]);
+
+  // Load job data when in edit mode and businesses are loaded
+  useEffect(() => {
+    if (isEditMode && jobId && businesses.length > 0) {
+      loadJobData(jobId);
+    }
+  }, [isEditMode, jobId, businesses]);
 
   const handleInputChange = (
     field: keyof JobFormData,
@@ -128,14 +184,27 @@ const PostJobScreen: React.FC = () => {
         business_logo_url: formData.businessLogo,
       };
 
-      const response = await JobsApiService.createJob(jobData);
+      let response;
+      if (isEditMode && jobId) {
+        // Update existing job
+        response = await JobsApiService.updateJob(jobId, jobData);
+      } else {
+        // Create new job
+        response = await JobsApiService.createJob(jobData);
+      }
 
       if (response.success) {
         // Show success message and navigate back to work portal
-        alert('Job posted successfully!');
+        alert(
+          isEditMode ? 'Job updated successfully!' : 'Job posted successfully!'
+        );
         navigate('/work');
       } else {
-        setSubmitError('Failed to post job. Please try again.');
+        setSubmitError(
+          isEditMode
+            ? 'Failed to update job. Please try again.'
+            : 'Failed to post job. Please try again.'
+        );
       }
     } catch (error: any) {
       console.error('Error posting job:', error);
@@ -145,11 +214,15 @@ const PostJobScreen: React.FC = () => {
     }
   };
 
-  if (isLoadingBusinesses) {
+  if (isLoadingBusinesses || isLoadingJob) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-gray-600">Loading verified businesses...</div>
+          <div className="text-gray-600">
+            {isLoadingJob
+              ? 'Loading job data...'
+              : 'Loading verified businesses...'}
+          </div>
         </div>
       </div>
     );
@@ -198,7 +271,9 @@ const PostJobScreen: React.FC = () => {
                 />
               </svg>
             </button>
-            <h1 className="text-2xl font-bold text-gray-900">Post a job</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditMode ? 'Update Job' : 'Post a Job'}
+            </h1>
           </div>
         </div>
       </div>
@@ -520,7 +595,13 @@ const PostJobScreen: React.FC = () => {
               disabled={isSubmitting}
               className="px-8 py-3"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
+              {isSubmitting
+                ? isEditMode
+                  ? 'Updating...'
+                  : 'Submitting...'
+                : isEditMode
+                ? 'Update Job'
+                : 'Submit'}
             </Button>
           </div>
         </form>

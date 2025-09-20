@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   MapPinIcon,
@@ -10,15 +10,20 @@ import {
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
+import { BusinessApiService } from '../api/businessApi';
+import { useUserStore } from '../stores/userStore';
 
 const JobDetailsScreen: React.FC = () => {
   const navigate = useNavigate();
   const { jobId } = useParams<{ jobId: string }>();
+  const { user } = useUserStore(); // Keep for future use
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [job, setJob] = useState<JobWithBusiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isApplying, setIsApplying] = useState(false);
+  const [isApplying, setIsApplying] = useState(false); // Keep for future use
+  const [userBusinesses, setUserBusinesses] = useState<number[]>([]);
+  const [isJobOwner, setIsJobOwner] = useState(false);
 
   const handleOverlayClick = () => {
     setIsDrawerOpen(false);
@@ -28,9 +33,29 @@ const JobDetailsScreen: React.FC = () => {
     navigate(-1);
   };
 
-  // Fetch job details
+  // Fetch user's businesses to check ownership
+  const fetchUserBusinesses = async () => {
+    try {
+      const response = await BusinessApiService.getUserBusinesses();
+      if (response.success && response.data) {
+        const businessIds = response.data.map((business) => business.id);
+        setUserBusinesses(businessIds);
+      }
+    } catch (err) {
+      console.error('Error fetching user businesses:', err);
+    }
+  };
+
+  // Check if current user owns this job
+  const checkJobOwnership = useCallback(() => {
+    if (job && userBusinesses.length > 0) {
+      setIsJobOwner(userBusinesses.includes(job.business_id));
+    }
+  }, [job, userBusinesses]);
+
+  // Fetch job details and user businesses
   useEffect(() => {
-    const fetchJobDetails = async () => {
+    const fetchData = async () => {
       if (!jobId) {
         setError('Job ID not provided');
         setLoading(false);
@@ -41,10 +66,14 @@ const JobDetailsScreen: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const response = await JobsApiService.getJobById(parseInt(jobId));
+        // Fetch job details and user businesses in parallel
+        const [jobResponse] = await Promise.all([
+          JobsApiService.getJobById(parseInt(jobId)),
+          fetchUserBusinesses(),
+        ]);
 
-        if (response.success) {
-          setJob(response.data);
+        if (jobResponse.success) {
+          setJob(jobResponse.data);
         } else {
           setError('Failed to load job details. Please try again.');
         }
@@ -56,13 +85,24 @@ const JobDetailsScreen: React.FC = () => {
       }
     };
 
-    fetchJobDetails();
+    fetchData();
   }, [jobId]);
+
+  // Check job ownership when job and user businesses are loaded
+  useEffect(() => {
+    checkJobOwnership();
+  }, [checkJobOwnership]);
 
   // Handle apply button click
   const handleApply = () => {
     if (!job) return;
     navigate(`/apply/${job.id}`);
+  };
+
+  // Handle update job button click
+  const handleUpdateJob = () => {
+    if (!job) return;
+    navigate(`/post-job?edit=${job.id}`);
   };
 
   // Format salary display
@@ -316,16 +356,26 @@ const JobDetailsScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Apply Button */}
+        {/* Apply/Update Button */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <Button
-            onClick={handleApply}
-            disabled={isApplying}
-            variant="primary"
-            className="w-full py-4 text-lg font-medium"
-          >
-            {isApplying ? 'Applying...' : 'Apply Now'}
-          </Button>
+          {isJobOwner ? (
+            <Button
+              onClick={handleUpdateJob}
+              variant="primary"
+              className="w-full py-4 text-lg font-medium"
+            >
+              Update Job
+            </Button>
+          ) : (
+            <Button
+              onClick={handleApply}
+              disabled={isApplying}
+              variant="primary"
+              className="w-full py-4 text-lg font-medium"
+            >
+              {isApplying ? 'Applying...' : 'Apply Now'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
