@@ -13,6 +13,7 @@ import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 import { ApplicationsApiService } from '../api/applicationsApi';
+import { BusinessApiService } from '../api/businessApi';
 
 const JobsPostedScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -39,37 +40,71 @@ const JobsPostedScreen: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // For now, we'll fetch all jobs. In a real app, this would be filtered by business owner
-        const response = await JobsApiService.getAllJobs({
-          limit: 50,
-          order_by: 'created_at',
-          order_direction: 'DESC',
-        });
+        // First, get user's businesses
+        const businessesResponse = await BusinessApiService.getUserBusinesses();
 
-        if (response.success) {
-          setJobs(response.data);
-
-          // Fetch application counts for each job
-          const counts: Record<number, number> = {};
-          for (const job of response.data) {
-            try {
-              const appResponse =
-                await ApplicationsApiService.getJobApplications(job.id, {
-                  limit: 1,
-                });
-              counts[job.id] = appResponse.pagination.total;
-            } catch (err) {
-              console.error(
-                `Error fetching applications for job ${job.id}:`,
-                err
-              );
-              counts[job.id] = 0;
-            }
-          }
-          setApplicationCounts(counts);
-        } else {
-          setError('Failed to load jobs. Please try again.');
+        if (
+          !businessesResponse.success ||
+          !businessesResponse.data ||
+          businessesResponse.data.length === 0
+        ) {
+          setJobs([]);
+          setApplicationCounts({});
+          setLoading(false);
+          return;
         }
+
+        // Get all jobs for user's businesses
+        const allJobs: JobWithBusiness[] = [];
+        const counts: Record<number, number> = {};
+
+        for (const business of businessesResponse.data) {
+          try {
+            const jobsResponse = await JobsApiService.getJobsByBusiness(
+              business.id,
+              {
+                limit: 50,
+                order_by: 'created_at',
+                order_direction: 'DESC',
+              }
+            );
+
+            if (jobsResponse.success) {
+              allJobs.push(...jobsResponse.data);
+
+              // Fetch application counts for each job
+              for (const job of jobsResponse.data) {
+                try {
+                  const appResponse =
+                    await ApplicationsApiService.getJobApplications(job.id, {
+                      limit: 1,
+                    });
+                  counts[job.id] = appResponse.pagination.total;
+                } catch (err) {
+                  console.error(
+                    `Error fetching applications for job ${job.id}:`,
+                    err
+                  );
+                  counts[job.id] = 0;
+                }
+              }
+            }
+          } catch (err) {
+            console.error(
+              `Error fetching jobs for business ${business.id}:`,
+              err
+            );
+          }
+        }
+
+        // Sort all jobs by created_at (newest first)
+        allJobs.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+
+        setJobs(allJobs);
+        setApplicationCounts(counts);
       } catch (err) {
         console.error('Error fetching jobs:', err);
         setError('Failed to load jobs. Please try again.');
@@ -242,8 +277,9 @@ const JobsPostedScreen: React.FC = () => {
               No Jobs Posted Yet
             </h3>
             <p className="text-gray-600 mb-6">
-              You haven't posted any jobs yet. Create your first job posting to
-              start attracting talent!
+              You haven't posted any jobs yet. First, add a business to your
+              profile, then create your first job posting to start attracting
+              talent!
             </p>
             <Button onClick={() => navigate('/post-job')} variant="primary">
               Post a Job
@@ -258,9 +294,9 @@ const JobsPostedScreen: React.FC = () => {
               <Button
                 onClick={() => navigate('/post-job')}
                 variant="primary"
-                className="flex items-center"
+                className="flex items-center text-sm px-4 py-2"
               >
-                <PlusIcon className="w-4 h-4 mr-2" />
+                <PlusIcon className="w-4 h-4 mr-1" />
                 Post New Job
               </Button>
             </div>
