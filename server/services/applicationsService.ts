@@ -366,9 +366,10 @@ export class ApplicationsService {
           j.description as job_description,
           b.name as business_name,
           b.owner_name as business_owner_name,
-          b.owner_email as business_owner_email
+          u.email as business_owner_email
         FROM jobs j
         JOIN businesses b ON j.business_id = b.id
+        JOIN users u ON b.user_id = u.id
         WHERE j.id = $1
       `;
 
