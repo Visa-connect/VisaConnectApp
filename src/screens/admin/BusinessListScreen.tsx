@@ -186,8 +186,11 @@ const BusinessListScreen: React.FC = () => {
           <ul className="divide-y divide-gray-200">
             {filteredBusinesses.map((business: Business) => (
               <li key={business.id}>
-                <div className="px-4 py-4 flex items-center justify-between">
-                  <div className="flex items-center">
+                <div
+                  className="px-4 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => handleView(business.id)}
+                >
+                  <div className="flex items-center flex-1">
                     <div className="flex-shrink-0">
                       {business.logo_url ? (
                         <img
@@ -232,7 +235,10 @@ const BusinessListScreen: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div
+                    className="flex items-center space-x-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       onClick={() => handleView(business.id)}
                       className="text-gray-400 hover:text-gray-600"
