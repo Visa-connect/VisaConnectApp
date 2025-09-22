@@ -282,7 +282,7 @@ router.put('/:id', authenticateUser, async (req: Request, res: Response) => {
     // Check ownership
     const isOwner = await jobsService.checkJobOwnership(
       jobId,
-      parseInt(userId)
+      userId
     );
     if (!isOwner) {
       return res.status(403).json({
