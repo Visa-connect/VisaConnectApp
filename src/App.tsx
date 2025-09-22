@@ -30,6 +30,8 @@ import JobsPostedScreen from './screens/JobsPostedScreen';
 import JobApplicationsScreen from './screens/JobApplicationsScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ChatScreen from './screens/ChatScreen';
+import TipsTripsAdviceScreen from './screens/TipsTripsAdviceScreen';
+import TipsTripsAdviceDetailScreen from './screens/TipsTripsAdviceDetailScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
 import AdminLayout from './components/AdminLayout';
@@ -62,6 +64,26 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <DashboardScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/tips-trips-advice"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <TipsTripsAdviceScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/tips-trips-advice/:postId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <TipsTripsAdviceDetailScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
