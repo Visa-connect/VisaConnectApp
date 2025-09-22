@@ -446,6 +446,47 @@ export default function businessApi(app: Express) {
   );
 
   /**
+   * Admin: Get business by ID with user information
+   * GET /api/business/admin/:id
+   */
+  app.get(
+    '/api/business/admin/:id',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const businessId = parseInt(req.params.id);
+        if (isNaN(businessId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid business ID',
+          });
+        }
+
+        const business = await businessService.getBusinessByIdWithUser(
+          businessId
+        );
+        if (!business) {
+          return res.status(404).json({
+            success: false,
+            message: 'Business not found',
+          });
+        }
+
+        res.json({
+          success: true,
+          data: business,
+        });
+      } catch (error) {
+        console.error('Error fetching business for admin:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to fetch business',
+        });
+      }
+    }
+  );
+
+  /**
    * Admin: Update business status
    * PUT /api/business/admin/:id/status
    */

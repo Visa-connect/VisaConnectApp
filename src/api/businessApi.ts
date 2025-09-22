@@ -33,6 +33,12 @@ export interface Business {
   updated_at: string;
 }
 
+export interface BusinessWithUser extends Business {
+  user_email?: string;
+  user_first_name?: string;
+  user_last_name?: string;
+}
+
 export interface BusinessCategory {
   id: number;
   name: string;
@@ -147,7 +153,9 @@ export class BusinessApiService {
   static async getBusinessByIdAdmin(
     businessId: number
   ): Promise<ApiResponse<Business>> {
-    return adminApiGet<ApiResponse<Business>>(`/api/business/${businessId}`);
+    return adminApiGet<ApiResponse<Business>>(
+      `/api/business/admin/${businessId}`
+    );
   }
 
   /**

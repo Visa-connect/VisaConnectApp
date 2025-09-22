@@ -11,12 +11,12 @@ import {
   GlobeAltIcon,
   DocumentTextIcon,
 } from '@heroicons/react/24/outline';
-import { BusinessApiService, Business } from '../../api/businessApi';
+import { BusinessApiService, BusinessWithUser } from '../../api/businessApi';
 
 const BusinessDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [business, setBusiness] = useState<Business | null>(null);
+  const [business, setBusiness] = useState<BusinessWithUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -235,6 +235,7 @@ const BusinessDetailScreen: React.FC = () => {
                     <UserIcon className="h-4 w-4 mr-2" />
                     {business.owner_name}
                   </div>
+
                   <div className="flex items-center text-sm text-gray-500">
                     <CalendarIcon className="h-4 w-4 mr-2" />
                     Formed in {business.year_formed}
