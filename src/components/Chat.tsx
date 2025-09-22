@@ -279,7 +279,7 @@ const Chat: React.FC<ChatProps> = ({
       {/* Message Input */}
       <div
         ref={inputContainerRef}
-        className="p-4 bg-gray-50 border-top border-gray-200"
+        className="p-4 bg-gray-50 border-t border-gray-200"
       >
         <form
           onSubmit={handleSendMessage}
