@@ -36,20 +36,22 @@ const SearchJobsScreen: React.FC = () => {
     navigate(-1);
   };
 
-  // Check which jobs the user has applied to
+  // Check which jobs the user has applied to (efficient bulk check)
   const checkAppliedJobs = async (jobIds: number[]) => {
     try {
-      // Get all user applications once
-      const response = await ApplicationsApiService.getMyApplications({
-        limit: 1000,
-      });
+      if (jobIds.length === 0) {
+        setAppliedJobs(new Set());
+        return;
+      }
+
+      const response = await ApplicationsApiService.checkAppliedJobs(jobIds);
       if (response.success) {
-        const appliedJobIds = response.data.map((app) => app.job_id);
-        const appliedJobsSet = new Set(appliedJobIds);
-        setAppliedJobs(appliedJobsSet);
+        setAppliedJobs(response.data);
       }
     } catch (error) {
       console.error('Error checking applied jobs:', error);
+      // Fallback: set empty set to avoid showing incorrect "Apply" buttons
+      setAppliedJobs(new Set());
     }
   };
 

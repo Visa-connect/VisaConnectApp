@@ -314,6 +314,30 @@ export class ApplicationsService {
   }
 
   /**
+   * Get which job IDs from a list the user has applied to (bulk check)
+   */
+  async getAppliedJobIds(
+    userId: string,
+    jobIds: number[]
+  ): Promise<Set<number>> {
+    if (jobIds.length === 0) {
+      return new Set();
+    }
+
+    const placeholders = jobIds.map((_, index) => `$${index + 2}`).join(',');
+    const query = `
+      SELECT job_id 
+      FROM job_applications 
+      WHERE user_id = $1 AND job_id IN (${placeholders})
+    `;
+
+    const values = [userId, ...jobIds];
+    const result = await pool.query(query, values);
+
+    return new Set(result.rows.map((row) => row.job_id));
+  }
+
+  /**
    * Get application statistics
    */
   async getApplicationStats(businessId?: number): Promise<{

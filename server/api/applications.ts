@@ -157,6 +157,73 @@ export default function applicationsApi(app: Express) {
     }
   );
 
+  // Check if user has applied to specific jobs (bulk check)
+  app.post(
+    '/api/applications/check-applications',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const userId = req.user?.uid;
+        if (!userId) {
+          throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
+        }
+
+        const { jobIds } = req.body;
+
+        if (!Array.isArray(jobIds)) {
+          throw new AppError(
+            'jobIds must be an array',
+            ErrorCode.VALIDATION_ERROR
+          );
+        }
+
+        if (jobIds.length === 0) {
+          return res.json({
+            success: true,
+            data: {},
+          });
+        }
+
+        // Validate job IDs
+        const validJobIds = jobIds.filter(
+          (id) => typeof id === 'number' && id > 0
+        );
+        if (validJobIds.length !== jobIds.length) {
+          throw new AppError(
+            'Invalid job IDs provided',
+            ErrorCode.VALIDATION_ERROR
+          );
+        }
+
+        const appliedJobs = await applicationsService.getAppliedJobIds(
+          userId,
+          validJobIds
+        );
+
+        res.json({
+          success: true,
+          data: appliedJobs,
+        });
+      } catch (error) {
+        console.error('Error checking applications:', error);
+
+        if (error instanceof AppError) {
+          res.status(error.statusCode).json({
+            success: false,
+            message: error.message,
+            errorCode: error.code,
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: 'Failed to check applications',
+            errorCode: ErrorCode.INTERNAL_ERROR,
+          });
+        }
+      }
+    }
+  );
+
   // Get user's applications
   app.get(
     '/api/applications/my-applications',

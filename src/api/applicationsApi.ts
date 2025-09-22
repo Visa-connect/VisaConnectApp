@@ -98,6 +98,20 @@ export class ApplicationsApiService {
   }
 
   /**
+   * Check if user has applied to specific jobs (bulk check)
+   */
+  static async checkAppliedJobs(jobIds: number[]): Promise<{
+    success: boolean;
+    data: Set<number>;
+  }> {
+    const response = await apiPost<{ success: boolean; data: Set<number> }>(
+      '/api/applications/check-applications',
+      { jobIds }
+    );
+    return response;
+  }
+
+  /**
    * Get user's applications
    */
   static async getMyApplications(
