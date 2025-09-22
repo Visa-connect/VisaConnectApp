@@ -22,35 +22,54 @@ const defaultHeaders = () => {
 const handleTokenRefresh = async (
   originalRequest: () => Promise<Response>
 ): Promise<Response> => {
-  try {
-    // First attempt with current token
-    return await originalRequest();
-  } catch (error: unknown) {
-    // Check if it's a 401 error (unauthorized)
-    const apiError = error as ApiError;
-    if (apiError.status === 401) {
-      console.log('Token expired, attempting to refresh...');
+  const MAX_RETRIES = 2;
+  const BASE_DELAY = 1000; // 1 second
 
-      // Try to refresh the token
-      const refreshResult = await tokenRefreshService.refreshToken();
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      // First attempt with current token
+      return await originalRequest();
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
 
-      if (refreshResult.success && refreshResult.token) {
-        // Update the token in the store
-        useUserStore.getState().setToken(refreshResult.token);
+      // Check if it's a 401 error (unauthorized)
+      if (apiError.status === 401) {
+        console.log('Token expired, attempting to refresh...');
 
-        // Retry the original request with the new token
-        return await originalRequest();
-      } else {
-        // Token refresh failed, user needs to re-authenticate
-        console.error('Token refresh failed:', refreshResult.error);
-        useUserStore.getState().clearUser();
-        throw new Error('Authentication expired. Please sign in again.');
+        // Try to refresh the token
+        const refreshResult = await tokenRefreshService.refreshToken();
+
+        if (refreshResult.success && refreshResult.token) {
+          // Update the token in the store
+          useUserStore.getState().setToken(refreshResult.token);
+
+          // Retry the original request with the new token
+          return await originalRequest();
+        } else {
+          // Token refresh failed, user needs to re-authenticate
+          console.error('Token refresh failed:', refreshResult.error);
+          useUserStore.getState().clearUser();
+          throw new Error('Authentication expired. Please sign in again.');
+        }
       }
-    }
 
-    // Re-throw non-401 errors
-    throw error;
+      // Check if it's a timeout error (408) and retry
+      if (apiError.status === 408 && attempt < MAX_RETRIES) {
+        console.warn(
+          `Request timeout (attempt ${attempt}/${MAX_RETRIES}), retrying...`
+        );
+        const delay = BASE_DELAY * Math.pow(2, attempt - 1);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+
+      // Re-throw non-retryable errors
+      throw error;
+    }
   }
+
+  // This should never be reached, but just in case
+  throw new Error('Request failed after multiple retry attempts');
 };
 
 // Headers without authentication for registration/login
