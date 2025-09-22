@@ -21,6 +21,8 @@ const Chat: React.FC<ChatProps> = ({
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   // Listen to messages in this conversation with real-time updates via WebSocket
   useEffect(() => {
@@ -36,7 +38,7 @@ const Chat: React.FC<ChatProps> = ({
         setIsLoading(false);
 
         // Auto-scroll to bottom after initial messages load
-        setTimeout(smoothScrollToBottom, 100);
+        setTimeout(smoothScrollToBottom, 50);
       } catch (error) {
         console.error('Error loading initial messages:', error);
         setIsLoading(false);
@@ -46,12 +48,21 @@ const Chat: React.FC<ChatProps> = ({
     loadInitialMessages();
 
     // Subscribe to real-time updates via WebSocket
-    websocketService.subscribeToConversation(conversationId, (newMessages) => {
-      setMessages(newMessages);
+    websocketService.subscribeToConversation(conversationId, (incoming) => {
+      // Backend may send doc change events, not full message arrays.
+      if (Array.isArray(incoming)) {
+        setMessages(incoming);
+      } else {
+        // Fallback: fetch the latest messages snapshot
+        chatService
+          .getMessages(conversationId)
+          .then((list) => setMessages(list))
+          .catch((err) => console.warn('Failed to refresh messages:', err));
+      }
       setIsLoading(false);
 
       // Auto-scroll to bottom when new messages arrive
-      setTimeout(smoothScrollToBottom, 100);
+      setTimeout(smoothScrollToBottom, 50);
     });
 
     return () => {
@@ -62,43 +73,43 @@ const Chat: React.FC<ChatProps> = ({
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      setTimeout(smoothScrollToBottom, 100);
+      setTimeout(smoothScrollToBottom, 50);
     }
   }, [messages.length]);
 
-  // Force scroll to bottom with multiple strategies
-  const smoothScrollToBottom = () => {
-    // Strategy 1: Scroll the entire page to bottom
-    window.scrollTo({
-      top: document.documentElement.scrollHeight,
-      behavior: 'smooth',
-    });
+  // Scroll to bottom on initial render
+  useEffect(() => {
+    setTimeout(smoothScrollToBottom, 50);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // Strategy 2: Also try to scroll the messages container
+  // Scroll to bottom of messages container only
+  const smoothScrollToBottom = () => {
+    // Prefer a sentinel element for reliable scrolling
+    if (endOfMessagesRef.current) {
+      endOfMessagesRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'end',
+      });
+      // Also ensure the input area is visible (especially on mobile)
+      if (inputContainerRef.current) {
+        inputContainerRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+        });
+      }
+      return;
+    }
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      container.scrollTop = container.scrollHeight;
-
-      // Strategy 3: Use scrollIntoView on the last message
-      const messages = container.querySelectorAll('[data-message]');
-      if (messages.length > 0) {
-        const lastMessage = messages[messages.length - 1];
-        lastMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+      if (inputContainerRef.current) {
+        inputContainerRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'end',
+        });
       }
-
-      // Strategy 4: Force scroll after a delay
-      setTimeout(() => {
-        container.scrollTop = container.scrollHeight;
-      }, 100);
     }
-
-    // Strategy 5: Final page scroll to ensure we're at bottom
-    setTimeout(() => {
-      window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'smooth',
-      });
-    }, 200);
   };
 
   // Send a new message with optimistic updates
@@ -124,7 +135,7 @@ const Chat: React.FC<ChatProps> = ({
     setNewMessage('');
 
     // Auto-scroll to bottom when new message is added
-    setTimeout(smoothScrollToBottom, 100);
+    setTimeout(smoothScrollToBottom, 50);
 
     try {
       // Send message to server
@@ -203,17 +214,9 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
       {/* Messages Area */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
-        style={{
-          height: 'calc(100vh - 200px)',
-          maxHeight: 'calc(100vh - 200px)',
-          overflowY: 'auto',
-        }}
-      >
+      <div ref={messagesContainerRef} className="flex-1 p-4 space-y-4 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
@@ -279,10 +282,14 @@ const Chat: React.FC<ChatProps> = ({
             );
           })
         )}
+        <div ref={endOfMessagesRef} />
       </div>
 
       {/* Message Input */}
-      <div className="p-4 bg-gray-50 border-t border-gray-200">
+      <div
+        ref={inputContainerRef}
+        className="p-4 bg-gray-50 border-t border-gray-200"
+      >
         <form
           onSubmit={handleSendMessage}
           className="flex items-center space-x-3"
