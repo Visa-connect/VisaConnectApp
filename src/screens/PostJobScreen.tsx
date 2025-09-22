@@ -2,16 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import LocationInput from '../components/LocationInput';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { JobsApiService, JobSubmission } from '../api/jobsApi';
 import { uploadBusinessLogo } from '../api/cloudinary';
 import { HandRaisedIcon } from '@heroicons/react/24/outline';
+import { LocationData } from '../types/location';
 
 interface JobFormData {
   businessId: number;
   title: string;
   description: string;
-  location: string;
+  location: LocationData;
   jobType: 'hourly' | 'fixed';
   rateFrom: string;
   rateTo: string;
@@ -39,7 +41,7 @@ const PostJobScreen: React.FC = () => {
     businessId: 0,
     title: '',
     description: '',
-    location: '',
+    location: { address: '' },
     jobType: 'hourly',
     rateFrom: '',
     rateTo: '',
@@ -57,7 +59,7 @@ const PostJobScreen: React.FC = () => {
             businessId: job.business_id,
             title: job.title,
             description: job.description,
-            location: job.location,
+            location: { address: job.location },
             jobType: job.job_type,
             rateFrom: job.rate_from?.toString() || '',
             rateTo: job.rate_to?.toString() || '',
@@ -139,6 +141,10 @@ const PostJobScreen: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleLocationChange = (location: LocationData) => {
+    setFormData((prev) => ({ ...prev, location }));
+  };
+
   const handleJobTypeChange = (jobType: 'hourly' | 'fixed') => {
     setFormData((prev) => ({ ...prev, jobType }));
   };
@@ -176,7 +182,11 @@ const PostJobScreen: React.FC = () => {
       return;
     }
 
-    if (!formData.title || !formData.description || !formData.location) {
+    if (
+      !formData.title ||
+      !formData.description ||
+      !formData.location.address
+    ) {
       setSubmitError('Please fill in all required fields');
       return;
     }
@@ -189,7 +199,7 @@ const PostJobScreen: React.FC = () => {
         business_id: formData.businessId,
         title: formData.title,
         description: formData.description,
-        location: formData.location,
+        location: formData.location.address,
         job_type: formData.jobType,
         rate_from: formData.rateFrom ? parseFloat(formData.rateFrom) : null,
         rate_to: formData.rateTo ? parseFloat(formData.rateTo) : null,
@@ -450,18 +460,12 @@ const PostJobScreen: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Location of job
-                </label>
-                <input
-                  type="text"
-                  value={formData.location}
-                  onChange={(e) =>
-                    handleInputChange('location', e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                <LocationInput
+                  value={formData.location.address}
+                  onChange={handleLocationChange}
                   placeholder="Enter job location"
                   required
+                  label="Location of job"
                 />
               </div>
             </div>

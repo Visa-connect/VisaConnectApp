@@ -4,16 +4,18 @@ import { CloudArrowUpIcon, HandRaisedIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import Modal from '../components/Modal';
+import LocationInput from '../components/LocationInput';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 import {
   ApplicationsApiService,
   ApplicationSubmission,
 } from '../api/applicationsApi';
 import { visaTypes, startDateOptions } from '../utils/visaTypes';
+import { LocationData } from '../types/location';
 
 interface ApplicationFormData {
   qualifications: string;
-  location: string;
+  location: LocationData;
   visa: string;
   startDate: string;
   resume?: File;
@@ -30,7 +32,7 @@ const ApplyToJobScreen: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<ApplicationFormData>({
     qualifications: '',
-    location: '',
+    location: { address: '' },
     visa: '',
     startDate: '',
   });
@@ -90,6 +92,10 @@ const ApplyToJobScreen: React.FC = () => {
     }));
   };
 
+  const handleLocationChange = (location: LocationData) => {
+    setFormData((prev) => ({ ...prev, location }));
+  };
+
   // Handle file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -112,7 +118,7 @@ const ApplyToJobScreen: React.FC = () => {
       alert('Please explain your qualifications.');
       return;
     }
-    if (!formData.location.trim()) {
+    if (!formData.location.address.trim()) {
       alert('Please provide your location.');
       return;
     }
@@ -129,7 +135,7 @@ const ApplyToJobScreen: React.FC = () => {
       const applicationData: ApplicationSubmission = {
         job_id: job.id,
         qualifications: formData.qualifications,
-        location: formData.location,
+        location: formData.location.address,
         visa_type: formData.visa || undefined,
         start_date: formData.startDate,
         // resume_url: formData.resume ? 'uploaded_url_here' : undefined,
@@ -261,20 +267,12 @@ const ApplyToJobScreen: React.FC = () => {
 
           {/* Location */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700 mb-3"
-            >
-              What is your location?
-            </label>
-            <input
-              type="text"
-              id="location"
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            <LocationInput
+              value={formData.location.address}
+              onChange={handleLocationChange}
               placeholder="Enter your current location"
               required
+              label="What is your location?"
             />
           </div>
 

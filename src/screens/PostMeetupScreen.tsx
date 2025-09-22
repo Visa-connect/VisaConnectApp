@@ -6,18 +6,20 @@ import {
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
+import LocationInput from '../components/LocationInput';
 import {
   meetupService,
   MeetupCategory,
   CreateMeetupRequest,
 } from '../api/meetupService';
 import { uploadMeetupPhoto, deleteMeetupPhoto } from '../api/cloudinary';
+import { LocationData } from '../types/location';
 
 interface PostMeetupForm {
   category_id: number | null;
   title: string;
   dateTime: string;
-  location: string;
+  location: LocationData;
   description: string;
   photo_url: string;
   photo_public_id: string;
@@ -29,7 +31,7 @@ const PostMeetupScreen: React.FC = () => {
     category_id: null,
     title: '',
     dateTime: '',
-    location: '',
+    location: { address: '' },
     description: '',
     photo_url: '',
     photo_public_id: '',
@@ -62,6 +64,10 @@ const PostMeetupScreen: React.FC = () => {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleLocationChange = (location: LocationData) => {
+    setFormData((prev) => ({ ...prev, location }));
   };
 
   const handleRemoveImage = async () => {
@@ -147,7 +153,7 @@ const PostMeetupScreen: React.FC = () => {
       !formData.category_id ||
       !formData.title ||
       !formData.dateTime ||
-      !formData.location ||
+      !formData.location.address ||
       !formData.description
     ) {
       setError('Please fill in all required fields');
@@ -162,7 +168,7 @@ const PostMeetupScreen: React.FC = () => {
         category_id: formData.category_id!, // We've validated this is not null above
         title: formData.title,
         description: formData.description,
-        location: formData.location,
+        location: formData.location.address,
         meetup_date: formData.dateTime,
         max_participants: null, // Optional field
         photo_url: formData.photo_url || null, // Cloudinary image URL
@@ -285,15 +291,11 @@ const PostMeetupScreen: React.FC = () => {
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Location
-            </label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
+            <LocationInput
+              value={formData.location.address}
+              onChange={handleLocationChange}
               placeholder="Enter meetup location"
-              className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              label="Location"
             />
           </div>
 
