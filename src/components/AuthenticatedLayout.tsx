@@ -17,6 +17,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   // Determine current page based on pathname
   const getCurrentPage = (pathname: string): string => {
     if (pathname === '/dashboard') return 'dashboard';
+    if (pathname === '/work') return 'work';
     if (pathname === '/settings') return 'settings';
     if (pathname === '/edit-profile') return 'settings';
     if (pathname.startsWith('/public-profile')) return 'dashboard';

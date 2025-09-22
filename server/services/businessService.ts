@@ -113,6 +113,35 @@ export class BusinessService {
   }
 
   /**
+   * Get business by ID with user information (admin use)
+   */
+  async getBusinessByIdWithUser(
+    businessId: number
+  ): Promise<BusinessWithUser | null> {
+    const client = await pool.connect();
+
+    try {
+      const query = `
+        SELECT 
+          b.*, 
+          bc.name as category_name,
+          u.email as user_email,
+          u.first_name as user_first_name,
+          u.last_name as user_last_name
+        FROM businesses b
+        LEFT JOIN business_categories bc ON b.category_id = bc.id
+        LEFT JOIN users u ON b.user_id = u.id
+        WHERE b.id = $1
+      `;
+
+      const result = await client.query(query, [businessId]);
+      return result.rows[0] || null;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Get businesses by user ID
    */
   async getBusinessesByUserId(userId: string): Promise<Business[]> {

@@ -197,4 +197,3 @@ export class AdminAuthService {
 
 // Export singleton instance
 export const adminAuthService = new AdminAuthService();
-export default adminAuthService;

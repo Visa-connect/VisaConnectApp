@@ -92,7 +92,7 @@ export interface CreateUserData extends BasicUserData {
   bio?: string;
 }
 
-export class UserService {
+class UserService {
   // Create a new user with basic information
   async createUser(userData: BasicUserData): Promise<User> {
     const id = userData.id || uuidv4();
@@ -510,4 +510,4 @@ export class UserService {
   }
 }
 
-export default new UserService();
+export const userService = new UserService();

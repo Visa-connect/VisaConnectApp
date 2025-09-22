@@ -143,7 +143,7 @@ const server = app.listen(PORT, () => {
 });
 
 // Initialize WebSocket service for real-time chat
-const wsService = new WebSocketService(server);
+new WebSocketService(server);
 console.log('✅ WebSocket service initialized for real-time chat');
 
 // Graceful shutdown

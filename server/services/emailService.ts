@@ -16,6 +16,23 @@ export interface BusinessSubmissionEmailData {
   userName: string;
 }
 
+export interface JobApplicationEmailData {
+  jobTitle: string;
+  businessName: string;
+  businessOwnerEmail: string;
+  businessOwnerName: string;
+  applicantName: string;
+  applicantEmail: string;
+  qualifications: string;
+  location: string;
+  visaType?: string;
+  startDate: string;
+  resumeUrl?: string;
+  resumeFilename?: string;
+  appliedAt: Date;
+  jobId: number;
+}
+
 export class EmailService {
   private sendGrid: any;
 
@@ -126,6 +143,86 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error('❌ Failed to send business status update:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Send job application notification to business owner
+   */
+  async sendJobApplicationNotificationToBusiness(
+    data: JobApplicationEmailData
+  ): Promise<boolean> {
+    if (!this.sendGrid) {
+      console.log('📧 Email service not available, skipping notification');
+      return false;
+    }
+
+    try {
+      const subject = `New Job Application: ${data.jobTitle} - ${data.businessName}`;
+
+      const htmlContent = this.generateJobApplicationBusinessEmailHTML(data);
+      const textContent = this.generateJobApplicationBusinessEmailText(data);
+
+      const msg = {
+        to: data.businessOwnerEmail,
+        from: FROM_EMAIL,
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await this.sendGrid.send(msg);
+      console.log(
+        `✅ Job application notification sent to business owner: ${data.businessOwnerEmail}`
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        '❌ Failed to send job application notification to business:',
+        error
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Send job application confirmation to applicant
+   */
+  async sendJobApplicationConfirmationToApplicant(
+    data: JobApplicationEmailData
+  ): Promise<boolean> {
+    if (!this.sendGrid) {
+      console.log('📧 Email service not available, skipping notification');
+      return false;
+    }
+
+    try {
+      const subject = `Application Confirmation: ${data.jobTitle} at ${data.businessName}`;
+
+      const htmlContent =
+        this.generateJobApplicationConfirmationEmailHTML(data);
+      const textContent =
+        this.generateJobApplicationConfirmationEmailText(data);
+
+      const msg = {
+        to: data.applicantEmail,
+        from: FROM_EMAIL,
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await this.sendGrid.send(msg);
+      console.log(
+        `✅ Job application confirmation sent to applicant: ${data.applicantEmail}`
+      );
+      return true;
+    } catch (error) {
+      console.error(
+        '❌ Failed to send job application confirmation to applicant:',
+        error
+      );
       return false;
     }
   }
@@ -356,6 +453,244 @@ ${
 }
 
 This is an automated notification from VisaConnect.
+    `;
+  }
+
+  /**
+   * Generate HTML content for job application business notification email
+   */
+  private generateJobApplicationBusinessEmailHTML(
+    data: JobApplicationEmailData
+  ): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>New Job Application</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #3B82F6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .application-info { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .field { margin-bottom: 15px; }
+          .field-label { font-weight: bold; color: #374151; }
+          .field-value { color: #6B7280; margin-top: 5px; }
+          .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 14px; }
+          .button { display: inline-block; background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .resume-link { color: #3B82F6; text-decoration: none; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Job Application</h1>
+            <p>Someone has applied for your job posting</p>
+          </div>
+          <div class="content">
+            <div class="application-info">
+              <h2>Job Details</h2>
+              <div class="field">
+                <div class="field-label">Job Title:</div>
+                <div class="field-value">${data.jobTitle}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Business:</div>
+                <div class="field-value">${data.businessName}</div>
+              </div>
+              
+              <h3 style="margin-top: 30px;">Applicant Information</h3>
+              <div class="field">
+                <div class="field-label">Name:</div>
+                <div class="field-value">${data.applicantName}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Email:</div>
+                <div class="field-value">${data.applicantEmail}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Location:</div>
+                <div class="field-value">${data.location}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Visa Status:</div>
+                <div class="field-value">${
+                  data.visaType || 'Not specified'
+                }</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Available Start Date:</div>
+                <div class="field-value">${data.startDate}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Qualifications:</div>
+                <div class="field-value">${data.qualifications}</div>
+              </div>
+              ${
+                data.resumeUrl
+                  ? `
+              <div class="field">
+                <div class="field-label">Resume:</div>
+                <div class="field-value">
+                  <a href="${
+                    data.resumeUrl
+                  }" class="resume-link" target="_blank">
+                    ${data.resumeFilename || 'Download Resume'}
+                  </a>
+                </div>
+              </div>
+              `
+                  : ''
+              }
+              <div class="field">
+                <div class="field-label">Applied At:</div>
+                <div class="field-value">${data.appliedAt.toLocaleString()}</div>
+              </div>
+            </div>
+            <p>Please review this application and contact the applicant if you're interested in moving forward.</p>
+            <a href="${config.email.appUrl || 'https://visaconnect.com'}/job/${
+      data.jobId
+    }" class="button">View Job Posting</a>
+          </div>
+          <div class="footer">
+            <p>This is an automated notification from VisaConnect</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate text content for job application business notification email
+   */
+  private generateJobApplicationBusinessEmailText(
+    data: JobApplicationEmailData
+  ): string {
+    return `
+New Job Application
+
+Someone has applied for your job posting:
+
+Job Title: ${data.jobTitle}
+Business: ${data.businessName}
+
+Applicant Information:
+Name: ${data.applicantName}
+Email: ${data.applicantEmail}
+Location: ${data.location}
+Visa Status: ${data.visaType || 'Not specified'}
+Available Start Date: ${data.startDate}
+Qualifications: ${data.qualifications}
+${data.resumeUrl ? `Resume: ${data.resumeUrl}` : ''}
+Applied At: ${data.appliedAt.toLocaleString()}
+
+Please review this application and contact the applicant if you're interested in moving forward.
+
+View Job Posting: ${config.email.appUrl || 'https://visaconnect.com'}/job/${
+      data.jobId
+    }
+
+This is an automated notification from VisaConnect.
+    `;
+  }
+
+  /**
+   * Generate HTML content for job application confirmation email
+   */
+  private generateJobApplicationConfirmationEmailHTML(
+    data: JobApplicationEmailData
+  ): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Confirmation</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .application-summary { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
+          .field { margin-bottom: 15px; }
+          .field-label { font-weight: bold; color: #374151; }
+          .field-value { color: #6B7280; margin-top: 5px; }
+          .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 14px; }
+          .button { display: inline-block; background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Application Submitted Successfully!</h1>
+            <p>Thank you for applying to this position</p>
+          </div>
+          <div class="content">
+            <div class="application-summary">
+              <h2>Application Summary</h2>
+              <div class="field">
+                <div class="field-label">Job Title:</div>
+                <div class="field-value">${data.jobTitle}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Company:</div>
+                <div class="field-value">${data.businessName}</div>
+              </div>
+              <div class="field">
+                <div class="field-label">Applied At:</div>
+                <div class="field-value">${data.appliedAt.toLocaleString()}</div>
+              </div>
+            </div>
+            <p>Your application has been successfully submitted and sent to the employer. If they are interested, they will contact you directly via email.</p>
+            <p>You can also view your application status and other job opportunities on VisaConnect.</p>
+            <a href="${
+              config.email.appUrl || 'https://visaconnect.com'
+            }/my-applications" class="button">View My Applications</a>
+            <a href="${
+              config.email.appUrl || 'https://visaconnect.com'
+            }/search-jobs" class="button">Browse More Jobs</a>
+          </div>
+          <div class="footer">
+            <p>This is an automated confirmation from VisaConnect</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate text content for job application confirmation email
+   */
+  private generateJobApplicationConfirmationEmailText(
+    data: JobApplicationEmailData
+  ): string {
+    return `
+Application Submitted Successfully!
+
+Thank you for applying to this position.
+
+Application Summary:
+Job Title: ${data.jobTitle}
+Company: ${data.businessName}
+Applied At: ${data.appliedAt.toLocaleString()}
+
+Your application has been successfully submitted and sent to the employer. If they are interested, they will contact you directly via email.
+
+You can also view your application status and other job opportunities on VisaConnect.
+
+View My Applications: ${
+      config.email.appUrl || 'https://visaconnect.com'
+    }/my-applications
+Browse More Jobs: ${
+      config.email.appUrl || 'https://visaconnect.com'
+    }/search-jobs
+
+This is an automated confirmation from VisaConnect.
     `;
   }
 }

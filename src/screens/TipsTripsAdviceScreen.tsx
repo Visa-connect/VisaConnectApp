@@ -60,6 +60,10 @@ const TipsTripsAdviceScreen: React.FC = () => {
     navigate(`/tips-trips-advice/${postId}`);
   };
 
+  const handleAuthorClick = (userId: string) => {
+    navigate(`/public-profile/${userId}`);
+  };
+
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -183,18 +187,27 @@ const TipsTripsAdviceScreen: React.FC = () => {
                 {/* User Profile Section */}
                 <div className="px-6 py-4 flex items-center justify-between border-b border-gray-100">
                   <div className="flex items-center space-x-3">
-                    <img
-                      src={
-                        post.creator.profile_photo_url ||
-                        'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
-                      }
-                      alt={`${post.creator.first_name} ${post.creator.last_name}`}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
+                    <button
+                      onClick={() => handleAuthorClick(post.creator.id)}
+                      className="focus:outline-none"
+                      aria-label={`View ${post.creator.first_name} ${post.creator.last_name}'s profile`}
+                    >
+                      <img
+                        src={
+                          post.creator.profile_photo_url ||
+                          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+                        }
+                        alt={`${post.creator.first_name} ${post.creator.last_name}`}
+                        className="w-12 h-12 rounded-full object-cover"
+                      />
+                    </button>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <button
+                        onClick={() => handleAuthorClick(post.creator.id)}
+                        className="font-semibold text-gray-900 text-left hover:underline"
+                      >
                         {post.creator.first_name} {post.creator.last_name}
-                      </h3>
+                      </button>
                       <div className="flex items-center space-x-2">
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-medium ${getPostTypeColor(

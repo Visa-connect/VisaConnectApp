@@ -58,6 +58,7 @@ jobs:
       - name: Health check
         run: |
           echo "Waiting for deployment to complete..."
+
           ATTEMPTS=5
           SLEEP=15
           URL="https://${{ env.STAGING_URL }}/api/health"

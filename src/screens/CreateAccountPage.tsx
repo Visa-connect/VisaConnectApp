@@ -6,6 +6,7 @@ import { US_CITIES } from '../data/usCities';
 import { apiPostPublic } from '../api';
 import logo from '../assets/images/logo.png';
 import { useUserStore } from '../stores/userStore';
+import { visaTypes } from '../utils/visaTypes';
 
 // Types for API responses
 interface RegisterResponse {
@@ -31,8 +32,6 @@ const Input = React.forwardRef<
   />
 ));
 Input.displayName = 'Input';
-
-const visaTypes = ['H2B', 'J1', 'H1B', 'F1'];
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -275,8 +274,8 @@ const CreateAccountPage: React.FC = () => {
                     Current Visa Type (e.g. H2B, J1, H1B, F1)
                   </option>
                   {visaTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                    <option key={type.value} value={type.value}>
+                      {type.label}
                     </option>
                   ))}
                 </select>

@@ -2,7 +2,7 @@ import { Express, Request, Response } from 'express';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { authenticateUser } from '../middleware/auth';
-import userService from '../services/userService';
+import { userService } from '../services/userService';
 import { config } from '../config/env';
 
 // Configure Cloudinary

@@ -62,22 +62,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          // Delete ALL old caches to force fresh start
-          console.log('Deleting cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    })
-  );
-});
-
-// Force update by skipping waiting
+// Activate event - claim control of all clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });

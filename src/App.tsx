@@ -14,14 +14,24 @@ import AddBusinessScreen from './screens/AddBusinessScreen';
 import EditBusinessScreen from './screens/EditBusinessScreen';
 import PublicProfileScreen from './screens/PublicProfileScreen';
 import SocialPortalScreen from './screens/SocialPortalScreen';
+import WorkPortalScreen from './screens/WorkPortalScreen';
+import SearchJobsScreen from './screens/SearchJobsScreen';
+import JobDetailsScreen from './screens/JobDetailsScreen';
+import ApplyToJobScreen from './screens/ApplyToJobScreen';
+import PostJobScreen from './screens/PostJobScreen';
 import MeetupsScreen from './screens/MeetupsScreen';
 import MeetupDetailsScreen from './screens/MeetupDetailsScreen';
 import PostMeetupScreen from './screens/PostMeetupScreen';
 import MeetupsPostedScreen from './screens/MeetupsPostedScreen';
 import MeetupsInterestedScreen from './screens/MeetupsInterestedScreen';
 import EditMeetupScreen from './screens/EditMeetupScreen';
+import JobsAppliedScreen from './screens/JobsAppliedScreen';
+import JobsPostedScreen from './screens/JobsPostedScreen';
+import JobApplicationsScreen from './screens/JobApplicationsScreen';
 import ConnectScreen from './screens/ConnectScreen';
 import ChatScreen from './screens/ChatScreen';
+import TipsTripsAdviceScreen from './screens/TipsTripsAdviceScreen';
+import TipsTripsAdviceDetailScreen from './screens/TipsTripsAdviceDetailScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
 import AdminLayout from './components/AdminLayout';
@@ -54,6 +64,26 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <DashboardScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/tips-trips-advice"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <TipsTripsAdviceScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/tips-trips-advice/:postId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <TipsTripsAdviceDetailScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
@@ -129,6 +159,56 @@ function App() {
           }
         />
         <Route
+          path="/work"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <WorkPortalScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/search-jobs"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <SearchJobsScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/job/:jobId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <JobDetailsScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/apply/:jobId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <ApplyToJobScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/post-job"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <PostJobScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
           path="/meetups"
           element={
             <AuthenticatedRoute>
@@ -174,6 +254,36 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <MeetupsInterestedScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/jobs-applied"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <JobsAppliedScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/jobs-posted"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <JobsPostedScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/job-applications/:jobId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <JobApplicationsScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }

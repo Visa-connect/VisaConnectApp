@@ -1,4 +1,5 @@
 import { useUserStore } from '../stores/userStore';
+import { tokenRefreshService } from './firebaseAuth';
 
 export interface WebSocketMessage {
   type: 'authenticate' | 'subscribe' | 'unsubscribe' | 'update';
@@ -45,7 +46,7 @@ class WebSocketService {
       this.reconnectAttempts = 0;
 
       // Re-authenticate and resubscribe to previous subscriptions
-      this.authenticate();
+      this.authenticateWithRefresh();
       this.resubscribe();
     };
 
@@ -87,7 +88,7 @@ class WebSocketService {
     }
   }
 
-  private authenticate() {
+  private async authenticate() {
     const token = useUserStore.getState().getToken();
     if (token && this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(
@@ -96,6 +97,35 @@ class WebSocketService {
           data: { token },
         })
       );
+    }
+  }
+
+  private async authenticateWithRefresh() {
+    try {
+      // Try to refresh the token first
+      const refreshResult = await tokenRefreshService.refreshToken();
+
+      if (refreshResult.success && refreshResult.token) {
+        // Update the token in the store
+        useUserStore.getState().setToken(refreshResult.token);
+
+        // Authenticate with the new token
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(
+            JSON.stringify({
+              type: 'authenticate',
+              data: { token: refreshResult.token },
+            })
+          );
+        }
+      } else {
+        console.error('Failed to refresh token for WebSocket authentication');
+        // Clear user data if token refresh fails
+        useUserStore.getState().clearUser();
+      }
+    } catch (error) {
+      console.error('WebSocket authentication failed:', error);
+      useUserStore.getState().clearUser();
     }
   }
 
@@ -130,12 +160,17 @@ class WebSocketService {
     this.messageHandlers.set('conversations', handler);
 
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(
-        JSON.stringify({
-          type: 'subscribe',
-          data: { type: 'userConversations' },
-        })
-      );
+      // Ensure we have a fresh token before subscribing
+      this.authenticateWithRefresh().then(() => {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(
+            JSON.stringify({
+              type: 'subscribe',
+              data: { type: 'userConversations' },
+            })
+          );
+        }
+      });
     }
   }
 
@@ -147,12 +182,17 @@ class WebSocketService {
     this.messageHandlers.set(`messages:${conversationId}`, handler);
 
     if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(
-        JSON.stringify({
-          type: 'subscribe',
-          data: { type: 'conversation', conversationId },
-        })
-      );
+      // Ensure we have a fresh token before subscribing
+      this.authenticateWithRefresh().then(() => {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          this.ws.send(
+            JSON.stringify({
+              type: 'subscribe',
+              data: { type: 'conversation', conversationId },
+            })
+          );
+        }
+      });
     }
   }
 

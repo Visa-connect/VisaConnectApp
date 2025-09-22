@@ -131,6 +131,7 @@ const DashboardScreen: React.FC = () => {
               variant="primary"
               size="sm"
               className="absolute top-3 right-3 md:top-4 md:right-4 text-sm md:text-base px-4 md:px-6 py-2 md:py-3"
+              onClick={() => navigate('/work')}
             >
               Explore
             </Button>

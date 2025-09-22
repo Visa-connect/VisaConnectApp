@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import userService from './userService';
+import { userService } from './userService';
 import { BasicUserData, CreateUserData, User } from './userService';
 import { config } from '../config/env';
 
@@ -251,6 +251,15 @@ export class AuthService {
       throw new Error('Failed to send password reset email');
     }
   }
+
+  // Generate custom token for token refresh
+  async generateCustomToken(uid: string): Promise<string> {
+    try {
+      return await admin.auth().createCustomToken(uid);
+    } catch (error) {
+      throw new Error('Failed to generate custom token');
+    }
+  }
 }
 
-export default new AuthService();
+export const authService = new AuthService();

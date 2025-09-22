@@ -47,13 +47,6 @@ export function register(config) {
 }
 
 function registerValidSW(swUrl, config) {
-  // First, unregister any existing service workers to clear old caches
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    for (let registration of registrations) {
-      registration.unregister();
-    }
-  });
-
   navigator.serviceWorker
     .register(swUrl, { updateViaCache: 'none' })
     .then((registration) => {

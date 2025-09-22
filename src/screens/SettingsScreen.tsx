@@ -47,11 +47,15 @@ const SettingsScreen: React.FC = () => {
       icon: InformationCircleIcon,
       onClick: () => {},
     },
-    { label: 'Jobs applied to', icon: BriefcaseIcon, onClick: () => {} },
+    {
+      label: 'Jobs applied to',
+      icon: BriefcaseIcon,
+      onClick: () => navigate('/jobs-applied'),
+    },
     {
       label: 'Jobs posted (only for approved employers)',
       icon: CameraIcon,
-      onClick: () => {},
+      onClick: () => navigate('/jobs-posted'),
     },
     {
       label: 'Meetups posted',
@@ -135,7 +139,14 @@ const SettingsScreen: React.FC = () => {
                 const isMeetupsPosted = item.label === 'Meetups posted';
                 const isMeetupsInterested =
                   item.label === "Meetups I'm interested in";
-                const isEnabled = isMeetupsPosted || isMeetupsInterested;
+                const isJobsApplied = item.label === 'Jobs applied to';
+                const isJobsPosted =
+                  item.label === 'Jobs posted (only for approved employers)';
+                const isEnabled =
+                  isMeetupsPosted ||
+                  isMeetupsInterested ||
+                  isJobsApplied ||
+                  isJobsPosted;
 
                 return (
                   <button

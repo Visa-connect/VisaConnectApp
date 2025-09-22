@@ -329,4 +329,6 @@ class WebSocketService {
   }
 }
 
+// Note: websocketService should be instantiated with a server instance
+// This is typically done in the main server file where the HTTP server is available
 export { WebSocketService };
