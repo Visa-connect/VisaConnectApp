@@ -114,13 +114,19 @@ export const useUserStore = create<UserStore>()(
         // Clear localStorage
         localStorage.removeItem('userData');
         get().removeToken();
+        // Clear token cache
+        tokenRefreshService.clearCache();
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
       // Token management
       getToken: () => localStorage.getItem('userToken'),
-      setToken: (token: string) => localStorage.setItem('userToken', token),
+      setToken: (token: string) => {
+        localStorage.setItem('userToken', token);
+        // Clear cache when token is manually set to ensure consistency
+        tokenRefreshService.clearCache();
+      },
       removeToken: () => localStorage.removeItem('userToken'),
 
       refreshToken: async () => {
