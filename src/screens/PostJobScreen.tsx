@@ -32,6 +32,7 @@ const PostJobScreen: React.FC = () => {
   const [jobId, setJobId] = useState<number | null>(null);
   const [isLoadingJob, setIsLoadingJob] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Form state
   const [formData, setFormData] = useState<JobFormData>({
@@ -205,14 +206,13 @@ const PostJobScreen: React.FC = () => {
       }
 
       if (response.success) {
-        // Show success modal for new job posts only
-        if (!isEditMode) {
-          setShowSuccessModal(true);
-        } else {
-          // For edit mode, show alert and navigate
-          alert('Job updated successfully!');
-          navigate('/work');
-        }
+        // Show success modal for both create and update for consistent UX
+        setSuccessMessage(
+          isEditMode
+            ? 'Job updated successfully!'
+            : 'Thank you for posting a job on Visa Connect!'
+        );
+        setShowSuccessModal(true);
       } else {
         setSubmitError(
           isEditMode
@@ -631,17 +631,19 @@ const PostJobScreen: React.FC = () => {
       >
         <div className="py-4">
           <h3 className="text-xl font-bold text-gray-900 mb-4">
-            Thank you for posting a job on Visa Connect!
+            {successMessage}
           </h3>
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
               <HandRaisedIcon className="w-8 h-8 text-blue-600" />
             </div>
           </div>
-          <p className="text-gray-700 text-sm leading-relaxed mb-6">
-            Your post is now live on Visa Connect. Any responses to this job
-            will be sent to your email or chat section of this app.
-          </p>
+          {!isEditMode && (
+            <p className="text-gray-700 text-sm leading-relaxed mb-6">
+              Your post is now live on Visa Connect. Any responses to this job
+              will be sent to your email or chat section of this app.
+            </p>
+          )}
           <Button
             onClick={handleCloseSuccessModal}
             variant="primary"
