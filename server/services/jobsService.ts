@@ -20,6 +20,7 @@ export interface JobWithBusiness extends Job {
   business_address: string | null;
   business_website: string | null;
   business_owner_name: string | null;
+  business_user_id: string;
 }
 
 export interface JobSubmission {
@@ -83,7 +84,8 @@ class JobsService {
         b.name as business_name,
         b.address as business_address,
         b.website as business_website,
-        b.owner_name as business_owner_name
+        b.owner_name as business_owner_name,
+        b.user_id as business_user_id
       FROM jobs j
       JOIN businesses b ON j.business_id = b.id
       WHERE j.id = $1
