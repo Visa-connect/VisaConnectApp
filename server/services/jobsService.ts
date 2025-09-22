@@ -263,7 +263,7 @@ class JobsService {
   /**
    * Check if user owns the business that posted the job
    */
-  async checkJobOwnership(jobId: number, userId: number): Promise<boolean> {
+  async checkJobOwnership(jobId: number, userId: string): Promise<boolean> {
     const query = `
       SELECT 1
       FROM jobs j
