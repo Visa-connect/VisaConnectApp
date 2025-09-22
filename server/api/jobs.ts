@@ -8,6 +8,14 @@ import {
 } from '../services/jobsService';
 import { businessService } from '../services/businessService';
 
+// Helper function to validate rate values
+const validateRate = (rate: any, fieldName: string): string | null => {
+  if (rate && (isNaN(rate) || rate < 0)) {
+    return `Invalid ${fieldName} for job`;
+  }
+  return null;
+};
+
 export default function jobsApi(app: Express) {
   /**
    * POST /api/jobs - Create a new job posting
@@ -71,18 +79,22 @@ export default function jobsApi(app: Express) {
 
         // Validate rate fields based on job type
         if (job_type === 'hourly') {
-          if (rate_from && (isNaN(rate_from) || rate_from < 0)) {
+          const rateFromError = validateRate(rate_from, 'rate_from');
+          if (rateFromError) {
             return res.status(400).json({
               success: false,
-              error: 'Invalid rate_from for hourly job',
+              error: rateFromError,
             });
           }
-          if (rate_to && (isNaN(rate_to) || rate_to < 0)) {
+
+          const rateToError = validateRate(rate_to, 'rate_to');
+          if (rateToError) {
             return res.status(400).json({
               success: false,
-              error: 'Invalid rate_to for hourly job',
+              error: rateToError,
             });
           }
+
           if (rate_from && rate_to && rate_from > rate_to) {
             return res.status(400).json({
               success: false,
@@ -90,10 +102,11 @@ export default function jobsApi(app: Express) {
             });
           }
         } else if (job_type === 'fixed') {
-          if (rate_from && (isNaN(rate_from) || rate_from < 0)) {
+          const rateFromError = validateRate(rate_from, 'rate_from');
+          if (rateFromError) {
             return res.status(400).json({
               success: false,
-              error: 'Invalid rate_from for fixed price job',
+              error: rateFromError,
             });
           }
         }
