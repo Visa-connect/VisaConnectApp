@@ -361,16 +361,14 @@ const ApplyToJobScreen: React.FC = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              variant="primary"
-              className="w-full py-4 text-lg font-medium"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            variant="primary"
+            className="w-full py-4 text-lg font-medium"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
         </form>
       </div>
 

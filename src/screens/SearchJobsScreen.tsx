@@ -8,6 +8,7 @@ import {
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness, JobFilters } from '../api/jobsApi';
+import { ApplicationsApiService } from '../api/applicationsApi';
 
 const SearchJobsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +26,7 @@ const SearchJobsScreen: React.FC = () => {
   });
   const [totalJobs, setTotalJobs] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [appliedJobs, setAppliedJobs] = useState<Set<number>>(new Set());
 
   const handleOverlayClick = () => {
     setIsDrawerOpen(false);
@@ -32,6 +34,23 @@ const SearchJobsScreen: React.FC = () => {
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  // Check which jobs the user has applied to
+  const checkAppliedJobs = async (jobIds: number[]) => {
+    try {
+      // Get all user applications once
+      const response = await ApplicationsApiService.getMyApplications({
+        limit: 1000,
+      });
+      if (response.success) {
+        const appliedJobIds = response.data.map((app) => app.job_id);
+        const appliedJobsSet = new Set(appliedJobIds);
+        setAppliedJobs(appliedJobsSet);
+      }
+    } catch (error) {
+      console.error('Error checking applied jobs:', error);
+    }
   };
 
   // Fetch jobs
@@ -47,6 +66,10 @@ const SearchJobsScreen: React.FC = () => {
           setJobs(response.data);
           setTotalJobs(response.pagination.total);
           setHasMore(response.pagination.hasMore);
+
+          // Check which jobs the user has applied to
+          const jobIds = response.data.map((job) => job.id);
+          checkAppliedJobs(jobIds);
         } else {
           setError('Failed to load jobs. Please try again.');
           setJobs([]);
@@ -65,7 +88,7 @@ const SearchJobsScreen: React.FC = () => {
   // Load jobs on component mount
   useEffect(() => {
     fetchJobs();
-  }, []);
+  }, [fetchJobs]);
 
   // Handle search
   const handleSearch = useCallback(async () => {
@@ -289,10 +312,15 @@ const SearchJobsScreen: React.FC = () => {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <div className="flex items-center mb-2">
+                      <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-500">
                           {formatTimeAgo(job.created_at)}
                         </span>
+                        {appliedJobs.has(job.id) && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ✓ Applied
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-lg font-semibold text-blue-600 hover:text-blue-800 mb-2">
                         {job.title}

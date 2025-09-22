@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
-import { BusinessApiService, Business } from '../api/businessApi';
+import { BusinessApiService } from '../api/businessApi';
 
 const WorkPortalScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
   const [hasVerifiedBusiness, setHasVerifiedBusiness] = useState(false);
 
@@ -15,7 +14,6 @@ const WorkPortalScreen: React.FC = () => {
       setIsLoadingBusinesses(true);
       const response = await BusinessApiService.getUserBusinesses();
       if (response.success && response.data) {
-        setBusinesses(response.data);
         // Check if user has any verified businesses
         const verified = response.data.some((business) => business.verified);
         setHasVerifiedBusiness(verified);
@@ -30,10 +28,6 @@ const WorkPortalScreen: React.FC = () => {
   useEffect(() => {
     loadBusinesses();
   }, []);
-
-  const handleBack = () => {
-    navigate(-1);
-  };
 
   const handleExplore = (feature: string) => {
     if (feature === 'Post Jobs - Approved') {

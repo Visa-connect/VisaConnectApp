@@ -177,7 +177,7 @@ export class ApplicationsApiService {
     jobId: number
   ): Promise<{ success: boolean; hasApplied: boolean }> {
     try {
-      const response = await this.getMyApplications({ limit: 1 });
+      const response = await this.getMyApplications({ limit: 1000 });
       const hasApplied = response.data.some((app) => app.job_id === jobId);
       return { success: true, hasApplied };
     } catch (error) {

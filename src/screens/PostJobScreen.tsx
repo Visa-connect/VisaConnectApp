@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Button from '../components/Button';
+import Modal from '../components/Modal';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { JobsApiService, JobSubmission } from '../api/jobsApi';
 import { uploadBusinessLogo } from '../api/cloudinary';
+import { HandRaisedIcon } from '@heroicons/react/24/outline';
 
 interface JobFormData {
   businessId: number;
@@ -29,6 +31,7 @@ const PostJobScreen: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [jobId, setJobId] = useState<number | null>(null);
   const [isLoadingJob, setIsLoadingJob] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<JobFormData>({
@@ -42,38 +45,41 @@ const PostJobScreen: React.FC = () => {
   });
 
   // Load job data for editing
-  const loadJobData = async (jobId: number) => {
-    try {
-      setIsLoadingJob(true);
-      const response = await JobsApiService.getJobById(jobId);
-      if (response.success) {
-        const job = response.data;
-        setFormData({
-          businessId: job.business_id,
-          title: job.title,
-          description: job.description,
-          location: job.location,
-          jobType: job.job_type,
-          rateFrom: job.rate_from?.toString() || '',
-          rateTo: job.rate_to?.toString() || '',
-          businessLogo: job.business_logo_url || undefined,
-        });
+  const loadJobData = useCallback(
+    async (jobId: number) => {
+      try {
+        setIsLoadingJob(true);
+        const response = await JobsApiService.getJobById(jobId);
+        if (response.success) {
+          const job = response.data;
+          setFormData({
+            businessId: job.business_id,
+            title: job.title,
+            description: job.description,
+            location: job.location,
+            jobType: job.job_type,
+            rateFrom: job.rate_from?.toString() || '',
+            rateTo: job.rate_to?.toString() || '',
+            businessLogo: job.business_logo_url || undefined,
+          });
 
-        // Find and set the selected business
-        const business = businesses.find((b) => b.id === job.business_id);
-        if (business) {
-          setSelectedBusiness(business);
+          // Find and set the selected business
+          const business = businesses.find((b) => b.id === job.business_id);
+          if (business) {
+            setSelectedBusiness(business);
+          }
+        } else {
+          setSubmitError('Failed to load job data for editing');
         }
-      } else {
+      } catch (error) {
+        console.error('Error loading job data:', error);
         setSubmitError('Failed to load job data for editing');
+      } finally {
+        setIsLoadingJob(false);
       }
-    } catch (error) {
-      console.error('Error loading job data:', error);
-      setSubmitError('Failed to load job data for editing');
-    } finally {
-      setIsLoadingJob(false);
-    }
-  };
+    },
+    [businesses]
+  );
 
   // Load user's verified businesses
   const loadBusinesses = async () => {
@@ -123,7 +129,7 @@ const PostJobScreen: React.FC = () => {
     if (isEditMode && jobId && businesses.length > 0) {
       loadJobData(jobId);
     }
-  }, [isEditMode, jobId, businesses]);
+  }, [isEditMode, jobId, businesses, loadJobData]);
 
   const handleInputChange = (
     field: keyof JobFormData,
@@ -154,6 +160,11 @@ const PostJobScreen: React.FC = () => {
     } catch (error) {
       console.error('Error uploading logo:', error);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    navigate('/work');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -194,11 +205,14 @@ const PostJobScreen: React.FC = () => {
       }
 
       if (response.success) {
-        // Show success message and navigate back to work portal
-        alert(
-          isEditMode ? 'Job updated successfully!' : 'Job posted successfully!'
-        );
-        navigate('/work');
+        // Show success modal for new job posts only
+        if (!isEditMode) {
+          setShowSuccessModal(true);
+        } else {
+          // For edit mode, show alert and navigate
+          alert('Job updated successfully!');
+          navigate('/work');
+        }
       } else {
         setSubmitError(
           isEditMode
@@ -606,6 +620,37 @@ const PostJobScreen: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        showCloseButton={false}
+        size="md"
+        className="text-center"
+      >
+        <div className="py-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-4">
+            Thank you for posting a job on Visa Connect!
+          </h3>
+          <div className="flex justify-center mb-6">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+              <HandRaisedIcon className="w-8 h-8 text-blue-600" />
+            </div>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed mb-6">
+            Your post is now live on Visa Connect. Any responses to this job
+            will be sent to your email or chat section of this app.
+          </p>
+          <Button
+            onClick={handleCloseSuccessModal}
+            variant="primary"
+            className="w-full py-3 text-base font-medium"
+          >
+            Done
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 };

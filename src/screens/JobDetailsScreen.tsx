@@ -11,17 +11,14 @@ import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 import { BusinessApiService } from '../api/businessApi';
-import { useUserStore } from '../stores/userStore';
 
 const JobDetailsScreen: React.FC = () => {
   const navigate = useNavigate();
   const { jobId } = useParams<{ jobId: string }>();
-  const { user } = useUserStore(); // Keep for future use
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [job, setJob] = useState<JobWithBusiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isApplying, setIsApplying] = useState(false); // Keep for future use
   const [userBusinesses, setUserBusinesses] = useState<number[]>([]);
   const [isJobOwner, setIsJobOwner] = useState(false);
 
@@ -357,26 +354,23 @@ const JobDetailsScreen: React.FC = () => {
         </div>
 
         {/* Apply/Update Button */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          {isJobOwner ? (
-            <Button
-              onClick={handleUpdateJob}
-              variant="primary"
-              className="w-full py-4 text-lg font-medium"
-            >
-              Update Job
-            </Button>
-          ) : (
-            <Button
-              onClick={handleApply}
-              disabled={isApplying}
-              variant="primary"
-              className="w-full py-4 text-lg font-medium"
-            >
-              {isApplying ? 'Applying...' : 'Apply Now'}
-            </Button>
-          )}
-        </div>
+        {isJobOwner ? (
+          <Button
+            onClick={handleUpdateJob}
+            variant="primary"
+            className="w-full py-4 text-lg font-medium"
+          >
+            Update Job
+          </Button>
+        ) : (
+          <Button
+            onClick={handleApply}
+            variant="primary"
+            className="w-full py-4 text-lg font-medium"
+          >
+            Apply Now
+          </Button>
+        )}
       </div>
     </div>
   );
