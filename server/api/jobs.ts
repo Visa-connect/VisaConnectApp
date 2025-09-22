@@ -280,10 +280,7 @@ router.put('/:id', authenticateUser, async (req: Request, res: Response) => {
     }
 
     // Check ownership
-    const isOwner = await jobsService.checkJobOwnership(
-      jobId,
-      userId
-    );
+    const isOwner = await jobsService.checkJobOwnership(jobId, userId);
     if (!isOwner) {
       return res.status(403).json({
         success: false,
@@ -347,10 +344,7 @@ router.put(
       }
 
       // Check ownership
-      const isOwner = await jobsService.checkJobOwnership(
-        jobId,
-        parseInt(userId)
-      );
+      const isOwner = await jobsService.checkJobOwnership(jobId, userId);
       if (!isOwner) {
         return res.status(403).json({
           success: false,
@@ -403,10 +397,7 @@ router.delete('/:id', authenticateUser, async (req: Request, res: Response) => {
     }
 
     // Check ownership
-    const isOwner = await jobsService.checkJobOwnership(
-      jobId,
-      parseInt(userId)
-    );
+    const isOwner = await jobsService.checkJobOwnership(jobId, userId);
     if (!isOwner) {
       return res.status(403).json({
         success: false,
