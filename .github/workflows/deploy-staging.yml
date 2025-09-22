@@ -58,9 +58,23 @@ jobs:
       - name: Health check
         run: |
           echo "Waiting for deployment to complete..."
-          sleep 45
-          echo "Running health check..."
-          curl -f https://${{ env.HEROKU_APP_NAME }}-113080622b06.herokuapp.com/api/health || exit 1
+          # Wait and retry health check for up to ~5 minutes
+          ATTEMPTS=20
+          SLEEP=15
+          URL="https://${{ env.STAGING_URL }}/api/health"
+          echo "Health check URL: $URL"
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS..."
+            if curl -fsS "$URL" > /dev/null; then
+              echo "Health check passed."
+              exit 0
+            fi
+            echo "Health check not ready yet. Retrying in ${SLEEP}s..."
+            sleep $SLEEP
+          done
+          echo "Health check failed after $ATTEMPTS attempts"
+          curl -v "$URL" || true
+          exit 1
 
       # - name: Comment on PR
       #   if: github.event_name == 'pull_request'
