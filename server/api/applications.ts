@@ -4,6 +4,7 @@ import applicationsService, {
   ApplicationSubmission,
   ApplicationFilters,
 } from '../services/applicationsService';
+import { jobsService } from '../services/jobsService';
 import { AppError, ErrorCode } from '../types/errors';
 
 export default function applicationsApi(app: Express) {
@@ -316,8 +317,11 @@ export default function applicationsApi(app: Express) {
 
         // Check if user has permission to view this application
         if (application.user_id !== userId) {
-          // TODO: Add business owner check here
-          throw new AppError('Access denied', ErrorCode.FORBIDDEN);
+          // Check if user is the business owner of the job
+          const job = await jobsService.getJobById(application.job_id);
+          if (!job || job.business_user_id !== userId) {
+            throw new AppError('Access denied', ErrorCode.FORBIDDEN);
+          }
         }
 
         res.json({
@@ -371,19 +375,45 @@ export default function applicationsApi(app: Express) {
           throw new AppError('Invalid status', ErrorCode.VALIDATION_ERROR);
         }
 
-        // TODO: Add business owner authorization check here
-        const application = await applicationsService.updateApplicationStatus(
-          applicationId,
-          status
+        // Get the application to check job ownership
+        const application = await applicationsService.getApplicationById(
+          applicationId
         );
         if (!application) {
           throw new AppError('Application not found', ErrorCode.NOT_FOUND);
         }
 
+        // Get the job to check if user owns the business
+        const job = await jobsService.getJobById(application.job_id);
+        if (!job) {
+          throw new AppError('Job not found', ErrorCode.NOT_FOUND);
+        }
+
+        // Check if the user owns the business that posted this job
+        if (job.business_user_id !== userId) {
+          throw new AppError(
+            'Access denied. Only business owners can update application status',
+            ErrorCode.FORBIDDEN
+          );
+        }
+
+        // Update the application status
+        const updatedApplication =
+          await applicationsService.updateApplicationStatus(
+            applicationId,
+            status
+          );
+        if (!updatedApplication) {
+          throw new AppError(
+            'Failed to update application status',
+            ErrorCode.INTERNAL_ERROR
+          );
+        }
+
         res.json({
           success: true,
           message: 'Application status updated successfully',
-          data: application,
+          data: updatedApplication,
         });
       } catch (error) {
         console.error('Error updating application status:', error);
