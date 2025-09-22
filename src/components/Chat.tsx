@@ -207,7 +207,7 @@ const Chat: React.FC<ChatProps> = ({
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 p-4 space-y-4 overflow-y-auto">
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
