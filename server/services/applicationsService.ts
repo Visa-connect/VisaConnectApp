@@ -385,7 +385,7 @@ export class ApplicationsService {
       const userQuery = `
         SELECT first_name, last_name, email
         FROM users
-        WHERE user_id = $1
+        WHERE id = $1
       `;
 
       const userResult = await pool.query(userQuery, [application.user_id]);
