@@ -251,6 +251,15 @@ export class AuthService {
       throw new Error('Failed to send password reset email');
     }
   }
+
+  // Generate custom token for token refresh
+  async generateCustomToken(uid: string): Promise<string> {
+    try {
+      return await admin.auth().createCustomToken(uid);
+    } catch (error) {
+      throw new Error('Failed to generate custom token');
+    }
+  }
 }
 
 export const authService = new AuthService();

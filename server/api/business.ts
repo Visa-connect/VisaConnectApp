@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Express, Request, Response } from 'express';
 import {
   businessService,
   BusinessSubmission,
@@ -20,7 +20,7 @@ const checkAdminStatus = async (userId: string): Promise<boolean> => {
   }
 };
 
-export const businessApi = (app: any) => {
+export default function businessApi(app: Express) {
   /**
    * Submit a new business for verification
    * POST /api/business/submit
@@ -513,4 +513,4 @@ export const businessApi = (app: any) => {
       }
     }
   );
-};
+}

@@ -17,4 +17,4 @@ const isAuthenticated =
     }
   };
 
-export default isAuthenticated;
+export { isAuthenticated };

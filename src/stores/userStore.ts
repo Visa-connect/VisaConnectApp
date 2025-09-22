@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { tokenRefreshService } from '../api/firebaseAuth';
 
 // User data interface
 export interface UserData {
@@ -55,6 +56,7 @@ interface UserStore {
   getToken: () => string | null;
   setToken: (token: string) => void;
   removeToken: () => void;
+  refreshToken: () => Promise<boolean>;
 
   // Computed values
   getFullName: () => string;
@@ -120,6 +122,20 @@ export const useUserStore = create<UserStore>()(
       getToken: () => localStorage.getItem('userToken'),
       setToken: (token: string) => localStorage.setItem('userToken', token),
       removeToken: () => localStorage.removeItem('userToken'),
+
+      refreshToken: async () => {
+        try {
+          const result = await tokenRefreshService.refreshToken();
+          if (result.success && result.token) {
+            get().setToken(result.token);
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          return false;
+        }
+      },
 
       // Computed values
       getFullName: () => {

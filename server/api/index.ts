@@ -6,7 +6,7 @@ import chatApi from './chat';
 import meetupApi from './meetup';
 import tipsTripsAdviceApi from './tipsTripsAdvice';
 import adminAuthApi from './adminAuth';
-import { businessApi } from './business';
+import businessApi from './business';
 import jobsApi from './jobs';
 import applicationsApi from './applications';
 
@@ -18,7 +18,7 @@ export function registerApiRoutes(app: Express): void {
   console.log('🔗 Registering API routes...');
 
   // Register all API routes
-  authApi(app);
+  app.use('/api/auth', authApi);
   userApi(app);
   photoApi(app);
   chatApi(app);
@@ -26,7 +26,7 @@ export function registerApiRoutes(app: Express): void {
   tipsTripsAdviceApi(app);
   adminAuthApi(app);
   businessApi(app);
-  app.use('/api/jobs', jobsApi);
+  jobsApi(app);
   applicationsApi(app);
 
   console.log('✅ All API routes registered successfully');
