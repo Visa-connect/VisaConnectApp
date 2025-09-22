@@ -41,8 +41,18 @@ const ChatList: React.FC<ChatListProps> = ({
     loadInitialConversations();
 
     // Subscribe to real-time updates via WebSocket
-    websocketService.subscribeToUserConversations((newConversations) => {
-      setConversations(newConversations);
+    websocketService.subscribeToUserConversations((incoming) => {
+      if (Array.isArray(incoming)) {
+        setConversations(incoming);
+      } else {
+        // Fallback: fetch snapshot if payload isn't an array
+        chatService
+          .getConversations()
+          .then((list) => setConversations(list))
+          .catch((err) =>
+            console.warn('Failed to refresh conversations:', err)
+          );
+      }
       setIsLoading(false);
     });
 

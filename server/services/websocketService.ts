@@ -2,6 +2,8 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { chatService } from './chatService';
 import admin from 'firebase-admin';
 
+type AliveWebSocket = WebSocket & { isAlive: boolean };
+
 interface WebSocketMessage {
   type: 'authenticate' | 'subscribe' | 'unsubscribe';
   data: any;
@@ -16,15 +18,24 @@ interface ClientConnection {
 class WebSocketService {
   private wss: WebSocketServer;
   private clients: Map<string, ClientConnection> = new Map();
+  private heartbeatInterval?: NodeJS.Timeout;
 
   constructor(server: any) {
     this.wss = new WebSocketServer({ server });
     this.setupWebSocketServer();
+    this.startHeartbeat();
   }
 
   private setupWebSocketServer() {
     this.wss.on('connection', (ws: WebSocket) => {
       console.log('New WebSocket connection established');
+
+      // Mark connection alive for heartbeat monitoring
+      const socket = ws as AliveWebSocket;
+      socket.isAlive = true;
+      ws.on('pong', () => {
+        socket.isAlive = true;
+      });
 
       ws.on('message', (message: string) => {
         try {
@@ -52,6 +63,30 @@ class WebSocketService {
     });
 
     console.log('WebSocket server initialized');
+  }
+
+  private startHeartbeat() {
+    // Send periodic pings to keep connections alive on Heroku and detect dead sockets
+    const THIRTY_SECONDS = 30_000;
+    this.heartbeatInterval = setInterval(() => {
+      this.wss.clients.forEach((ws: WebSocket) => {
+        const socket = ws as AliveWebSocket;
+        if (socket.isAlive === false) {
+          try {
+            ws.terminate();
+          } catch {
+            // ignore
+          }
+          return;
+        }
+        socket.isAlive = false;
+        try {
+          ws.ping();
+        } catch {
+          // ignore
+        }
+      });
+    }, THIRTY_SECONDS);
   }
 
   private async handleMessage(ws: WebSocket, message: WebSocketMessage) {
