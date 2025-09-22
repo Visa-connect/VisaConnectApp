@@ -48,8 +48,17 @@ const Chat: React.FC<ChatProps> = ({
     loadInitialMessages();
 
     // Subscribe to real-time updates via WebSocket
-    websocketService.subscribeToConversation(conversationId, (newMessages) => {
-      setMessages(newMessages);
+    websocketService.subscribeToConversation(conversationId, (incoming) => {
+      // Backend may send doc change events, not full message arrays.
+      if (Array.isArray(incoming)) {
+        setMessages(incoming);
+      } else {
+        // Fallback: fetch the latest messages snapshot
+        chatService
+          .getMessages(conversationId)
+          .then((list) => setMessages(list))
+          .catch((err) => console.warn('Failed to refresh messages:', err));
+      }
       setIsLoading(false);
 
       // Auto-scroll to bottom when new messages arrive
