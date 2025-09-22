@@ -1,6 +1,7 @@
 import config from '../config';
 import { useUserStore } from '../stores/userStore';
 import { tokenRefreshService } from './firebaseAuth';
+import { ApiError } from '../types/api';
 
 // Backend API base URL
 const API_BASE_URL = config.apiUrl;
@@ -24,9 +25,10 @@ const handleTokenRefresh = async (
   try {
     // First attempt with current token
     return await originalRequest();
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Check if it's a 401 error (unauthorized)
-    if (error.status === 401 || error.message?.includes('401')) {
+    const apiError = error as ApiError;
+    if (apiError.status === 401) {
       console.log('Token expired, attempting to refresh...');
 
       // Try to refresh the token
@@ -62,8 +64,8 @@ export async function apiGet<T>(url: string): Promise<T> {
       headers: defaultHeaders(),
     });
     if (!res.ok) {
-      const error = new Error(await res.text());
-      (error as any).status = res.status;
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
       throw error;
     }
     return res;
@@ -81,8 +83,8 @@ export async function apiPost<T>(url: string, body: any): Promise<T> {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const error = new Error(await res.text());
-      (error as any).status = res.status;
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
       throw error;
     }
     return res;
@@ -119,8 +121,8 @@ export async function apiPatch<T>(url: string, body: any): Promise<T> {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const error = new Error(await res.text());
-      (error as any).status = res.status;
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
       throw error;
     }
     return res;
@@ -138,8 +140,8 @@ export async function apiPut<T>(url: string, body: any): Promise<T> {
       body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const error = new Error(await res.text());
-      (error as any).status = res.status;
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
       throw error;
     }
     return res;
@@ -156,8 +158,8 @@ export async function apiDelete<T>(url: string): Promise<T> {
       headers: defaultHeaders(),
     });
     if (!res.ok) {
-      const error = new Error(await res.text());
-      (error as any).status = res.status;
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
       throw error;
     }
     return res;
