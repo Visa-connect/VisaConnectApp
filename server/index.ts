@@ -4,7 +4,7 @@ import cors from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { config } from './config/env';
-import WebSocketService from './services/websocketService';
+import { WebSocketService } from './services/websocketService';
 
 // Database connection
 import pool from './db/config';
