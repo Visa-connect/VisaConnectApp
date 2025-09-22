@@ -54,7 +54,10 @@ router.post(
       // Generate a new custom token for the user
       const customToken = await authService.generateCustomToken(userId);
 
-      // Exchange custom token for ID token
+      // Exchange custom token for ID token with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
       const exchangeResponse = await fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${process.env.FIREBASE_WEB_API_KEY}`,
         {
@@ -66,8 +69,11 @@ router.post(
             token: customToken,
             returnSecureToken: true,
           }),
+          signal: controller.signal,
         }
       );
+
+      clearTimeout(timeoutId);
 
       if (!exchangeResponse.ok) {
         const errorData = await exchangeResponse.json();
@@ -90,6 +96,14 @@ router.post(
       });
     } catch (error: any) {
       console.error('Token refresh error:', error);
+
+      if (error.name === 'AbortError') {
+        return res.status(408).json({
+          success: false,
+          message: 'Token refresh timed out. Please try again.',
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Token refresh failed',
