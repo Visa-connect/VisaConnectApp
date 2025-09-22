@@ -38,6 +38,10 @@
     "eject": "react-scripts eject",
     "dev": "concurrently \"react-scripts start\" \"cd server && nodemon index.ts\"",
     "postinstall": "npm run build",
+    "scripts:get-auth-token": "node scripts/get-auth-token.js",
+    "scripts:list-firebase-users": "node scripts/list-firebase-users.js",
+    "scripts:make-admin": "node scripts/make-admin.js",
+    "scripts:set-admin-claims": "node scripts/set-admin-claims.js",
     "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate"
   },
   "eslintConfig": {
