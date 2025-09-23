@@ -1,5 +1,5 @@
 import { useUserStore } from '../stores/userStore';
-import { tokenRefreshService } from './firebaseAuth';
+// import { tokenRefreshService } from './firebaseAuth'; // Temporarily disabled
 
 export interface WebSocketMessage {
   type: 'authenticate' | 'subscribe' | 'unsubscribe' | 'update';
