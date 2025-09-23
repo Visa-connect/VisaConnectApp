@@ -55,10 +55,9 @@ router.post(
       const customToken = await authService.generateCustomToken(userId);
 
       // Exchange custom token for ID token with timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      console.log('Starting token exchange for user:', userId);
 
-      const exchangeResponse = await fetch(
+      const exchangePromise = fetch(
         `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${process.env.FIREBASE_WEB_API_KEY}`,
         {
           method: 'POST',
@@ -69,11 +68,20 @@ router.post(
             token: customToken,
             returnSecureToken: true,
           }),
-          signal: controller.signal,
         }
       );
 
-      clearTimeout(timeoutId);
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          console.log('Token exchange timeout triggered after 8 seconds');
+          reject(new Error('Token exchange timeout'));
+        }, 8000); // 8 second timeout
+      });
+
+      const exchangeResponse = await Promise.race([
+        exchangePromise,
+        timeoutPromise,
+      ]);
 
       if (!exchangeResponse.ok) {
         const errorData = await exchangeResponse.json();
@@ -96,17 +104,33 @@ router.post(
       });
     } catch (error: any) {
       console.error('Token refresh error:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
 
-      if (error.name === 'AbortError') {
+      if (
+        error.name === 'AbortError' ||
+        error.message === 'Token exchange timeout'
+      ) {
+        console.log('Request was aborted due to timeout');
         return res.status(408).json({
           success: false,
           message: 'Token refresh timed out. Please try again.',
         });
       }
 
+      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+        console.log('Network timeout or connection reset');
+        return res.status(408).json({
+          success: false,
+          message: 'Network timeout. Please try again.',
+        });
+      }
+
       res.status(500).json({
         success: false,
         message: 'Token refresh failed',
+        error:
+          process.env.NODE_ENV === 'development' ? error.message : undefined,
       });
     }
   }
