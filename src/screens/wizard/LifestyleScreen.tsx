@@ -26,7 +26,7 @@ const LifestyleScreen: React.FC = () => {
     favoriteState: '',
     outings: '',
     hasCar: 'yes' as 'yes' | 'no',
-    willingToDrive: 'no' as 'yes' | 'no',
+    willingToDrive: 'yes' as 'yes' | 'no',
   });
   const [hobbiesQuery, setHobbiesQuery] = useState('');
   const [hobbiesOpen, setHobbiesOpen] = useState(false);
@@ -44,8 +44,14 @@ const LifestyleScreen: React.FC = () => {
         hobbies: user.hobbies || [],
         favoriteState: user.favorite_state || '',
         outings: user.preferred_outings?.join(', ') || '',
-        hasCar: user.has_car ? 'yes' : 'no',
-        willingToDrive: user.offers_rides ? 'yes' : 'no',
+        hasCar:
+          user.has_car !== undefined ? (user.has_car ? 'yes' : 'no') : 'yes',
+        willingToDrive:
+          user.offers_rides !== undefined
+            ? user.offers_rides
+              ? 'yes'
+              : 'no'
+            : 'yes',
       });
     }
   }, [user]);
@@ -390,11 +396,9 @@ const LifestyleScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
-                    form.willingToDrive === 'yes'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                  className={`px-6 py-3 rounded-full font-semibold text-white ${
+                    form.willingToDrive === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  } focus:outline-none`}
                   onClick={() => handleToggle('willingToDrive', 'yes')}
                 >
                   Yes
