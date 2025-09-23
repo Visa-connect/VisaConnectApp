@@ -102,9 +102,9 @@ export class ApplicationsApiService {
    */
   static async checkAppliedJobs(jobIds: number[]): Promise<{
     success: boolean;
-    data: Set<number>;
+    data: number[];
   }> {
-    const response = await apiPost<{ success: boolean; data: Set<number> }>(
+    const response = await apiPost<{ success: boolean; data: number[] }>(
       '/api/applications/check-applications',
       { jobIds }
     );

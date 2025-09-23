@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { tokenRefreshService } from '../api/firebaseAuth';
+// import { tokenRefreshService } from '../api/firebaseAuth'; // Temporarily disabled
 
 // User data interface
 export interface UserData {
@@ -114,27 +114,25 @@ export const useUserStore = create<UserStore>()(
         // Clear localStorage
         localStorage.removeItem('userData');
         get().removeToken();
+        // Clear token cache (temporarily disabled)
+        // tokenRefreshService.clearCache();
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
 
       // Token management
       getToken: () => localStorage.getItem('userToken'),
-      setToken: (token: string) => localStorage.setItem('userToken', token),
+      setToken: (token: string) => {
+        localStorage.setItem('userToken', token);
+        // Clear cache when token is manually set to ensure consistency
+        // tokenRefreshService.clearCache(); // Temporarily disabled
+      },
       removeToken: () => localStorage.removeItem('userToken'),
 
       refreshToken: async () => {
-        try {
-          const result = await tokenRefreshService.refreshToken();
-          if (result.success && result.token) {
-            get().setToken(result.token);
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error('Token refresh failed:', error);
-          return false;
-        }
+        // Token refresh temporarily disabled
+        console.log('Token refresh is temporarily disabled');
+        return false;
       },
 
       // Computed values

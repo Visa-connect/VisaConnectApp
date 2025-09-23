@@ -1,5 +1,5 @@
 import { useUserStore } from '../stores/userStore';
-import { tokenRefreshService } from './firebaseAuth';
+// import { tokenRefreshService } from './firebaseAuth'; // Temporarily disabled
 
 export interface WebSocketMessage {
   type: 'authenticate' | 'subscribe' | 'unsubscribe' | 'update';
@@ -72,6 +72,23 @@ class WebSocketService {
   }
 
   private handleMessage(message: WebSocketMessage) {
+    // Filter out development server HMR messages
+    const hmrMessageTypes = [
+      'hot',
+      'liveReload',
+      'reconnect',
+      'overlay',
+      'hash',
+      'errors',
+      'invalid',
+      'still-ok',
+      'ok',
+    ];
+    if (hmrMessageTypes.includes(message.type)) {
+      // Ignore HMR messages silently
+      return;
+    }
+
     switch (message.type) {
       case 'update':
         const update: ChatUpdate = message.data;
@@ -102,25 +119,21 @@ class WebSocketService {
 
   private async authenticateWithRefresh() {
     try {
-      // Try to refresh the token first
-      const refreshResult = await tokenRefreshService.refreshToken();
+      // Skip token refresh for now - just use existing token
+      const currentToken = useUserStore.getState().getToken();
 
-      if (refreshResult.success && refreshResult.token) {
-        // Update the token in the store
-        useUserStore.getState().setToken(refreshResult.token);
-
-        // Authenticate with the new token
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          this.ws.send(
-            JSON.stringify({
-              type: 'authenticate',
-              data: { token: refreshResult.token },
-            })
-          );
-        }
+      if (currentToken && this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(
+          JSON.stringify({
+            type: 'authenticate',
+            data: { token: currentToken },
+          })
+        );
+        console.log(
+          'WebSocket authenticated with existing token (refresh disabled)'
+        );
       } else {
-        console.error('Failed to refresh token for WebSocket authentication');
-        // Clear user data if token refresh fails
+        console.error('No token available for WebSocket authentication');
         useUserStore.getState().clearUser();
       }
     } catch (error) {
