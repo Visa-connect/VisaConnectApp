@@ -5,7 +5,7 @@ import {
   NominatimSearchResult,
   NominatimReverseResult,
 } from '../types/location';
-import { MapPinIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon } from '@heroicons/react/24/outline';
 
 // Nominatim API base URL
 const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
