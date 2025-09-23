@@ -72,6 +72,23 @@ class WebSocketService {
   }
 
   private handleMessage(message: WebSocketMessage) {
+    // Filter out development server HMR messages
+    const hmrMessageTypes = [
+      'hot',
+      'liveReload',
+      'reconnect',
+      'overlay',
+      'hash',
+      'errors',
+      'invalid',
+      'still-ok',
+      'ok',
+    ];
+    if (hmrMessageTypes.includes(message.type)) {
+      // Ignore HMR messages silently
+      return;
+    }
+
     switch (message.type) {
       case 'update':
         const update: ChatUpdate = message.data;

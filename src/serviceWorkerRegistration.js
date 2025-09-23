@@ -12,6 +12,21 @@ const isLocalhost = Boolean(
 );
 
 export function register(config) {
+  // Temporarily disable service worker to prevent refresh loops
+  console.log('Service worker registration disabled to prevent refresh loops');
+
+  // Unregister any existing service workers
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister();
+        console.log('Unregistered existing service worker');
+      });
+    });
+  }
+
+  return;
+
   if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
