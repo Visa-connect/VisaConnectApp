@@ -334,7 +334,7 @@ const PostMeetupScreen: React.FC = () => {
               />
               <label
                 htmlFor="image-upload"
-                className={`w-full bg-sky-400 text-white rounded-lg px-4 py-3 flex items-center justify-center cursor-pointer hover:bg-sky-500 transition-colors ${
+                className={`w-full bg-transparent border-2 border-gray-300 text-gray-700 rounded-lg px-4 py-3 flex items-center justify-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors ${
                   loading ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
                 style={{ pointerEvents: loading ? 'none' : 'auto' }}
@@ -343,7 +343,7 @@ const PostMeetupScreen: React.FC = () => {
                   {loading ? 'Uploading...' : 'Upload image'}
                 </span>
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-gray-700 border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <svg
                     className="w-5 h-5"
