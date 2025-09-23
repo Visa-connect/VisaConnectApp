@@ -17,18 +17,6 @@ interface TimeoutStats {
   timeSinceLastTimeout?: number;
 }
 
-interface CacheStatus {
-  hasCache: boolean;
-  expiresAt?: string;
-  timeUntilExpiry?: number;
-}
-
-interface ServiceStatus {
-  cache: CacheStatus;
-  timeouts: TimeoutStats;
-  hasActiveRefresh: boolean;
-}
-
 class TokenRefreshService {
   private refreshPromise: Promise<TokenRefreshResult> | null = null;
   private tokenCache: CachedToken | null = null;
@@ -198,7 +186,11 @@ class TokenRefreshService {
   /**
    * Get cache status for debugging/monitoring
    */
-  public getCacheStatus(): CacheStatus {
+  public getCacheStatus(): {
+    hasCache: boolean;
+    expiresAt?: string;
+    timeUntilExpiry?: number;
+  } {
     if (!this.tokenCache) {
       return { hasCache: false };
     }
@@ -218,57 +210,6 @@ class TokenRefreshService {
    */
   public getTimeoutStats(): TimeoutStats {
     const stats: TimeoutStats = { count: this.timeoutCount };
-
-    if (this.lastTimeoutTime) {
-      stats.lastTimeout = new Date(this.lastTimeoutTime).toISOString();
-      stats.timeSinceLastTimeout = Date.now() - this.lastTimeoutTime;
-    }
-
-    return stats;
-  }
-
-  /**
-   * Utility method to delay execution
-   */
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  /**
-   * Track timeout occurrences for monitoring
-   */
-  private trackTimeout(): void {
-    this.timeoutCount++;
-    this.lastTimeoutTime = Date.now();
-
-    console.warn(`Timeout detected! Total timeouts: ${this.timeoutCount}`);
-
-    // Log warning if we're seeing frequent timeouts
-    if (this.timeoutCount >= 5) {
-      console.error(
-        `High timeout frequency detected: ${this.timeoutCount} timeouts. This may indicate Firebase connectivity issues.`
-      );
-    }
-
-    const now = Date.now();
-    const timeUntilExpiry = this.tokenCache.expiresAt - now;
-
-    return {
-      hasCache: true,
-      expiresAt: new Date(this.tokenCache.expiresAt).toISOString(),
-      timeUntilExpiry: Math.max(0, timeUntilExpiry),
-    };
-  }
-
-  /**
-   * Get timeout statistics for monitoring
-   */
-  public getTimeoutStats(): {
-    count: number;
-    lastTimeout?: string;
-    timeSinceLastTimeout?: number;
-  } {
-    const stats: { count: number; lastTimeout?: string; timeSinceLastTimeout?: number } = { count: this.timeoutCount };
 
     if (this.lastTimeoutTime) {
       stats.lastTimeout = new Date(this.lastTimeoutTime).toISOString();
@@ -323,26 +264,6 @@ class TokenRefreshService {
     };
     hasActiveRefresh: boolean;
   } {
-    return {
-      cache: this.getCacheStatus(),
-      timeouts: this.getTimeoutStats(),
-      hasActiveRefresh: this.refreshPromise !== null,
-    };
-  }
-
-  /**
-   * Reset timeout statistics (useful for testing or manual reset)
-   */
-  public resetTimeoutStats(): void {
-    this.timeoutCount = 0;
-    this.lastTimeoutTime = null;
-    console.log('Timeout statistics reset');
-  }
-
-  /**
-   * Get comprehensive service status for debugging
-   */
-  public getServiceStatus(): ServiceStatus {
     return {
       cache: this.getCacheStatus(),
       timeouts: this.getTimeoutStats(),
