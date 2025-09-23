@@ -11,6 +11,24 @@ interface CachedToken {
   expiresAt: number;
 }
 
+interface TimeoutStats {
+  count: number;
+  lastTimeout?: string;
+  timeSinceLastTimeout?: number;
+}
+
+interface CacheStatus {
+  hasCache: boolean;
+  expiresAt?: string;
+  timeUntilExpiry?: number;
+}
+
+interface ServiceStatus {
+  cache: CacheStatus;
+  timeouts: TimeoutStats;
+  hasActiveRefresh: boolean;
+}
+
 class TokenRefreshService {
   private refreshPromise: Promise<TokenRefreshResult> | null = null;
   private tokenCache: CachedToken | null = null;
@@ -180,11 +198,7 @@ class TokenRefreshService {
   /**
    * Get cache status for debugging/monitoring
    */
-  public getCacheStatus(): {
-    hasCache: boolean;
-    expiresAt?: string;
-    timeUntilExpiry?: number;
-  } {
+  public getCacheStatus(): CacheStatus {
     if (!this.tokenCache) {
       return { hasCache: false };
     }
@@ -202,12 +216,8 @@ class TokenRefreshService {
   /**
    * Get timeout statistics for monitoring
    */
-  public getTimeoutStats(): {
-    count: number;
-    lastTimeout?: string;
-    timeSinceLastTimeout?: number;
-  } {
-    const stats: { count: number; lastTimeout?: string; timeSinceLastTimeout?: number } = { count: this.timeoutCount };
+  public getTimeoutStats(): TimeoutStats {
+    const stats: TimeoutStats = { count: this.timeoutCount };
 
     if (this.lastTimeoutTime) {
       stats.lastTimeout = new Date(this.lastTimeoutTime).toISOString();
@@ -253,15 +263,7 @@ class TokenRefreshService {
   /**
    * Get comprehensive service status for debugging
    */
-  public getServiceStatus(): {
-    cache: { hasCache: boolean; expiresAt?: string; timeUntilExpiry?: number };
-    timeouts: {
-      count: number;
-      lastTimeout?: string;
-      timeSinceLastTimeout?: number;
-    };
-    hasActiveRefresh: boolean;
-  } {
+  public getServiceStatus(): ServiceStatus {
     return {
       cache: this.getCacheStatus(),
       timeouts: this.getTimeoutStats(),
