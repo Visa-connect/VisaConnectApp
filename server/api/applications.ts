@@ -203,7 +203,7 @@ export default function applicationsApi(app: Express) {
 
         res.json({
           success: true,
-          data: appliedJobs,
+          data: Array.from(appliedJobs),
         });
       } catch (error) {
         console.error('Error checking applications:', error);

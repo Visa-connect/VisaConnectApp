@@ -46,7 +46,8 @@ const SearchJobsScreen: React.FC = () => {
 
       const response = await ApplicationsApiService.checkAppliedJobs(jobIds);
       if (response.success) {
-        setAppliedJobs(response.data);
+        // Convert array back to Set since JSON serialization converts Set to array
+        setAppliedJobs(new Set(response.data));
       }
     } catch (error) {
       console.error('Error checking applied jobs:', error);
