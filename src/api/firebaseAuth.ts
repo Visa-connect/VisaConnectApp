@@ -273,8 +273,24 @@ class TokenRefreshService {
 export const tokenRefreshService = new TokenRefreshService();
 
 // Expose debugging utilities to window object in development
+
+interface TokenDebug {
+  getStatus: () => ReturnType<typeof tokenRefreshService.getServiceStatus>;
+  getCacheStatus: () => ReturnType<typeof tokenRefreshService.getCacheStatus>;
+  getTimeoutStats: () => ReturnType<typeof tokenRefreshService.getTimeoutStats>;
+  clearCache: () => void;
+  resetTimeoutStats: () => void;
+  hasCachedToken: () => boolean;
+}
+
+declare global {
+  interface Window {
+    tokenDebug: TokenDebug;
+  }
+}
+
 if (process.env.NODE_ENV === 'development') {
-  (window as any).tokenDebug = {
+  window.tokenDebug = {
     getStatus: () => tokenRefreshService.getServiceStatus(),
     getCacheStatus: () => tokenRefreshService.getCacheStatus(),
     getTimeoutStats: () => tokenRefreshService.getTimeoutStats(),
