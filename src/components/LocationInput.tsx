@@ -51,6 +51,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
           addressdetails: '1',
           extratags: '1',
           namedetails: '1',
+          countrycodes: 'us', // Limit to USA only
         });
 
         const response = await fetch(`${NOMINATIM_BASE_URL}/search?${params}`, {
@@ -64,7 +65,26 @@ const LocationInput: React.FC<LocationInputProps> = ({
         }
 
         const results: NominatimSearchResult[] = await response.json();
-        return results.filter((result) => result.display_name);
+        return results.filter((result) => {
+          // Ensure we have a display name and the result is in the USA
+          if (!result.display_name) return false;
+
+          // Check if the address indicates it's in the USA
+          const address = result.address;
+          if (address) {
+            return (
+              address.country === 'United States' ||
+              address.country === 'USA' ||
+              address.country === 'US' ||
+              result.display_name.includes('United States') ||
+              result.display_name.includes(', USA') ||
+              result.display_name.includes(', US')
+            );
+          }
+
+          // If no address details, include it (countrycodes should have filtered it)
+          return true;
+        });
       } catch (error) {
         console.error('Error searching locations:', error);
         return [];
@@ -87,6 +107,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
           addressdetails: '1',
           extratags: '1',
           namedetails: '1',
+          countrycodes: 'us', // Limit to USA only
         });
 
         const response = await fetch(
@@ -103,6 +124,27 @@ const LocationInput: React.FC<LocationInputProps> = ({
         }
 
         const result: NominatimReverseResult = await response.json();
+
+        // Verify the result is in the USA
+        const address = result.address;
+        if (address) {
+          const isUSA =
+            address.country === 'United States' ||
+            address.country === 'USA' ||
+            address.country === 'US' ||
+            result.display_name.includes('United States') ||
+            result.display_name.includes(', USA') ||
+            result.display_name.includes(', US');
+
+          if (!isUSA) {
+            console.warn(
+              'Reverse geocoding result is not in USA:',
+              result.display_name
+            );
+            return null;
+          }
+        }
+
         return result;
       } catch (error) {
         console.error('Error reverse geocoding:', error);
