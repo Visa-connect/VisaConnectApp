@@ -207,7 +207,7 @@ class TokenRefreshService {
     lastTimeout?: string;
     timeSinceLastTimeout?: number;
   } {
-    const stats: any = { count: this.timeoutCount };
+    const stats: { count: number; lastTimeout?: string; timeSinceLastTimeout?: number } = { count: this.timeoutCount };
 
     if (this.lastTimeoutTime) {
       stats.lastTimeout = new Date(this.lastTimeoutTime).toISOString();
