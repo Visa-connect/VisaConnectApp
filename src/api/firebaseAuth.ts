@@ -26,11 +26,23 @@ class TokenRefreshService {
   private timeoutCount = 0;
   private lastTimeoutTime: number | null = null;
 
+  // Temporary flag to disable refresh token logic
+  private readonly REFRESH_TOKEN_DISABLED = true;
+
   /**
    * Refresh the Firebase ID token via backend
    * Uses caching and exponential backoff to prevent multiple simultaneous refresh attempts
    */
   async refreshToken(): Promise<TokenRefreshResult> {
+    // Check if refresh token is disabled
+    if (this.REFRESH_TOKEN_DISABLED) {
+      console.log('Token refresh is temporarily disabled');
+      return {
+        success: false,
+        error: 'Token refresh is temporarily disabled',
+      };
+    }
+
     // Check if we have a valid cached token first
     const cachedToken = this.getCachedToken();
     if (cachedToken) {
