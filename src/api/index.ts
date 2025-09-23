@@ -34,23 +34,13 @@ const handleTokenRefresh = async (
 
       // Check if it's a 401 error (unauthorized)
       if (apiError.status === 401) {
-        console.log('Token expired, attempting to refresh...');
+        console.log(
+          'Token expired, but refresh is disabled - redirecting to sign in'
+        );
 
-        // Try to refresh the token
-        const refreshResult = await tokenRefreshService.refreshToken();
-
-        if (refreshResult.success && refreshResult.token) {
-          // Update the token in the store
-          useUserStore.getState().setToken(refreshResult.token);
-
-          // Retry the original request with the new token
-          return await originalRequest();
-        } else {
-          // Token refresh failed, user needs to re-authenticate
-          console.error('Token refresh failed:', refreshResult.error);
-          useUserStore.getState().clearUser();
-          throw new Error('Authentication expired. Please sign in again.');
-        }
+        // Token refresh is disabled, user needs to re-authenticate
+        useUserStore.getState().clearUser();
+        throw new Error('Authentication expired. Please sign in again.');
       }
 
       // Check if it's a timeout error (408) and retry

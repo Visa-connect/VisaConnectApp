@@ -102,25 +102,21 @@ class WebSocketService {
 
   private async authenticateWithRefresh() {
     try {
-      // Try to refresh the token first
-      const refreshResult = await tokenRefreshService.refreshToken();
+      // Skip token refresh for now - just use existing token
+      const currentToken = useUserStore.getState().getToken();
 
-      if (refreshResult.success && refreshResult.token) {
-        // Update the token in the store
-        useUserStore.getState().setToken(refreshResult.token);
-
-        // Authenticate with the new token
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          this.ws.send(
-            JSON.stringify({
-              type: 'authenticate',
-              data: { token: refreshResult.token },
-            })
-          );
-        }
+      if (currentToken && this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(
+          JSON.stringify({
+            type: 'authenticate',
+            data: { token: currentToken },
+          })
+        );
+        console.log(
+          'WebSocket authenticated with existing token (refresh disabled)'
+        );
       } else {
-        console.error('Failed to refresh token for WebSocket authentication');
-        // Clear user data if token refresh fails
+        console.error('No token available for WebSocket authentication');
         useUserStore.getState().clearUser();
       }
     } catch (error) {
