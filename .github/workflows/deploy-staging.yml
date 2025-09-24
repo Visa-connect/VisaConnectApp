@@ -47,13 +47,17 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Deploy to Heroku Staging
-        uses: akhileshns/heroku-deploy@v3.12.14
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ env.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          # For PRs, use the source branch. For pushes, use the current branch
-          branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+        run: |
+          # Login to Heroku
+          echo "${{ secrets.HEROKU_API_KEY }}" | heroku auth:token
+
+          # Set up Heroku remote
+          heroku git:remote -a ${{ env.HEROKU_APP_NAME }}
+
+          # Deploy to Heroku
+          git push heroku ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}:main --force
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
 
       - name: Health check
         run: |
