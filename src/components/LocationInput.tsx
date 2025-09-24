@@ -26,6 +26,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [error, setError] = useState<string>('');
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(
     null
   );
@@ -56,7 +57,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
 
         const response = await fetch(`${NOMINATIM_BASE_URL}/search?${params}`, {
           headers: {
-            'User-Agent': 'VisaConnect/1.0', // Required by Nominatim
+            'User-Agent': 'VisaConnect/1.0 (support@visaconnect.app)', // Required by Nominatim
           },
         });
 
@@ -114,7 +115,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
           `${NOMINATIM_BASE_URL}/reverse?${params}`,
           {
             headers: {
-              'User-Agent': 'VisaConnect/1.0',
+              'User-Agent': 'VisaConnect/1.0 (support@visaconnect.app)',
             },
           }
         );
@@ -159,6 +160,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const newValue = e.target.value;
       setInputValue(newValue);
+      setError(''); // Clear any existing errors
 
       // Clear existing timer
       if (debounceTimer) {
@@ -178,6 +180,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
             console.error('Search error:', error);
             setSuggestions([]);
             setShowSuggestions(false);
+            setError('Unable to search for locations. Please try again.');
           } finally {
             setIsLoading(false);
           }
@@ -225,10 +228,11 @@ const LocationInput: React.FC<LocationInputProps> = ({
   // Get current location
   const handleGetCurrentLocation = useCallback(() => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
+      setError('Geolocation is not supported by this browser.');
       return;
     }
 
+    setError(''); // Clear any existing errors
     setIsGettingLocation(true);
 
     navigator.geolocation.getCurrentPosition(
@@ -271,7 +275,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
           }
         } catch (error) {
           console.error('Error getting address for current location:', error);
-          alert('Unable to get address for current location.');
+          setError('Unable to get address for current location.');
         } finally {
           setIsGettingLocation(false);
         }
@@ -279,7 +283,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
       (error) => {
         setIsGettingLocation(false);
         console.error('Error getting location:', error);
-        alert('Unable to get your current location. Please enter manually.');
+        setError('Unable to get your current location. Please enter manually.');
       }
     );
   }, [reverseGeocode, onChange]);
@@ -357,6 +361,13 @@ const LocationInput: React.FC<LocationInputProps> = ({
           )}
         </div>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="mt-2">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
 
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
