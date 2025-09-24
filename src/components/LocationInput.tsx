@@ -337,6 +337,9 @@ const LocationInput: React.FC<LocationInputProps> = ({
           required={required}
           disabled={disabled}
           className="w-full pl-10 pr-20 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-50 disabled:text-gray-500"
+          // TODO: Refactor to use consistent app styling pattern or reusable Input component
+          // Current styling doesn't match app standards (rounded-xl, focus:ring-sky-300, etc.)
+          // This requires updating ALL inputs across the app - handle in separate branch
         />
 
         <div className="absolute inset-y-0 right-0 flex items-center pr-2 space-x-1">
