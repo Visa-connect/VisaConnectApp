@@ -10,7 +10,7 @@ import { useUserStore } from '../../stores/userStore';
 
 const KnowledgeCommunityScreen: React.FC = () => {
   const [form, setForm] = useState({
-    mentorshipInterest: 'no' as 'yes' | 'no',
+    mentorshipInterest: 'yes' as 'yes' | 'no',
     jobBoards: [] as string[],
     visaAdvice: '',
   });
@@ -27,7 +27,12 @@ const KnowledgeCommunityScreen: React.FC = () => {
   useEffect(() => {
     if (user) {
       setForm({
-        mentorshipInterest: user.mentorship_interest ? 'yes' : 'no',
+        mentorshipInterest:
+          user.mentorship_interest !== undefined
+            ? user.mentorship_interest
+              ? 'yes'
+              : 'no'
+            : 'yes',
         jobBoards: user.job_boards || [],
         visaAdvice: user.visa_advice || '',
       });

@@ -11,6 +11,12 @@ interface CachedToken {
   expiresAt: number;
 }
 
+interface TimeoutStats {
+  count: number;
+  lastTimeout?: string;
+  timeSinceLastTimeout?: number;
+}
+
 class TokenRefreshService {
   private refreshPromise: Promise<TokenRefreshResult> | null = null;
   private tokenCache: CachedToken | null = null;
@@ -202,12 +208,8 @@ class TokenRefreshService {
   /**
    * Get timeout statistics for monitoring
    */
-  public getTimeoutStats(): {
-    count: number;
-    lastTimeout?: string;
-    timeSinceLastTimeout?: number;
-  } {
-    const stats: { count: number; lastTimeout?: string; timeSinceLastTimeout?: number } = { count: this.timeoutCount };
+  public getTimeoutStats(): TimeoutStats {
+    const stats: TimeoutStats = { count: this.timeoutCount };
 
     if (this.lastTimeoutTime) {
       stats.lastTimeout = new Date(this.lastTimeoutTime).toISOString();

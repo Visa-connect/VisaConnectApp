@@ -56,6 +56,15 @@ Instead, it will copy all the configuration files and the transitive dependencie
 
 You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
 
+## TODO
+
+### Design System Improvements
+
+- **Input Component Refactoring**: Create a reusable `Input` component to ensure consistent styling across all forms
+  - Current issue: `LocationInput` uses different styling (`rounded-lg`, `focus:ring-blue-500`) than app standard (`rounded-xl`, `focus:ring-sky-300`)
+  - Requires updating ALL input fields across the app (CreateAccountPage, LoginScreen, PostJobScreen, etc.)
+  - Should be handled in a dedicated branch for design system consistency
+
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
