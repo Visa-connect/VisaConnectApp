@@ -65,6 +65,11 @@ jobs:
           # Release the container
           heroku container:release web --app ${{ env.HEROKU_APP_NAME }}
 
+      - name: Run Database Migrations
+        run: |
+          # Run migrations on the deployed app
+          heroku run "cd server && npm run migrate" --app ${{ env.HEROKU_APP_NAME }}
+
       - name: Health check
         run: |
           echo "Waiting for deployment to complete..."
