@@ -3,7 +3,6 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
-import { config } from './config/env';
 import { WebSocketService } from './services/websocketService';
 
 // Database connection
