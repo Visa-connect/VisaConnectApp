@@ -30,6 +30,10 @@ server/firebase-stage-credentials.json
 # Build artifacts
 /server/dist
 
+# Documentation and history files that may contain secrets
+.specstory/
+.cursorindexingignore
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
