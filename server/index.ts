@@ -44,6 +44,9 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  storageBucket:
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    'visaconnectus-stage.firebasestorage.app',
 });
 
 const app: Express = express();

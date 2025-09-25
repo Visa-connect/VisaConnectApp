@@ -22,7 +22,7 @@ interface PostMeetupForm {
   location: LocationData;
   description: string;
   photo_url: string;
-  photo_public_id: string;
+  photo_fileName: string; // Changed from photo_public_id to photo_fileName
 }
 
 const PostMeetupScreen: React.FC = () => {
@@ -34,7 +34,7 @@ const PostMeetupScreen: React.FC = () => {
     location: { address: '' },
     description: '',
     photo_url: '',
-    photo_public_id: '',
+    photo_fileName: '',
   });
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [categories, setCategories] = useState<MeetupCategory[]>([]);
@@ -71,23 +71,23 @@ const PostMeetupScreen: React.FC = () => {
   };
 
   const handleRemoveImage = async () => {
-    if (formData.photo_public_id) {
+    if (formData.photo_fileName) {
       try {
         setLoading(true);
         setError(null);
 
-        // Delete from Cloudinary
-        const result = await deleteMeetupPhoto(formData.photo_public_id);
+        // Delete from Firebase Storage via backend
+        const result = await deleteMeetupPhoto(formData.photo_fileName);
 
         if (result.success) {
           // Clear from local state
           setFormData((prev) => ({
             ...prev,
             photo_url: '',
-            photo_public_id: '',
+            photo_fileName: '',
           }));
         } else {
-          setError(result.error || 'Failed to remove image from Cloudinary');
+          setError(result.error || 'Failed to remove image from storage');
         }
       } catch (err) {
         console.error('Error removing image:', err);
@@ -96,11 +96,11 @@ const PostMeetupScreen: React.FC = () => {
         setLoading(false);
       }
     } else {
-      // If no public ID, just clear local state
+      // If no file name, just clear local state
       setFormData((prev) => ({
         ...prev,
         photo_url: '',
-        photo_public_id: '',
+        photo_fileName: '',
       }));
     }
   };
@@ -127,14 +127,14 @@ const PostMeetupScreen: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Upload to Cloudinary
+        // Upload to Firebase Storage via backend
         const result = await uploadMeetupPhoto(file);
 
-        if (result.success && result.url && result.publicId) {
+        if (result.success && result.url && result.fileName) {
           setFormData((prev) => ({
             ...prev,
             photo_url: result.url || '',
-            photo_public_id: result.publicId || '',
+            photo_fileName: result.fileName || '',
           }));
         } else {
           setError(result.error || 'Failed to upload image');
@@ -171,8 +171,8 @@ const PostMeetupScreen: React.FC = () => {
         location: formData.location.address,
         meetup_date: formData.dateTime,
         max_participants: null, // Optional field
-        photo_url: formData.photo_url || null, // Cloudinary image URL
-        photo_public_id: formData.photo_public_id || null, // Cloudinary public ID
+        photo_url: formData.photo_url || null, // Firebase Storage image URL
+        photo_public_id: formData.photo_fileName || null, // Firebase Storage file name
       };
 
       await meetupService.createMeetup(meetupData);

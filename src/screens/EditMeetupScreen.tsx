@@ -136,7 +136,7 @@ const EditMeetupScreen: React.FC = () => {
       setFormData((prev) => ({
         ...prev,
         photo_url: result.url || null,
-        photo_public_id: result.publicId || null,
+        photo_public_id: result.fileName || null,
       }));
     } catch (err) {
       console.error('Error uploading image:', err);

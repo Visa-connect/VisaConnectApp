@@ -100,7 +100,7 @@ const AddBusinessScreen: React.FC = () => {
           return;
         }
         logoUrl = uploadResult.url || '';
-        logoPublicId = uploadResult.publicId || '';
+        logoPublicId = uploadResult.fileName || '';
       }
 
       // Prepare business submission data

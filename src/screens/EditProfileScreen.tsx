@@ -106,7 +106,7 @@ const EditProfileScreen: React.FC = () => {
         }
 
         photoUrl = uploadResult.url;
-        photoPublicId = uploadResult.publicId;
+        photoPublicId = uploadResult.fileName;
       }
 
       // Update user profile with new photo URL and public_id

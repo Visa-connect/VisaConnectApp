@@ -4,43 +4,47 @@ This directory contains database migration scripts for the VisaConnect applicati
 
 ## Recent Migrations
 
-### Add Meetup Photo URL Fields
+### Migrate to Firebase Storage
 
-**File**: `add-meetup-photo-url.sql`
+**File**: `005_migrate_to_firebase_storage.sql`
 
 **Date**: Current
 
-**Description**: Adds photo support to meetups table
+**Description**: Migrates from Cloudinary to Firebase Storage for all file uploads
 
 **Changes**:
 
-- Added `photo_url` VARCHAR(500) field to store meetup image URLs
-- Added `photo_public_id` VARCHAR(255) field to store Cloudinary public IDs for photo management
-- Created indexes on both fields for performance
-- Added column comments for documentation
+- Updated column comments to clarify Firebase Storage usage
+- Added business logo fields to businesses table
+- Created indexes for new business logo fields
+- Added Firebase Storage URL validation functions
+- Created monitoring view for storage usage
+- Added migration logging system
 
 **To Apply**:
 
 ```bash
-psql -d your_database_name -f add-meetup-photo-url.sql
+psql -d your_database_name -f 005_migrate_to_firebase_storage.sql
 ```
 
 **Backend Changes Required**:
 
-- Updated `Meetup` interface in `meetupService.ts`
-- Updated `CreateMeetupRequest` and `UpdateMeetupRequest` interfaces
-- Modified `createMeetup`, `getMeetup`, and `searchMeetups` methods
-- Updated API endpoint to handle photo fields
+- Updated `firebaseStorageService.ts` for server-side file handling
+- Updated `photo.ts` API endpoints to use Firebase Storage
+- Added resume upload functionality
+- Updated all photo upload/delete functions
 
 **Frontend Changes Required**:
 
-- Updated `Meetup` interface in `meetupService.ts`
-- Updated `CreateMeetupRequest` interface
-- Modified `PostMeetupScreen` to handle photo uploads
-- Updated `MeetupsScreen` and `MeetupDetailsScreen` to display photos
+- Updated `cloudinary.ts` to work with backend API
+- Updated `PostMeetupScreen` for Firebase Storage
+- Updated `ApplyToJobScreen` for resume uploads
+- Removed client-side Firebase Storage SDK
 
 **Notes**:
 
-- Photo fields are optional and can be null
-- `photo_public_id` is used for Cloudinary integration to enable photo deletion
-- Frontend currently uses placeholder URLs for testing; actual Cloudinary integration needed
+- All file uploads now go through backend API
+- Supports images (JPG, PNG, WebP) and documents (PDF, DOC, DOCX)
+- File size limits: 5MB for images, 10MB for documents
+- Better security with server-side validation
+- Consistent with existing Firebase Auth architecture

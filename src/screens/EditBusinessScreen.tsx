@@ -154,7 +154,7 @@ const EditBusinessScreen: React.FC = () => {
           return;
         }
         logoUrl = uploadResult.url || '';
-        logoPublicId = uploadResult.publicId || '';
+        logoPublicId = uploadResult.fileName || '';
       }
 
       // Prepare business update data

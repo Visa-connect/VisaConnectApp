@@ -10,6 +10,7 @@ import {
   ApplicationsApiService,
   ApplicationSubmission,
 } from '../api/applicationsApi';
+import { uploadResume } from '../api/cloudinary';
 import { visaTypes, startDateOptions } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
 
@@ -19,6 +20,8 @@ interface ApplicationFormData {
   visa: string;
   startDate: string;
   resume?: File;
+  resumeUrl?: string;
+  resumeFileName?: string;
 }
 
 const ApplyToJobScreen: React.FC = () => {
@@ -97,13 +100,52 @@ const ApplyToJobScreen: React.FC = () => {
   };
 
   // Handle file upload
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        resume: file,
-      }));
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        alert('Please select a valid document file (PDF, DOC, or DOCX)');
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        alert('File size must be less than 10MB');
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+
+        // Upload resume to Firebase Storage via backend
+        const result = await uploadResume(file);
+
+        if (result.success && result.url && result.fileName) {
+          setFormData((prev) => ({
+            ...prev,
+            resume: file,
+            resumeUrl: result.url,
+            resumeFileName: result.fileName,
+          }));
+        } else {
+          alert(result.error || 'Failed to upload resume');
+        }
+      } catch (error) {
+        console.error('Error uploading resume:', error);
+        alert('Failed to upload resume. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -129,17 +171,14 @@ const ApplyToJobScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      // TODO: Handle resume file upload to cloud storage
-      // For now, we'll skip the resume upload and just submit the form data
-
       const applicationData: ApplicationSubmission = {
         job_id: job.id,
         qualifications: formData.qualifications,
         location: formData.location.address,
         visa_type: formData.visa || undefined,
         start_date: formData.startDate,
-        // resume_url: formData.resume ? 'uploaded_url_here' : undefined,
-        // resume_filename: formData.resume?.name,
+        resume_url: formData.resumeUrl || undefined,
+        resume_filename: formData.resume?.name || undefined,
       };
 
       const response = await ApplicationsApiService.submitApplication(
@@ -334,9 +373,10 @@ const ApplyToJobScreen: React.FC = () => {
                 <input
                   type="file"
                   id="resume"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileUpload}
                   className="hidden"
+                  disabled={isSubmitting}
                 />
                 <label
                   htmlFor="resume"
@@ -345,7 +385,7 @@ const ApplyToJobScreen: React.FC = () => {
                   <CloudArrowUpIcon className="h-6 w-6 text-gray-400 mr-2" />
                   <span className="text-gray-600">
                     {formData.resume
-                      ? formData.resume.name
+                      ? `${formData.resume.name} ✓`
                       : 'Click to upload resume'}
                   </span>
                 </label>
