@@ -22,6 +22,8 @@ jobs:
         with:
           # For PRs, use the source branch. For pushes, use the current branch
           ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          # Fetch full history for git operations
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -46,14 +48,27 @@ jobs:
           curl https://cli-assets.heroku.com/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Login to Heroku Container Registry
+        run: |
+          echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+
+      - name: Build and Push Docker Image
+        run: |
+          # Build the Docker image
+          docker build -t registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web .
+
+          # Push the image to Heroku Container Registry
+          docker push registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
+
       - name: Deploy to Heroku Staging
-        uses: akhileshns/heroku-deploy@v3.12.14
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ env.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          # For PRs, use the source branch. For pushes, use the current branch
-          branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+        run: |
+          # Release the container
+          heroku container:release web --app ${{ env.HEROKU_APP_NAME }}
+
+      - name: Run Database Migrations
+        run: |
+          # Run migrations on the deployed app
+          heroku run "cd server && npm run migrate" --app ${{ env.HEROKU_APP_NAME }}
 
       - name: Health check
         run: |

@@ -10,6 +10,7 @@ import {
   ApplicationsApiService,
   ApplicationSubmission,
 } from '../api/applicationsApi';
+import { uploadResume } from '../api/cloudinary';
 import { visaTypes, startDateOptions } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
 
@@ -19,6 +20,8 @@ interface ApplicationFormData {
   visa: string;
   startDate: string;
   resume?: File;
+  resumeUrl?: string;
+  resumeFileName?: string;
 }
 
 const ApplyToJobScreen: React.FC = () => {
@@ -28,6 +31,10 @@ const ApplyToJobScreen: React.FC = () => {
   const [job, setJob] = useState<JobWithBusiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
+  const [formValidationError, setFormValidationError] = useState<string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<ApplicationFormData>({
@@ -97,13 +104,58 @@ const ApplyToJobScreen: React.FC = () => {
   };
 
   // Handle file upload
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (file) {
-      setFormData((prev) => ({
-        ...prev,
-        resume: file,
-      }));
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        setFileUploadError(
+          'Please select a valid document file (PDF, DOC, or DOCX)'
+        );
+        setTimeout(() => setFileUploadError(null), 5000);
+        return;
+      }
+
+      // Validate file size (10MB limit)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setFileUploadError('File size must be less than 10MB');
+        setTimeout(() => setFileUploadError(null), 5000);
+        return;
+      }
+
+      try {
+        setIsSubmitting(true);
+
+        // Upload resume to Firebase Storage via backend
+        const result = await uploadResume(file);
+
+        if (result.success && result.url && result.fileName) {
+          setFormData((prev) => ({
+            ...prev,
+            resume: file,
+            resumeUrl: result.url,
+            resumeFileName: result.fileName,
+          }));
+        } else {
+          setFileUploadError(result.error || 'Failed to upload resume');
+          setTimeout(() => setFileUploadError(null), 5000);
+        }
+      } catch (error) {
+        console.error('Error uploading resume:', error);
+        setFileUploadError('Failed to upload resume. Please try again.');
+        setTimeout(() => setFileUploadError(null), 5000);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -115,31 +167,31 @@ const ApplyToJobScreen: React.FC = () => {
 
     // Basic validation
     if (!formData.qualifications.trim()) {
-      alert('Please explain your qualifications.');
+      setFormValidationError('Please explain your qualifications.');
+      setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
     if (!formData.location.address.trim()) {
-      alert('Please provide your location.');
+      setFormValidationError('Please provide your location.');
+      setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
     if (!formData.startDate.trim()) {
-      alert('Please specify when you can start.');
+      setFormValidationError('Please specify when you can start.');
+      setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // TODO: Handle resume file upload to cloud storage
-      // For now, we'll skip the resume upload and just submit the form data
-
       const applicationData: ApplicationSubmission = {
         job_id: job.id,
         qualifications: formData.qualifications,
         location: formData.location.address,
         visa_type: formData.visa || undefined,
         start_date: formData.startDate,
-        // resume_url: formData.resume ? 'uploaded_url_here' : undefined,
-        // resume_filename: formData.resume?.name,
+        resume_url: formData.resumeUrl || undefined,
+        resume_filename: formData.resumeFileName || undefined,
       };
 
       const response = await ApplicationsApiService.submitApplication(
@@ -155,7 +207,8 @@ const ApplyToJobScreen: React.FC = () => {
       console.error('Error submitting application:', err);
       const errorMessage =
         err.message || 'Failed to submit application. Please try again.';
-      alert(errorMessage);
+      setFormValidationError(errorMessage);
+      setTimeout(() => setFormValidationError(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -243,6 +296,13 @@ const ApplyToJobScreen: React.FC = () => {
 
         {/* Application Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Form Validation Error */}
+          {formValidationError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm">{formValidationError}</p>
+            </div>
+          )}
+
           {/* Qualifications */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <label
@@ -334,9 +394,10 @@ const ApplyToJobScreen: React.FC = () => {
                 <input
                   type="file"
                   id="resume"
-                  accept=".pdf,.doc,.docx"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   onChange={handleFileUpload}
                   className="hidden"
+                  disabled={isSubmitting}
                 />
                 <label
                   htmlFor="resume"
@@ -345,12 +406,20 @@ const ApplyToJobScreen: React.FC = () => {
                   <CloudArrowUpIcon className="h-6 w-6 text-gray-400 mr-2" />
                   <span className="text-gray-600">
                     {formData.resume
-                      ? formData.resume.name
+                      ? `${formData.resume.name} ✓`
                       : 'Click to upload resume'}
                   </span>
                 </label>
               </div>
             </div>
+
+            {/* File Upload Error */}
+            {fileUploadError && (
+              <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-600 text-sm">{fileUploadError}</p>
+              </div>
+            )}
+
             {formData.resume && (
               <p className="mt-2 text-sm text-green-600">
                 ✓ Resume uploaded: {formData.resume.name}

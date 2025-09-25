@@ -3,7 +3,6 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
-import { config } from './config/env';
 import { WebSocketService } from './services/websocketService';
 
 // Database connection
@@ -44,6 +43,9 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  storageBucket:
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    'visaconnectus-stage.firebasestorage.app',
 });
 
 const app: Express = express();

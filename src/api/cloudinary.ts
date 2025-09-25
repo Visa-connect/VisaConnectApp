@@ -3,7 +3,7 @@ import { useUserStore } from '../stores/userStore';
 export interface PhotoUploadResult {
   success: boolean;
   url?: string;
-  publicId?: string;
+  fileName?: string; // Changed from publicId to fileName for Firebase Storage
   error?: string;
 }
 
@@ -42,7 +42,7 @@ export const uploadProfilePhoto = async (
     return {
       success: true,
       url: data.url,
-      publicId: data.publicId,
+      fileName: data.fileName,
     };
   } catch (error) {
     console.error('Error uploading profile photo:', error);
@@ -54,7 +54,7 @@ export const uploadProfilePhoto = async (
 };
 
 export const deleteProfilePhoto = async (
-  publicId: string
+  fileName: string
 ): Promise<PhotoUploadResult> => {
   try {
     // Get auth token from user store
@@ -126,7 +126,7 @@ export const uploadMeetupPhoto = async (
     return {
       success: true,
       url: data.url,
-      publicId: data.publicId,
+      fileName: data.fileName,
     };
   } catch (error) {
     console.error('Error uploading meetup photo:', error);
@@ -139,7 +139,7 @@ export const uploadMeetupPhoto = async (
 
 // Delete meetup photo function
 export const deleteMeetupPhoto = async (
-  publicId: string
+  fileName: string
 ): Promise<PhotoUploadResult> => {
   try {
     // Get auth token from user store
@@ -155,7 +155,7 @@ export const deleteMeetupPhoto = async (
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ publicId }),
+      body: JSON.stringify({ fileName }),
     });
 
     if (!response.ok) {
@@ -213,7 +213,7 @@ export const uploadBusinessLogo = async (
     return {
       success: true,
       url: data.url,
-      publicId: data.publicId,
+      fileName: data.fileName,
     };
   } catch (error) {
     console.error('Error uploading business logo:', error);
@@ -226,7 +226,7 @@ export const uploadBusinessLogo = async (
 
 // Delete business logo function
 export const deleteBusinessLogo = async (
-  publicId: string
+  fileName: string
 ): Promise<PhotoUploadResult> => {
   try {
     // Get auth token from user store
@@ -242,7 +242,7 @@ export const deleteBusinessLogo = async (
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ publicId }),
+      body: JSON.stringify({ fileName }),
     });
 
     if (!response.ok) {
@@ -260,6 +260,51 @@ export const deleteBusinessLogo = async (
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Delete failed',
+    };
+  }
+};
+
+// Resume upload function
+export const uploadResume = async (file: File): Promise<PhotoUploadResult> => {
+  try {
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('resume', file);
+
+    // Get auth token from user store
+    const token = useUserStore.getState().getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // Upload to our backend API
+    const response = await fetch('/api/photo/upload-resume', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `Upload failed: ${response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+
+    return {
+      success: true,
+      url: data.url,
+      fileName: data.fileName,
+    };
+  } catch (error) {
+    console.error('Error uploading resume:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Upload failed',
     };
   }
 };
