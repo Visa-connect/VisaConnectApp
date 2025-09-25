@@ -52,8 +52,10 @@ jobs:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           heroku_app_name: ${{ env.HEROKU_APP_NAME }}
           heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          # For PRs, use the source branch. For pushes, use the current branch
+          # Deploy the current branch to Heroku
           branch: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          # Ensure we're deploying from the root directory
+          appdir: '.'
 
       - name: Health check
         run: |
