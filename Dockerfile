@@ -15,10 +15,6 @@ RUN cd server && yarn install --frozen-lockfile --production
 # Copy source code
 COPY . .
 
-# Debug: Check what's in the current directory
-RUN ls -la
-RUN ls -la public/ || echo "Public directory not found"
-
 # Build frontend
 RUN yarn build
 

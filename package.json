@@ -37,7 +37,6 @@
     "lint:fix": "npx eslint src --ext .ts,.tsx,.js,.jsx --fix",
     "eject": "react-scripts eject",
     "dev": "concurrently \"react-scripts start\" \"cd server && nodemon index.ts\"",
-    "postinstall": "npm run build",
     "scripts:get-auth-token": "node scripts/get-auth-token.js",
     "scripts:list-firebase-users": "node scripts/list-firebase-users.js",
     "scripts:make-admin": "node scripts/make-admin.js",
