@@ -48,8 +48,8 @@ jobs:
 
       - name: Deploy to Heroku Staging
         run: |
-          # Login to Heroku
-          echo "${{ secrets.HEROKU_API_KEY }}" | heroku auth:token
+          # Login to Heroku using API key
+          heroku auth:token ${{ secrets.HEROKU_API_KEY }}
 
           # Add Heroku remote
           git remote add heroku https://git.heroku.com/${{ env.HEROKU_APP_NAME }}.git
