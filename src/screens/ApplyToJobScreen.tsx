@@ -32,6 +32,9 @@ const ApplyToJobScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
+  const [formValidationError, setFormValidationError] = useState<string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<ApplicationFormData>({
@@ -164,15 +167,18 @@ const ApplyToJobScreen: React.FC = () => {
 
     // Basic validation
     if (!formData.qualifications.trim()) {
-      alert('Please explain your qualifications.');
+      setFormValidationError('Please explain your qualifications.');
+      setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
     if (!formData.location.address.trim()) {
-      alert('Please provide your location.');
+      setFormValidationError('Please provide your location.');
+      setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
     if (!formData.startDate.trim()) {
-      alert('Please specify when you can start.');
+      setFormValidationError('Please specify when you can start.');
+      setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
 
@@ -201,7 +207,8 @@ const ApplyToJobScreen: React.FC = () => {
       console.error('Error submitting application:', err);
       const errorMessage =
         err.message || 'Failed to submit application. Please try again.';
-      alert(errorMessage);
+      setFormValidationError(errorMessage);
+      setTimeout(() => setFormValidationError(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
@@ -289,6 +296,13 @@ const ApplyToJobScreen: React.FC = () => {
 
         {/* Application Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Form Validation Error */}
+          {formValidationError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600 text-sm">{formValidationError}</p>
+            </div>
+          )}
+
           {/* Qualifications */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <label
