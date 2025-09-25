@@ -8,6 +8,31 @@ import { jobsService } from '../services/jobsService';
 import { chatService } from '../services/chatService';
 import { AppError, ErrorCode } from '../types/errors';
 
+// Validate if URL is from trusted Firebase Storage domain
+const isValidResumeUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+
+    // Only allow HTTPS URLs
+    if (urlObj.protocol !== 'https:') {
+      return false;
+    }
+
+    // Allow Firebase Storage domains
+    const trustedDomains = [
+      'storage.googleapis.com',
+      'firebasestorage.googleapis.com',
+      'visaconnectus-stage.firebasestorage.app', // Your staging bucket
+      'visaconnectus.firebasestorage.app', // Your production bucket
+    ];
+
+    return trustedDomains.some((domain) => urlObj.hostname === domain);
+  } catch (error) {
+    // Invalid URL format
+    return false;
+  }
+};
+
 // Helper function to create initial application message
 async function createApplicationMessage(
   application: any,
@@ -31,12 +56,12 @@ async function createApplicationMessage(
   message += `Email: ${user.email || 'Not provided'}\n`;
   message += `Occupation: ${user.occupation || 'Not specified'}\n`;
   message += `Visa Type: ${user.visa_type || 'Not specified'}\n\n`;
-  
+
   message += `Application Details:\n`;
   message += `• Location: ${application.location}\n`;
   message += `• Start Date: ${application.start_date}\n`;
   message += `• Qualifications: ${application.qualifications}\n\n`;
-  
+
   if (application.resume_url) {
     message += `📄 Resume: [View Resume](${application.resume_url})`;
   }
@@ -70,6 +95,14 @@ export default function applicationsApi(app: Express) {
         if (!job_id || !qualifications || !location || !start_date) {
           throw new AppError(
             'Missing required fields: job_id, qualifications, location, start_date',
+            ErrorCode.VALIDATION_ERROR
+          );
+        }
+
+        // Validate resume URL if provided
+        if (resume_url && !isValidResumeUrl(resume_url)) {
+          throw new AppError(
+            'Invalid resume URL: Must be from trusted Firebase Storage domain',
             ErrorCode.VALIDATION_ERROR
           );
         }

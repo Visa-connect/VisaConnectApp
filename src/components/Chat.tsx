@@ -191,6 +191,31 @@ const Chat: React.FC<ChatProps> = ({
     });
   };
 
+  // Validate if URL is from trusted Firebase Storage domain
+  const isValidResumeUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+
+      // Only allow HTTPS URLs
+      if (urlObj.protocol !== 'https:') {
+        return false;
+      }
+
+      // Allow Firebase Storage domains
+      const trustedDomains = [
+        'storage.googleapis.com',
+        'firebasestorage.googleapis.com',
+        'visaconnectus-stage.firebasestorage.app', // Your staging bucket
+        'visaconnectus.firebasestorage.app', // Your production bucket
+      ];
+
+      return trustedDomains.some((domain) => urlObj.hostname === domain);
+    } catch (error) {
+      // Invalid URL format
+      return false;
+    }
+  };
+
   // Format message content with clickable resume links
   const formatMessageContent = (content: string) => {
     // Check if message contains a resume link
@@ -205,18 +230,32 @@ const Chat: React.FC<ChatProps> = ({
         parts.push(content.slice(lastIndex, match.index));
       }
 
-      // Add clickable resume link
+      // Validate and add clickable resume link
       const resumeUrl = match[1];
-      const resumeFileName = resumeUrl.split('/').pop() || 'resume.pdf';
-      parts.push(
-        <button
-          key={match.index}
-          onClick={() => handleResumeClick(resumeUrl, resumeFileName)}
-          className="text-blue-600 hover:text-blue-800 underline font-medium"
-        >
-          📄 View Resume
-        </button>
-      );
+
+      if (isValidResumeUrl(resumeUrl)) {
+        const resumeFileName = resumeUrl.split('/').pop() || 'resume.pdf';
+        parts.push(
+          <button
+            key={match.index}
+            onClick={() => handleResumeClick(resumeUrl, resumeFileName)}
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+          >
+            📄 View Resume
+          </button>
+        );
+      } else {
+        // If URL is not trusted, show as plain text with warning
+        parts.push(
+          <span
+            key={match.index}
+            className="text-gray-500 italic"
+            title="Resume link from untrusted source - click to open in new tab"
+          >
+            📄 Resume (External Link)
+          </span>
+        );
+      }
 
       lastIndex = match.index + match[0].length;
     }

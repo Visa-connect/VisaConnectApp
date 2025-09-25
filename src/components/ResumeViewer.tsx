@@ -8,6 +8,31 @@ interface ResumeViewerProps {
   onClose: () => void;
 }
 
+// Validate if URL is from trusted Firebase Storage domain
+const isValidResumeUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+
+    // Only allow HTTPS URLs
+    if (urlObj.protocol !== 'https:') {
+      return false;
+    }
+
+    // Allow Firebase Storage domains
+    const trustedDomains = [
+      'storage.googleapis.com',
+      'firebasestorage.googleapis.com',
+      'visaconnectus-stage.firebasestorage.app', // Your staging bucket
+      'visaconnectus.firebasestorage.app', // Your production bucket
+    ];
+
+    return trustedDomains.some((domain) => urlObj.hostname === domain);
+  } catch (error) {
+    // Invalid URL format
+    return false;
+  }
+};
+
 const ResumeViewer: React.FC<ResumeViewerProps> = ({
   resumeUrl,
   resumeFileName,
@@ -18,6 +43,60 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  // Validate URL before rendering
+  if (!isValidResumeUrl(resumeUrl)) {
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          onClick={onClose}
+        />
+        <div className="flex min-h-full items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-white rounded-lg shadow-xl">
+            <div className="p-6 text-center">
+              <div className="text-red-500 mb-4">
+                <svg
+                  className="h-12 w-12 mx-auto"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Security Warning
+              </h3>
+              <p className="text-gray-600 mb-4">
+                This resume link is from an untrusted source and cannot be
+                displayed safely.
+              </p>
+              <div className="flex space-x-2 justify-center">
+                <button
+                  onClick={() => window.open(resumeUrl, '_blank')}
+                  className="px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                >
+                  Open in New Tab (External)
+                </button>
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleLoad = () => {
     setLoading(false);
