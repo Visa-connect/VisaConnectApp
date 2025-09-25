@@ -31,6 +31,7 @@ const ApplyToJobScreen: React.FC = () => {
   const [job, setJob] = useState<JobWithBusiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formData, setFormData] = useState<ApplicationFormData>({
@@ -113,14 +114,18 @@ const ApplyToJobScreen: React.FC = () => {
       ];
 
       if (!allowedTypes.includes(file.type)) {
-        alert('Please select a valid document file (PDF, DOC, or DOCX)');
+        setFileUploadError(
+          'Please select a valid document file (PDF, DOC, or DOCX)'
+        );
+        setTimeout(() => setFileUploadError(null), 5000);
         return;
       }
 
       // Validate file size (10MB limit)
       const maxSize = 10 * 1024 * 1024; // 10MB
       if (file.size > maxSize) {
-        alert('File size must be less than 10MB');
+        setFileUploadError('File size must be less than 10MB');
+        setTimeout(() => setFileUploadError(null), 5000);
         return;
       }
 
@@ -138,11 +143,13 @@ const ApplyToJobScreen: React.FC = () => {
             resumeFileName: result.fileName,
           }));
         } else {
-          alert(result.error || 'Failed to upload resume');
+          setFileUploadError(result.error || 'Failed to upload resume');
+          setTimeout(() => setFileUploadError(null), 5000);
         }
       } catch (error) {
         console.error('Error uploading resume:', error);
-        alert('Failed to upload resume. Please try again.');
+        setFileUploadError('Failed to upload resume. Please try again.');
+        setTimeout(() => setFileUploadError(null), 5000);
       } finally {
         setIsSubmitting(false);
       }
@@ -391,6 +398,14 @@ const ApplyToJobScreen: React.FC = () => {
                 </label>
               </div>
             </div>
+
+            {/* File Upload Error */}
+            {fileUploadError && (
+              <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-red-600 text-sm">{fileUploadError}</p>
+              </div>
+            )}
+
             {formData.resume && (
               <p className="mt-2 text-sm text-green-600">
                 ✓ Resume uploaded: {formData.resume.name}
