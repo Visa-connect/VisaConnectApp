@@ -5,7 +5,69 @@ import applicationsService, {
   ApplicationFilters,
 } from '../services/applicationsService';
 import { jobsService } from '../services/jobsService';
+import { chatService } from '../services/chatService';
 import { AppError, ErrorCode } from '../types/errors';
+import pool from '../db/config';
+
+// Validate if URL is from trusted Firebase Storage domain
+const isValidResumeUrl = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url);
+
+    // Only allow HTTPS URLs
+    if (urlObj.protocol !== 'https:') {
+      return false;
+    }
+
+    // Allow Firebase Storage domains
+    const trustedDomains = [
+      'storage.googleapis.com',
+      'firebasestorage.googleapis.com',
+      'visaconnectus-stage.firebasestorage.app', // Your staging bucket
+      'visaconnectus.firebasestorage.app', // Your production bucket
+    ];
+
+    return trustedDomains.some((domain) => urlObj.hostname === domain);
+  } catch (error) {
+    // Invalid URL format
+    return false;
+  }
+};
+
+// Helper function to create initial application message
+async function createApplicationMessage(
+  application: any,
+  job: any
+): Promise<string> {
+  const userQuery = `
+    SELECT first_name, last_name, email, occupation, visa_type
+    FROM users
+    WHERE id = $1
+  `;
+
+  const userResult = await pool.query(userQuery, [application.user_id]);
+  const user = userResult.rows[0] || {};
+
+  const applicantName =
+    `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unknown User';
+
+  let message = `🎯 New Job Application for "${job.title}"\n\n`;
+  message += `Applicant: ${applicantName}\n`;
+  message += `Email: ${user.email || 'Not provided'}\n`;
+  message += `Occupation: ${user.occupation || 'Not specified'}\n`;
+  message += `Visa Type: ${user.visa_type || 'Not specified'}\n\n`;
+
+  message += `Application Details:\n`;
+  message += `• Location: ${application.location}\n`;
+  message += `• Start Date: ${application.start_date}\n`;
+  message += `• Qualifications: ${application.qualifications}\n\n`;
+
+  if (application.resume_url) {
+    message += `📄 Resume: [View Resume](${application.resume_url})`;
+  }
+
+  return message;
+}
 
 export default function applicationsApi(app: Express) {
   // Submit a new job application
@@ -37,6 +99,14 @@ export default function applicationsApi(app: Express) {
           );
         }
 
+        // Validate resume URL if provided
+        if (resume_url && !isValidResumeUrl(resume_url)) {
+          throw new AppError(
+            'Invalid resume URL: Must be from trusted Firebase Storage domain',
+            ErrorCode.VALIDATION_ERROR
+          );
+        }
+
         // Check if user has already applied to this job
         const hasApplied = await applicationsService.hasUserAppliedToJob(
           job_id,
@@ -63,6 +133,36 @@ export default function applicationsApi(app: Express) {
         const application = await applicationsService.createApplication(
           applicationData
         );
+
+        // Create chat between applicant and employer
+        try {
+          // Get job details to find the employer
+          const job = await jobsService.getJobById(job_id);
+          if (job && job.business_user_id) {
+            // Create conversation between applicant and employer
+            const conversationId = await chatService.createConversation(
+              userId,
+              job.business_user_id
+            );
+
+            // Create initial message with application details
+            const initialMessage = await createApplicationMessage(
+              application,
+              job
+            );
+
+            // Send the initial message
+            await chatService.sendMessage(conversationId, {
+              senderId: userId,
+              receiverId: job.business_user_id,
+              content: initialMessage,
+              read: false,
+            });
+          }
+        } catch (chatError) {
+          console.error('Error creating chat for application:', chatError);
+          // Don't fail the application if chat creation fails
+        }
 
         res.status(201).json({
           success: true,

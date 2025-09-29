@@ -2,6 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useUserStore } from '../stores/userStore';
 import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
+import ResumeViewer from './ResumeViewer';
+import {
+  getResumeFileName,
+  RESUME_LINK_REGEX,
+  sanitizeResumeUrl,
+} from '../utils/resume';
 
 interface ChatProps {
   conversationId: string;
@@ -20,6 +26,15 @@ const Chat: React.FC<ChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [resumeViewer, setResumeViewer] = useState<{
+    isOpen: boolean;
+    resumeUrl: string;
+    resumeFileName: string;
+  }>({
+    isOpen: false,
+    resumeUrl: '',
+    resumeFileName: '',
+  });
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
@@ -163,6 +178,76 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
+  // Handle resume link clicks
+  const handleResumeClick = (resumeUrl: string, resumeFileName: string) => {
+    setResumeViewer({
+      isOpen: true,
+      resumeUrl,
+      resumeFileName,
+    });
+  };
+
+  // Close resume viewer
+  const closeResumeViewer = () => {
+    setResumeViewer({
+      isOpen: false,
+      resumeUrl: '',
+      resumeFileName: '',
+    });
+  };
+
+  // Format message content with clickable resume links
+  const formatMessageContent = (content: string) => {
+    // Check if message contains a resume link
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = RESUME_LINK_REGEX.exec(content)) !== null) {
+      // Add text before the link
+      if (match.index > lastIndex) {
+        parts.push(content.slice(lastIndex, match.index));
+      }
+
+      // Validate and add clickable resume link
+      const resumeUrl = match[1];
+      const safeUrl = sanitizeResumeUrl(resumeUrl);
+
+      if (safeUrl) {
+        const resumeFileName = getResumeFileName(safeUrl);
+        parts.push(
+          <button
+            key={match.index}
+            onClick={() => handleResumeClick(safeUrl, resumeFileName)}
+            className="text-blue-600 hover:text-blue-800 underline font-medium"
+          >
+            📄 View Resume
+          </button>
+        );
+      } else {
+        // If URL is not trusted, show as plain text with warning
+        parts.push(
+          <span
+            key={match.index}
+            className="text-gray-500 italic"
+            title="Resume link from untrusted source - click to open in new tab"
+          >
+            📄 Resume (External Link)
+          </span>
+        );
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.slice(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : content;
+  };
+
   // Format timestamp for display
   const formatTime = (timestamp: any) => {
     if (!timestamp) return '';
@@ -216,7 +301,10 @@ const Chat: React.FC<ChatProps> = ({
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
       {/* Messages Area */}
-      <div ref={messagesContainerRef} className="flex-1 p-4 space-y-4 overflow-y-auto">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 p-4 space-y-4 overflow-y-auto"
+      >
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <div className="text-center">
@@ -265,7 +353,9 @@ const Chat: React.FC<ChatProps> = ({
                   } ${message.id?.startsWith('temp-') ? 'opacity-70' : ''}`}
                 >
                   <div className="flex items-center space-x-2">
-                    <p className="text-sm">{message.content}</p>
+                    <div className="text-sm whitespace-pre-wrap">
+                      {formatMessageContent(message.content)}
+                    </div>
                   </div>
                   <p className={`text-xs mt-2 text-gray-500`}>
                     {formatTime(message.timestamp) || (
@@ -325,6 +415,14 @@ const Chat: React.FC<ChatProps> = ({
           />
         </form>
       </div>
+
+      {/* Resume Viewer Modal */}
+      <ResumeViewer
+        resumeUrl={resumeViewer.resumeUrl}
+        resumeFileName={resumeViewer.resumeFileName}
+        isOpen={resumeViewer.isOpen}
+        onClose={closeResumeViewer}
+      />
     </div>
   );
 };

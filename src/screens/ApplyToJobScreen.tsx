@@ -200,6 +200,10 @@ const ApplyToJobScreen: React.FC = () => {
 
       if (response.success) {
         setShowSuccessModal(true);
+        // Redirect to search jobs page after successful submission
+        setTimeout(() => {
+          navigate('/search-jobs');
+        }, 2000); // Wait 2 seconds to show success message
       } else {
         throw new Error('Failed to submit application');
       }

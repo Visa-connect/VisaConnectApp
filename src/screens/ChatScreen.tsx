@@ -99,7 +99,7 @@ const ChatScreen: React.FC = () => {
                 navigate('/chat');
               }
             }}
-            className="absolute left-4 p-1 z-10"
+            className="absolute left-4 z-10 hover:bg-gray-100 rounded-lg p-2 transition-colors"
           >
             <svg
               className="w-6 h-6 text-gray-600"
@@ -122,10 +122,14 @@ const ChatScreen: React.FC = () => {
               <img
                 src={otherUserPhoto}
                 alt={otherUserName}
-                className="w-10 h-10 rounded-full object-cover mr-3"
+                onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                className="w-10 h-10 rounded-full object-cover mr-3 cursor-pointer hover:opacity-80 transition-opacity"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+              <div
+                onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 cursor-pointer hover:opacity-80 transition-opacity"
+              >
                 <span className="text-gray-600 font-medium">
                   {(otherUserDetails?.fullName || otherUserName)
                     .charAt(0)
@@ -134,19 +138,12 @@ const ChatScreen: React.FC = () => {
               </div>
             )}
             <div className="text-center">
-              <h2 className="font-semibold text-gray-900">
+              <h2
+                onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+              >
                 {otherUserDetails?.fullName || otherUserName}
               </h2>
-              {otherUserDetails && (
-                <div className="text-xs text-gray-500 mt-1">
-                  {otherUserDetails.occupation && (
-                    <span className="block">{otherUserDetails.occupation}</span>
-                  )}
-                  {otherUserDetails.visaType && (
-                    <span className="block">{otherUserDetails.visaType}</span>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
