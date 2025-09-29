@@ -4,6 +4,8 @@ export const visaTypes = [
   { value: 'j1', label: 'J1' },
   { value: 'h1b', label: 'H1B' },
   { value: 'f1', label: 'F1' },
+  { value: 'o1', label: 'O1' },
+  { value: 'not a current visa holder', label: 'Not a current visa holder' },
 ];
 
 export const startDateOptions = [
