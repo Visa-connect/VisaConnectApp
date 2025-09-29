@@ -216,6 +216,35 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
+  // Derive a display file name from a Firebase or generic URL
+  const getResumeFileName = (resumeUrl: string): string => {
+    try {
+      const url = new URL(resumeUrl);
+
+      // Handle Firebase Storage pattern: .../o/<encoded path>
+      if (url.pathname.includes('/o/')) {
+        const afterO = url.pathname.split('/o/')[1] || '';
+        const decodedPath = decodeURIComponent(afterO);
+        const segments = decodedPath.split('/');
+        const lastSegment = segments[segments.length - 1];
+        if (lastSegment && lastSegment.includes('.')) {
+          return lastSegment;
+        }
+      }
+
+      // Fallback to last path segment from generic URLs
+      const lastPathPart = url.pathname.split('/').pop() || '';
+      if (lastPathPart && lastPathPart.includes('.')) {
+        return decodeURIComponent(lastPathPart);
+      }
+
+      // Final fallback: generic name without assuming extension
+      return 'resume';
+    } catch {
+      return 'resume';
+    }
+  };
+
   // Format message content with clickable resume links
   const formatMessageContent = (content: string) => {
     // Check if message contains a resume link
@@ -234,7 +263,7 @@ const Chat: React.FC<ChatProps> = ({
       const resumeUrl = match[1];
 
       if (isValidResumeUrl(resumeUrl)) {
-        const resumeFileName = resumeUrl.split('/').pop() || 'resume.pdf';
+        const resumeFileName = getResumeFileName(resumeUrl);
         parts.push(
           <button
             key={match.index}
