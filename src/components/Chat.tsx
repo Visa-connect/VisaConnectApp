@@ -3,7 +3,11 @@ import { useUserStore } from '../stores/userStore';
 import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
 import ResumeViewer from './ResumeViewer';
-import { isValidResumeUrl, getResumeFileName } from '../utils/resume';
+import {
+  isValidResumeUrl,
+  getResumeFileName,
+  RESUME_LINK_REGEX,
+} from '../utils/resume';
 
 interface ChatProps {
   conversationId: string;
@@ -192,12 +196,10 @@ const Chat: React.FC<ChatProps> = ({
     });
   };
 
-  // isValidResumeUrl and getResumeFileName moved to shared utils
-
   // Format message content with clickable resume links
   const formatMessageContent = (content: string) => {
     // Check if message contains a resume link
-    const resumeLinkRegex = /\[View Resume\]\((https:\/\/[^)]+)\)/g;
+    const resumeLinkRegex = RESUME_LINK_REGEX;
     const parts = [];
     let lastIndex = 0;
     let match;

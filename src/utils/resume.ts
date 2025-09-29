@@ -51,3 +51,6 @@ export const getResumeFileName = (resumeUrl: string): string => {
     return 'resume';
   }
 };
+
+// Matches markdown-style resume links: [View Resume](http(s)://...)
+export const RESUME_LINK_REGEX = /\[View Resume\]\((https?:\/\/[^)]+)\)/g;
