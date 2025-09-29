@@ -7,6 +7,7 @@ import applicationsService, {
 import { jobsService } from '../services/jobsService';
 import { chatService } from '../services/chatService';
 import { AppError, ErrorCode } from '../types/errors';
+import pool from '../db/config';
 
 // Validate if URL is from trusted Firebase Storage domain
 const isValidResumeUrl = (url: string): boolean => {
@@ -44,7 +45,6 @@ async function createApplicationMessage(
     WHERE id = $1
   `;
 
-  const pool = require('../db/config').default;
   const userResult = await pool.query(userQuery, [application.user_id]);
   const user = userResult.rows[0] || {};
 
