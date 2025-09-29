@@ -158,10 +158,6 @@ export default function applicationsApi(app: Express) {
               content: initialMessage,
               read: false,
             });
-
-            console.log(
-              `Chat created for application ${application.id} between ${userId} and ${job.business_user_id}`
-            );
           }
         } catch (chatError) {
           console.error('Error creating chat for application:', chatError);
