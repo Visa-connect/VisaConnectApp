@@ -3,6 +3,7 @@ import { useUserStore } from '../stores/userStore';
 import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
 import ResumeViewer from './ResumeViewer';
+import { isValidResumeUrl, getResumeFileName } from '../utils/resume';
 
 interface ChatProps {
   conversationId: string;
@@ -191,59 +192,7 @@ const Chat: React.FC<ChatProps> = ({
     });
   };
 
-  // Validate if URL is from trusted Firebase Storage domain
-  const isValidResumeUrl = (url: string): boolean => {
-    try {
-      const urlObj = new URL(url);
-
-      // Only allow HTTPS URLs
-      if (urlObj.protocol !== 'https:') {
-        return false;
-      }
-
-      // Allow Firebase Storage domains
-      const trustedDomains = [
-        'storage.googleapis.com',
-        'firebasestorage.googleapis.com',
-        'visaconnectus-stage.firebasestorage.app', // Your staging bucket
-        'visaconnectus.firebasestorage.app', // Your production bucket
-      ];
-
-      return trustedDomains.some((domain) => urlObj.hostname === domain);
-    } catch (error) {
-      // Invalid URL format
-      return false;
-    }
-  };
-
-  // Derive a display file name from a Firebase or generic URL
-  const getResumeFileName = (resumeUrl: string): string => {
-    try {
-      const url = new URL(resumeUrl);
-
-      // Handle Firebase Storage pattern: .../o/<encoded path>
-      if (url.pathname.includes('/o/')) {
-        const afterO = url.pathname.split('/o/')[1] || '';
-        const decodedPath = decodeURIComponent(afterO);
-        const segments = decodedPath.split('/');
-        const lastSegment = segments[segments.length - 1];
-        if (lastSegment && lastSegment.includes('.')) {
-          return lastSegment;
-        }
-      }
-
-      // Fallback to last path segment from generic URLs
-      const lastPathPart = url.pathname.split('/').pop() || '';
-      if (lastPathPart && lastPathPart.includes('.')) {
-        return decodeURIComponent(lastPathPart);
-      }
-
-      // Final fallback: generic name without assuming extension
-      return 'resume';
-    } catch {
-      return 'resume';
-    }
-  };
+  // isValidResumeUrl and getResumeFileName moved to shared utils
 
   // Format message content with clickable resume links
   const formatMessageContent = (content: string) => {

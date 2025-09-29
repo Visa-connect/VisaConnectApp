@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { isValidResumeUrl } from '../utils/resume';
 
 interface ResumeViewerProps {
   resumeUrl: string;
@@ -7,31 +8,6 @@ interface ResumeViewerProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-// Validate if URL is from trusted Firebase Storage domain
-const isValidResumeUrl = (url: string): boolean => {
-  try {
-    const urlObj = new URL(url);
-
-    // Only allow HTTPS URLs
-    if (urlObj.protocol !== 'https:') {
-      return false;
-    }
-
-    // Allow Firebase Storage domains
-    const trustedDomains = [
-      'storage.googleapis.com',
-      'firebasestorage.googleapis.com',
-      'visaconnectus-stage.firebasestorage.app', // Your staging bucket
-      'visaconnectus.firebasestorage.app', // Your production bucket
-    ];
-
-    return trustedDomains.some((domain) => urlObj.hostname === domain);
-  } catch (error) {
-    // Invalid URL format
-    return false;
-  }
-};
 
 const ResumeViewer: React.FC<ResumeViewerProps> = ({
   resumeUrl,
