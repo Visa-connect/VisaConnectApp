@@ -199,12 +199,11 @@ const Chat: React.FC<ChatProps> = ({
   // Format message content with clickable resume links
   const formatMessageContent = (content: string) => {
     // Check if message contains a resume link
-    const resumeLinkRegex = RESUME_LINK_REGEX;
     const parts = [];
     let lastIndex = 0;
     let match;
 
-    while ((match = resumeLinkRegex.exec(content)) !== null) {
+    while ((match = RESUME_LINK_REGEX.exec(content)) !== null) {
       // Add text before the link
       if (match.index > lastIndex) {
         parts.push(content.slice(lastIndex, match.index));
