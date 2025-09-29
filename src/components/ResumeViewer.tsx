@@ -18,8 +18,11 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const openResumeInNewTab = (url: string) => {
-    if (!isValidResumeUrl(url)) {
+  const openResumeInNewTab = (
+    url: string,
+    options?: { skipValidation?: boolean }
+  ) => {
+    if (!options?.skipValidation && !isValidResumeUrl(url)) {
       console.warn('Blocked attempt to open untrusted resume URL');
       return;
     }
@@ -63,7 +66,9 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
               </p>
               <div className="flex space-x-2 justify-center">
                 <button
-                  onClick={() => openResumeInNewTab(resumeUrl)}
+                  onClick={() =>
+                    openResumeInNewTab(resumeUrl, { skipValidation: true })
+                  }
                   className="px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
                 >
                   Open in New Tab (External)
