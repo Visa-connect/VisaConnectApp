@@ -4,9 +4,9 @@ import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
 import ResumeViewer from './ResumeViewer';
 import {
-  isValidResumeUrl,
   getResumeFileName,
   RESUME_LINK_REGEX,
+  sanitizeResumeUrl,
 } from '../utils/resume';
 
 interface ChatProps {
@@ -212,13 +212,14 @@ const Chat: React.FC<ChatProps> = ({
 
       // Validate and add clickable resume link
       const resumeUrl = match[1];
+      const safeUrl = sanitizeResumeUrl(resumeUrl);
 
-      if (isValidResumeUrl(resumeUrl)) {
-        const resumeFileName = getResumeFileName(resumeUrl);
+      if (safeUrl) {
+        const resumeFileName = getResumeFileName(safeUrl);
         parts.push(
           <button
             key={match.index}
-            onClick={() => handleResumeClick(resumeUrl, resumeFileName)}
+            onClick={() => handleResumeClick(safeUrl, resumeFileName)}
             className="text-blue-600 hover:text-blue-800 underline font-medium"
           >
             📄 View Resume

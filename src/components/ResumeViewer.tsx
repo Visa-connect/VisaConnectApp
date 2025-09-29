@@ -18,6 +18,14 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const openResumeInNewTab = (url: string) => {
+    if (!isValidResumeUrl(url)) {
+      console.warn('Blocked attempt to open untrusted resume URL');
+      return;
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   if (!isOpen) return null;
 
   // Validate URL before rendering
@@ -55,7 +63,7 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
               </p>
               <div className="flex space-x-2 justify-center">
                 <button
-                  onClick={() => window.open(resumeUrl, '_blank')}
+                  onClick={() => openResumeInNewTab(resumeUrl)}
                   className="px-4 py-2 text-sm bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
                 >
                   Open in New Tab (External)
@@ -161,7 +169,7 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
                   </div>
                   <p className="text-red-600 mb-4">{error}</p>
                   <button
-                    onClick={() => window.open(resumeUrl, '_blank')}
+                    onClick={() => openResumeInNewTab(resumeUrl)}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Open in New Tab
@@ -203,7 +211,7 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
                     This file type cannot be previewed in the browser.
                   </p>
                   <button
-                    onClick={() => window.open(resumeUrl, '_blank')}
+                    onClick={() => openResumeInNewTab(resumeUrl)}
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Download & Open
@@ -220,7 +228,7 @@ const ResumeViewer: React.FC<ResumeViewerProps> = ({
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={() => window.open(resumeUrl, '_blank')}
+                onClick={() => openResumeInNewTab(resumeUrl)}
                 className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Open in New Tab

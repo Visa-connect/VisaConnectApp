@@ -1,3 +1,10 @@
+export const TRUSTED_RESUME_DOMAINS = [
+  'storage.googleapis.com',
+  'firebasestorage.googleapis.com',
+  'visaconnectus-stage.firebasestorage.app',
+  'visaconnectus.firebasestorage.app',
+];
+
 // Validate if URL is from trusted Firebase Storage domain
 export const isValidResumeUrl = (url: string): boolean => {
   try {
@@ -9,18 +16,16 @@ export const isValidResumeUrl = (url: string): boolean => {
     }
 
     // Allow Firebase Storage domains
-    const trustedDomains = [
-      'storage.googleapis.com',
-      'firebasestorage.googleapis.com',
-      'visaconnectus-stage.firebasestorage.app',
-      'visaconnectus.firebasestorage.app',
-    ];
-
-    return trustedDomains.some((domain) => urlObj.hostname === domain);
+    return TRUSTED_RESUME_DOMAINS.some((domain) => urlObj.hostname === domain);
   } catch (error) {
     // Invalid URL format
     return false;
   }
+};
+
+// Returns the URL if trusted, otherwise null
+export const sanitizeResumeUrl = (url: string): string | null => {
+  return isValidResumeUrl(url) ? url : null;
 };
 
 // Derive a display file name from a Firebase or generic URL
