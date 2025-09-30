@@ -227,7 +227,8 @@ export class NotificationService {
     applicantName: string,
     jobTitle: string,
     jobId: number,
-    applicationId: number
+    applicationId: number,
+    conversationId: string
   ): Promise<Notification> {
     return this.createNotification({
       user_id: employerId,
@@ -237,10 +238,11 @@ export class NotificationService {
       data: {
         job_id: jobId,
         application_id: applicationId,
+        conversation_id: conversationId,
         applicant_name: applicantName,
         job_title: jobTitle,
       },
-      action_url: `/applications/${applicationId}`,
+      action_url: `/chat/${conversationId}`,
     });
   }
 

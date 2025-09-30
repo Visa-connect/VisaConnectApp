@@ -38,10 +38,10 @@ const ChatScreen: React.FC = () => {
 
   // Fetch user details when conversation is selected
   useEffect(() => {
-    if (selectedConversationId && otherUserId) {
+    if (selectedConversationId) {
       fetchUserDetails(selectedConversationId);
     }
-  }, [selectedConversationId, otherUserId]);
+  }, [selectedConversationId]);
 
   // Function to fetch user details from the database
   const fetchUserDetails = async (conversationId: string) => {
@@ -59,6 +59,10 @@ const ChatScreen: React.FC = () => {
         const data = await response.json();
         if (data.success) {
           setOtherUserDetails(data.data);
+          // Ensure otherUserId is set when opening via direct link (e.g., from notifications)
+          if (data.data.id) {
+            setOtherUserId(data.data.id);
+          }
           // Update the name and photo if we have better data
           if (data.data.fullName && data.data.fullName !== 'User') {
             setOtherUserName(data.data.fullName);

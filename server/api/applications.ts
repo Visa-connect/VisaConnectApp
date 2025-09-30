@@ -143,7 +143,8 @@ export default function applicationsApi(app: Express) {
             // Create conversation between applicant and employer
             const conversationId = await chatService.createConversation(
               userId,
-              job.business_user_id
+              job.business_user_id,
+              { applicantId: userId, employerId: job.business_user_id }
             );
 
             // Create initial message with application details
@@ -176,7 +177,8 @@ export default function applicationsApi(app: Express) {
                 applicantName,
                 job.title,
                 job.id,
-                application.id
+                application.id,
+                conversationId
               );
             } catch (notificationError) {
               console.error(

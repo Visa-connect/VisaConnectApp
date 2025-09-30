@@ -28,11 +28,18 @@ export interface Conversation {
   unreadCount?: { [userId: string]: number };
   createdAt: any;
   updatedAt: any;
+  // Metadata fields to help downstream features (non-sensitive)
+  applicantId?: string;
+  employerId?: string;
 }
 
 class ChatService {
   // Create a new conversation between two users
-  async createConversation(userId1: string, userId2: string): Promise<string> {
+  async createConversation(
+    userId1: string,
+    userId2: string,
+    metadata?: { applicantId?: string; employerId?: string }
+  ): Promise<string> {
     console.log('Creating conversation between: ', userId1, userId2);
     try {
       const conversationData: Omit<Conversation, 'id'> = {
@@ -43,6 +50,8 @@ class ChatService {
           [userId1]: 0,
           [userId2]: 0,
         },
+        ...(metadata?.applicantId ? { applicantId: metadata.applicantId } : {}),
+        ...(metadata?.employerId ? { employerId: metadata.employerId } : {}),
       };
 
       const docRef = await getFirestore()
