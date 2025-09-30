@@ -1,8 +1,6 @@
 import { apiGet, apiPut, apiDelete } from './index';
 import {
-  Notification,
   NotificationFilters,
-  NotificationStats,
   NotificationResponse,
   UnreadCountResponse,
 } from '../types/notifications';
