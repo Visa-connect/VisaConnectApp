@@ -173,36 +173,39 @@ export class NotificationService {
    * Get notification statistics for a user
    */
   async getNotificationStats(userId: string): Promise<NotificationStats> {
-    const query = `
+    // Query for overall totals
+    const overallQuery = `
       SELECT 
         COUNT(*) as total,
-        COUNT(*) FILTER (WHERE read_at IS NULL) as unread,
+        COUNT(*) FILTER (WHERE read_at IS NULL) as unread
+      FROM notifications
+      WHERE user_id = $1
+    `;
+    const overallResult = await pool.query(overallQuery, [userId]);
+    const total = parseInt(overallResult.rows[0].total, 10);
+    const unread = parseInt(overallResult.rows[0].unread, 10);
+
+    // Query for per-type counts
+    const typeQuery = `
+      SELECT 
         type,
         COUNT(*) as type_count
-      FROM notifications 
+      FROM notifications
       WHERE user_id = $1
       GROUP BY type
     `;
+    const typeResult = await pool.query(typeQuery, [userId]);
 
-    const result = await pool.query(query, [userId]);
-
-    const stats: NotificationStats = {
-      total: 0,
-      unread: 0,
-      by_type: {} as Record<NotificationType, number>,
-    };
-
-    result.rows.forEach((row) => {
-      // Aggregate overall totals from grouped results
-      stats.total += parseInt(row.total, 10);
-      stats.unread += parseInt(row.unread ?? 0, 10);
-      // Per-type count
-      stats.by_type[row.type as NotificationType] = parseInt(
-        row.type_count,
-        10
-      );
+    const by_type: Record<NotificationType, number> = {};
+    typeResult.rows.forEach((row) => {
+      by_type[row.type as NotificationType] = parseInt(row.type_count, 10);
     });
 
+    const stats: NotificationStats = {
+      total,
+      unread,
+      by_type,
+    };
     return stats;
   }
 
