@@ -193,11 +193,14 @@ export class NotificationService {
     };
 
     result.rows.forEach((row) => {
-      stats.total += parseInt(row.type_count);
-      if (row.read_at === null) {
-        stats.unread += parseInt(row.type_count);
-      }
-      stats.by_type[row.type as NotificationType] = parseInt(row.type_count);
+      // Aggregate overall totals from grouped results
+      stats.total += parseInt(row.total, 10);
+      stats.unread += parseInt(row.unread ?? 0, 10);
+      // Per-type count
+      stats.by_type[row.type as NotificationType] = parseInt(
+        row.type_count,
+        10
+      );
     });
 
     return stats;
