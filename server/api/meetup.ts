@@ -1,7 +1,9 @@
 import { Express, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { meetupService } from '../services/meetupService';
+import { notificationService } from '../services/notificationService';
 import { AppError, ErrorCode } from '../types/errors';
+import pool from '../db/config';
 
 export default function meetupApi(app: Express) {
   // Get all meetup categories
@@ -202,11 +204,30 @@ export default function meetupApi(app: Express) {
         // Get the meetup details to send notification
         const meetup = await meetupService.getMeetup(meetupId);
         if (meetup && meetup.creator) {
-          // TODO: Send email and chat message to meetup creator
-          // This will be implemented in the notification service
-          console.log(
-            `User ${userId} expressed interest in meetup ${meetupId} by ${meetup.creator.email}`
-          );
+          // Create notification for the meetup creator
+          try {
+            const userResult = await pool.query(
+              'SELECT first_name, last_name FROM users WHERE id = $1',
+              [userId]
+            );
+            const user = userResult.rows[0] || {};
+            const interestedUserName =
+              `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+              'Unknown User';
+
+            await notificationService.createMeetupInterestNotification(
+              meetup.creator.id,
+              interestedUserName,
+              meetup.title,
+              meetupId
+            );
+          } catch (notificationError) {
+            console.error(
+              'Error creating meetup interest notification:',
+              notificationError
+            );
+            // Don't fail the interest expression if notification creation fails
+          }
         }
 
         res.json({
@@ -436,6 +457,55 @@ export default function meetupApi(app: Express) {
         }
 
         await meetupService.updateMeetup(meetupId, userId, updateData);
+
+        // Notify interested users about the meetup update
+        try {
+          const meetup = await meetupService.getMeetup(meetupId);
+          if (meetup) {
+            // Get all users interested in this meetup
+            const interestedUsersResult = await pool.query(
+              'SELECT user_id FROM meetup_interests WHERE meetup_id = $1',
+              [meetupId]
+            );
+
+            // Determine what was updated
+            const updateTypes: string[] = [];
+            if (updateData.title) updateTypes.push('title');
+            if (updateData.description) updateTypes.push('description');
+            if (updateData.location) updateTypes.push('location');
+            if (updateData.meetup_date) updateTypes.push('date/time');
+            if (updateData.max_participants !== undefined)
+              updateTypes.push('participant limit');
+            if (updateData.is_active !== undefined) updateTypes.push('status');
+
+            const updateType =
+              updateTypes.length > 0 ? updateTypes.join(', ') : 'details';
+
+            // Create notifications for all interested users
+            for (const row of interestedUsersResult.rows) {
+              try {
+                await notificationService.createMeetupUpdateNotification(
+                  row.user_id,
+                  meetup.title,
+                  meetupId,
+                  updateType
+                );
+              } catch (notificationError) {
+                console.error(
+                  `Error creating meetup update notification for user ${row.user_id}:`,
+                  notificationError
+                );
+                // Continue with other users even if one fails
+              }
+            }
+          }
+        } catch (notificationError) {
+          console.error(
+            'Error creating meetup update notifications:',
+            notificationError
+          );
+          // Don't fail the meetup update if notification creation fails
+        }
 
         res.json({
           success: true,

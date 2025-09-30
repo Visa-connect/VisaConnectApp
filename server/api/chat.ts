@@ -1,6 +1,8 @@
 import { Express, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { chatService } from '../services/chatService';
+import { notificationService } from '../services/notificationService';
+import pool from '../db/config';
 import { userService } from '../services/userService';
 
 export default function chatApi(app: Express) {
@@ -188,6 +190,31 @@ export default function chatApi(app: Express) {
           content,
           read: false,
         });
+
+        // Create notification for the message recipient
+        try {
+          const senderResult = await pool.query(
+            'SELECT first_name, last_name FROM users WHERE id = $1',
+            [senderId]
+          );
+          const sender = senderResult.rows[0] || {};
+          const senderName =
+            `${sender.first_name || ''} ${sender.last_name || ''}`.trim() ||
+            'Unknown User';
+
+          await notificationService.createChatMessageNotification(
+            receiverId,
+            senderName,
+            conversationId,
+            content
+          );
+        } catch (notificationError) {
+          console.error(
+            'Error creating chat message notification:',
+            notificationError
+          );
+          // Don't fail the message sending if notification creation fails
+        }
 
         res.json({ success: true, data: { messageId } });
       } catch (error) {
