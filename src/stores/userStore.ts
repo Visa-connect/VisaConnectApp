@@ -80,14 +80,32 @@ export const useUserStore = create<UserStore>()(
             set({ user, isAuthenticated: true, hasToken: true });
 
             // Fetch notifications if user is already authenticated
-            const notificationStore = useNotificationStore.getState();
-            if (notificationStore.shouldRefresh()) {
-              notificationStore.fetchNotifications().catch((error) => {
-                console.error('Failed to fetch notifications on init:', error);
+            const hydrateAndFetch = () => {
+              const notificationStore = useNotificationStore.getState();
+              if (notificationStore.shouldRefresh()) {
+                notificationStore.fetchNotifications().catch((error) => {
+                  console.error(
+                    'Failed to fetch notifications on init:',
+                    error
+                  );
+                });
+                notificationStore.fetchUnreadCount().catch((error) => {
+                  console.error('Failed to fetch unread count on init:', error);
+                });
+              }
+            };
+
+            // Ensure the notification store is hydrated before use to avoid race conditions
+            const persistApi: any = (useNotificationStore as any).persist;
+            if (persistApi?.hasHydrated?.()) {
+              hydrateAndFetch();
+            } else if (persistApi?.onFinishHydration) {
+              persistApi.onFinishHydration(() => {
+                hydrateAndFetch();
               });
-              notificationStore.fetchUnreadCount().catch((error) => {
-                console.error('Failed to fetch unread count on init:', error);
-              });
+            } else {
+              // Fallback: schedule on next tick
+              setTimeout(hydrateAndFetch, 0);
             }
           } catch (error) {
             console.error(
@@ -112,13 +130,30 @@ export const useUserStore = create<UserStore>()(
 
         // Fetch notifications after successful login
         if (hasToken) {
-          const notificationStore = useNotificationStore.getState();
-          notificationStore.fetchNotifications().catch((error) => {
-            console.error('Failed to fetch notifications after login:', error);
-          });
-          notificationStore.fetchUnreadCount().catch((error) => {
-            console.error('Failed to fetch unread count after login:', error);
-          });
+          const runFetch = () => {
+            const notificationStore = useNotificationStore.getState();
+            notificationStore.fetchNotifications().catch((error) => {
+              console.error(
+                'Failed to fetch notifications after login:',
+                error
+              );
+            });
+            notificationStore.fetchUnreadCount().catch((error) => {
+              console.error('Failed to fetch unread count after login:', error);
+            });
+          };
+
+          // Ensure notification store is hydrated first
+          const persistApi: any = (useNotificationStore as any).persist;
+          if (persistApi?.hasHydrated?.()) {
+            runFetch();
+          } else if (persistApi?.onFinishHydration) {
+            persistApi.onFinishHydration(() => {
+              runFetch();
+            });
+          } else {
+            setTimeout(runFetch, 0);
+          }
         }
       },
 
