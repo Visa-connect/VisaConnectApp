@@ -153,7 +153,7 @@ export class NotificationService {
     `;
 
     const result = await pool.query(query, [id, userId]);
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   /**

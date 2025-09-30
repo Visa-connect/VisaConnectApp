@@ -7,6 +7,7 @@ import AccountCreatedPage from './screens/AccountCreatedPage';
 import BackgroundScreen from './screens/wizard/BackgroundScreen';
 import LifestyleScreen from './screens/wizard/LifestyleScreen';
 import DashboardScreen from './screens/DashboardScreen';
+import NotificationsScreen from './screens/NotificationsScreen';
 import SignInScreen from './screens/LoginScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
@@ -64,6 +65,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <DashboardScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <NotificationsScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }

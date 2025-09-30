@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 // import { tokenRefreshService } from '../api/firebaseAuth'; // Temporarily disabled
+import { useNotificationStore } from './notificationStore';
 
 // User data interface
 export interface UserData {
@@ -77,6 +78,17 @@ export const useUserStore = create<UserStore>()(
           try {
             const user = JSON.parse(userData);
             set({ user, isAuthenticated: true, hasToken: true });
+
+            // Fetch notifications if user is already authenticated
+            const notificationStore = useNotificationStore.getState();
+            if (notificationStore.shouldRefresh()) {
+              notificationStore.fetchNotifications().catch((error) => {
+                console.error('Failed to fetch notifications on init:', error);
+              });
+              notificationStore.fetchUnreadCount().catch((error) => {
+                console.error('Failed to fetch unread count on init:', error);
+              });
+            }
           } catch (error) {
             console.error(
               'Failed to parse user data from localStorage:',
@@ -97,6 +109,17 @@ export const useUserStore = create<UserStore>()(
         set({ user, isAuthenticated: true, hasToken });
         // Also update localStorage for backward compatibility
         localStorage.setItem('userData', JSON.stringify(user));
+
+        // Fetch notifications after successful login
+        if (hasToken) {
+          const notificationStore = useNotificationStore.getState();
+          notificationStore.fetchNotifications().catch((error) => {
+            console.error('Failed to fetch notifications after login:', error);
+          });
+          notificationStore.fetchUnreadCount().catch((error) => {
+            console.error('Failed to fetch unread count after login:', error);
+          });
+        }
       },
 
       updateUser: (updates: Partial<UserData>) => {
@@ -116,6 +139,10 @@ export const useUserStore = create<UserStore>()(
         get().removeToken();
         // Clear token cache (temporarily disabled)
         // tokenRefreshService.clearCache();
+
+        // Clear notifications when user logs out
+        const notificationStore = useNotificationStore.getState();
+        notificationStore.clearNotifications();
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
