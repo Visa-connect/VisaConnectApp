@@ -61,8 +61,18 @@ export class NotificationService {
     }
 
     const whereClause = whereConditions.join(' AND ');
-    const orderBy = filters.order_by || 'created_at';
-    const orderDirection = filters.order_direction || 'DESC';
+
+    // Validate and sanitize order_by and order_direction to prevent SQL injection
+    const allowedOrderColumns = ['created_at', 'read_at', 'type', 'title'];
+    const orderBy = allowedOrderColumns.includes(filters.order_by || '')
+      ? filters.order_by
+      : 'created_at';
+    const orderDirection = ['ASC', 'DESC'].includes(
+      filters.order_direction || ''
+    )
+      ? filters.order_direction
+      : 'DESC';
+
     const limit = filters.limit || 20;
     const offset = filters.offset || 0;
 
@@ -162,10 +172,10 @@ export class NotificationService {
   async deleteOldNotifications(daysOld: number = 30): Promise<number> {
     const query = `
       DELETE FROM notifications 
-      WHERE created_at < CURRENT_TIMESTAMP - INTERVAL '${daysOld} days'
+      WHERE created_at < CURRENT_TIMESTAMP - INTERVAL $1 days
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(query, [daysOld]);
     return result.rowCount || 0;
   }
 
