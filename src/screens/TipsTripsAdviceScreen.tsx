@@ -171,12 +171,13 @@ const TipsTripsAdviceScreen: React.FC = () => {
                   ? 'Be the first to share a tip, trip, or advice!'
                   : `No ${selectedFilter}s have been shared yet.`}
               </p>
-              <Button
+              {/* Temporarily hidden - only admins can create posts in initial phase */}
+              {/* <Button
                 onClick={() => navigate('/post-tips-trips-advice')}
                 className="bg-blue-600 text-white"
               >
                 Create First Post
-              </Button>
+              </Button> */}
             </div>
           ) : (
             posts.map((post) => (
