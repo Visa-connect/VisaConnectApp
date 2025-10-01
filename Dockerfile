@@ -16,6 +16,8 @@ RUN cd server && yarn install --frozen-lockfile --production
 COPY . .
 
 # Build frontend
+ARG CACHEBUST=1
+RUN echo "Cache bust: $CACHEBUST"
 RUN yarn build
 
 # Build backend TypeScript
