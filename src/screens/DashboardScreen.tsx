@@ -67,7 +67,7 @@ const DashboardScreen: React.FC = () => {
           {/* Your Dashboard Title */}
           <div className="text-center mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-4">
-              Your Dashboardddddd
+              Your Dashboard
             </h1>
           </div>
 
