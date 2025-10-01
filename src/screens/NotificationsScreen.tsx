@@ -18,7 +18,7 @@ const NotificationsScreen: React.FC = () => {
   const [selectedNotifications, setSelectedNotifications] = useState<
     Set<number>
   >(new Set());
-  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [showUnreadOnly, setShowUnreadOnly] = useState(true);
 
   const {
     notifications,
