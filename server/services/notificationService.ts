@@ -196,7 +196,16 @@ export class NotificationService {
     `;
     const typeResult = await pool.query(typeQuery, [userId]);
 
-    const by_type: Record<NotificationType, number> = {};
+    const by_type: Record<NotificationType, number> = {
+      meetup_interest: 0,
+      job_applicant: 0,
+      chat_message: 0,
+      meetup_updated: 0,
+      job_updated: 0,
+      application_status_changed: 0,
+      meetup_reminder: 0,
+      system_announcement: 0,
+    };
     typeResult.rows.forEach((row) => {
       by_type[row.type as NotificationType] = parseInt(row.type_count, 10);
     });
