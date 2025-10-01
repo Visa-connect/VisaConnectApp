@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 // import { tokenRefreshService } from '../api/firebaseAuth'; // Temporarily disabled
 import { useNotificationStore } from './notificationStore';
+import { executeWhenHydrated } from '../utils/persistUtils';
 
 // User data interface
 export interface UserData {
@@ -144,16 +145,7 @@ export const useUserStore = create<UserStore>()(
           };
 
           // Ensure notification store is hydrated first
-          const persistApi: any = (useNotificationStore as any).persist;
-          if (persistApi?.hasHydrated?.()) {
-            runFetch();
-          } else if (persistApi?.onFinishHydration) {
-            persistApi.onFinishHydration(() => {
-              runFetch();
-            });
-          } else {
-            setTimeout(runFetch, 0);
-          }
+          executeWhenHydrated(useNotificationStore, runFetch);
         }
       },
 
