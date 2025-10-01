@@ -47,23 +47,27 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      - name: Login to Heroku Container Registry
+      - name: Authenticate Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          echo "${{ secrets.HEROKU_API_KEY }}" | docker login --username=_ --password-stdin registry.heroku.com
+          heroku auth:token >/dev/null 2>&1 || true
+          heroku auth:whoami || heroku auth:token >/dev/null 2>&1
 
-      - name: Build and Push Docker Image
+      - name: Ensure Heroku app stack
         run: |
-          # Build the Docker image
-          docker build -t registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web .
+          heroku stack:set heroku-24 --app ${{ env.HEROKU_APP_NAME }}
 
-          # Push the image to Heroku Container Registry
-          docker push registry.heroku.com/${{ env.HEROKU_APP_NAME }}/web
-
-      - name: Deploy to Heroku Staging
+      - name: Add Heroku git remote
         run: |
-          # Release the container
-          heroku container:release web --app ${{ env.HEROKU_APP_NAME }}
+          heroku git:remote --app ${{ env.HEROKU_APP_NAME }} || true
+
+      - name: Push to Heroku (git) and release
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          # Push current HEAD to Heroku main
+          git push https://heroku:${HEROKU_API_KEY}@git.heroku.com/${{ env.HEROKU_APP_NAME }}.git HEAD:main --force
 
       - name: Run Database Migrations
         run: |
