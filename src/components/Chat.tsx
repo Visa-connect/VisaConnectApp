@@ -108,8 +108,11 @@ const Chat: React.FC<ChatProps> = ({
   const smoothScrollToBottom = () => {
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      // Use scrollTo to keep scroll confined to this container only
-      container.scrollTop = container.scrollHeight;
+      // Use scrollTo with smooth behavior, confined to this container only
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth',
+      });
     }
   };
 
