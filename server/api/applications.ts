@@ -6,6 +6,7 @@ import applicationsService, {
 } from '../services/applicationsService';
 import { jobsService } from '../services/jobsService';
 import { chatService } from '../services/chatService';
+import { notificationService } from '../services/notificationService';
 import { AppError, ErrorCode } from '../types/errors';
 import pool from '../db/config';
 
@@ -142,7 +143,8 @@ export default function applicationsApi(app: Express) {
             // Create conversation between applicant and employer
             const conversationId = await chatService.createConversation(
               userId,
-              job.business_user_id
+              job.business_user_id,
+              { applicantId: userId, employerId: job.business_user_id }
             );
 
             // Create initial message with application details
@@ -158,6 +160,33 @@ export default function applicationsApi(app: Express) {
               content: initialMessage,
               read: false,
             });
+
+            // Create notification for the employer
+            try {
+              const userResult = await pool.query(
+                'SELECT first_name, last_name FROM users WHERE id = $1',
+                [userId]
+              );
+              const user = userResult.rows[0] || {};
+              const applicantName =
+                `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
+                'Unknown User';
+
+              await notificationService.createJobApplicationNotification(
+                job.business_user_id,
+                applicantName,
+                job.title,
+                job.id,
+                application.id,
+                conversationId
+              );
+            } catch (notificationError) {
+              console.error(
+                'Error creating job application notification:',
+                notificationError
+              );
+              // Don't fail the application if notification creation fails
+            }
           }
         } catch (chatError) {
           console.error('Error creating chat for application:', chatError);

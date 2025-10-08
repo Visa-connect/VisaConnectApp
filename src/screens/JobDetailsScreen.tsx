@@ -11,6 +11,7 @@ import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 import { BusinessApiService } from '../api/businessApi';
+import { formatTimeAgoWithPosted } from '../utils/time';
 
 const JobDetailsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -116,23 +117,6 @@ const JobDetailsScreen: React.FC = () => {
     return 'Salary not specified';
   };
 
-  // Format time ago
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    );
-
-    if (diffInHours < 1) return 'Posted just now';
-    if (diffInHours === 1) return 'Posted 1 hour ago';
-    if (diffInHours < 24) return `Posted ${diffInHours} hours ago`;
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return 'Posted 1 day ago';
-    return `Posted ${diffInDays} days ago`;
-  };
-
   // Loading state
   if (loading) {
     return (
@@ -209,7 +193,7 @@ const JobDetailsScreen: React.FC = () => {
             <div className="flex-1">
               <div className="flex items-center mb-2">
                 <span className="text-sm text-gray-500">
-                  {formatTimeAgo(job.created_at)}
+                  {formatTimeAgoWithPosted(job.created_at)}
                 </span>
               </div>
               <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">

@@ -3,9 +3,11 @@ import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import DrawerMenu from '../components/DrawerMenu';
 import { useUserStore } from '../stores/userStore';
+import { useNotificationStore } from '../stores/notificationStore';
 
 const DashboardScreen: React.FC = () => {
   const { user, isLoading, getCompletion } = useUserStore();
+  const { unreadCount } = useNotificationStore();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -72,10 +74,23 @@ const DashboardScreen: React.FC = () => {
           {/* Notifications Section - Mobile First */}
           <div className="mb-6 md:mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-lg md:text-xl text-gray-900">
-                Notifications (0 new)
-              </h2>
-              <span className="text-gray-500 text-xl">→</span>
+              <div className="flex items-center space-x-3">
+                <h2 className="font-bold text-lg md:text-xl text-gray-900">
+                  Notifications
+                </h2>
+                {unreadCount > 0 && (
+                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => navigate('/notifications')}
+                className="text-gray-500 text-xl hover:text-gray-700 transition-colors"
+                aria-label="View all notifications"
+              >
+                →
+              </button>
             </div>
           </div>
 

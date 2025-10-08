@@ -7,6 +7,15 @@
   - Requires updating ALL input fields across the app (CreateAccountPage, LoginScreen, PostJobScreen, etc.)
   - Should be handled in a dedicated branch for design system consistency
 
+### Chat Functionality Improvements
+
+- **Chat Scroll Behavior & Header Fixes**: Improve chat interface user experience
+  - Fix smooth scroll behavior in Chat component to properly scroll to bottom
+  - Ensure chat header remains fixed/sticky while scrolling through messages
+  - Prevent scrollIntoView from affecting parent containers
+  - Optimize scroll performance and ensure consistent behavior across devices
+  - Should be handled in a dedicated branch for chat UX improvements
+
 ### Logging Improvements
 
 - **Structured Logging**: Replace `console.log` usage with a centralized logger (e.g., Winston)

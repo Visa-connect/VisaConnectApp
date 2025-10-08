@@ -9,6 +9,7 @@ import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness, JobFilters } from '../api/jobsApi';
 import { ApplicationsApiService } from '../api/applicationsApi';
+import { formatTimeAgoWithPosted } from '../utils/time';
 
 const SearchJobsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -149,23 +150,6 @@ const SearchJobsScreen: React.FC = () => {
       }+`;
     }
     return 'Salary not specified';
-  };
-
-  // Format time ago
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    );
-
-    if (diffInHours < 1) return 'Posted just now';
-    if (diffInHours === 1) return 'Posted 1 hour ago';
-    if (diffInHours < 24) return `Posted ${diffInHours} hours ago`;
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return 'Posted 1 day ago';
-    return `Posted ${diffInDays} days ago`;
   };
 
   return (
@@ -317,7 +301,7 @@ const SearchJobsScreen: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm text-gray-500">
-                          {formatTimeAgo(job.created_at)}
+                          {formatTimeAgoWithPosted(job.created_at)}
                         </span>
                         {appliedJobs.has(job.id) && (
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">

@@ -9,6 +9,7 @@ import adminAuthApi from './adminAuth';
 import businessApi from './business';
 import jobsApi from './jobs';
 import applicationsApi from './applications';
+import notificationsApi from './notifications';
 
 /**
  * Centralized API service registration
@@ -28,6 +29,7 @@ export function registerApiRoutes(app: Express): void {
   businessApi(app);
   jobsApi(app);
   applicationsApi(app);
+  notificationsApi(app);
 
   console.log('✅ All API routes registered successfully');
 }
@@ -44,4 +46,5 @@ export {
   businessApi,
   jobsApi,
   applicationsApi,
+  notificationsApi,
 };
