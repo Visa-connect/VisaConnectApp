@@ -317,10 +317,12 @@ export default function phoneMfaApi(app: Express) {
           verificationCode
         );
 
+        // Return response in the format expected by LoginResponse interface
         res.json({
           success: true,
-          data: result,
           message: 'Phone login successful',
+          user: result.user,
+          token: result.token,
         });
       } catch (error: any) {
         console.error('Phone login verification error:', error);
