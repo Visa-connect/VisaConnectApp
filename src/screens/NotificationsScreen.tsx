@@ -11,6 +11,7 @@ import {
 import DrawerMenu from '../components/DrawerMenu';
 import { useNotificationStore } from '../stores/notificationStore';
 import { Notification, NotificationType } from '../types/notifications';
+import { formatTimeAgoCompact } from '../utils/time';
 
 const NotificationsScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -111,20 +112,6 @@ const NotificationsScreen: React.FC = () => {
       default:
         return '🔔';
     }
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return 'Just now';
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-    if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)}h ago`;
-    if (diffInSeconds < 604800)
-      return `${Math.floor(diffInSeconds / 86400)}d ago`;
-    return date.toLocaleDateString();
   };
 
   // Fetch notifications on component mount
@@ -326,7 +313,7 @@ const NotificationsScreen: React.FC = () => {
                         </p>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-xs text-gray-500">
-                            {formatTimeAgo(notification.created_at)}
+                            {formatTimeAgoCompact(notification.created_at)}
                           </span>
                           {!notification.read_at && (
                             <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-800 bg-blue-100 rounded-full">

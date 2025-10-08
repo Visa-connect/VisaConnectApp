@@ -6,6 +6,7 @@ import {
   tipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../api/tipsTripsAdviceService';
+import { formatTimeAgo } from '../utils/time';
 
 const TipsTripsAdviceDetailScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -43,26 +44,6 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
   const handleChat = () => {
     // TODO: Implement chat functionality
     console.log('Opening chat for post:', post?.id);
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    );
-
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours === 1) return '1 hour ago';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return '1 day ago';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    if (diffInWeeks === 1) return '1 week ago';
-    return `${diffInWeeks} weeks ago`;
   };
 
   const getPostTypeColor = (postType: string) => {

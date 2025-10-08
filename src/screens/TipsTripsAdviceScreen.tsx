@@ -5,6 +5,7 @@ import {
   tipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../api/tipsTripsAdviceService';
+import { formatTimeAgoNoSuffix } from '../utils/time';
 
 type FilterType = 'all' | 'tip' | 'trip' | 'advice';
 
@@ -62,22 +63,6 @@ const TipsTripsAdviceScreen: React.FC = () => {
 
   const handleAuthorClick = (userId: string) => {
     navigate(`/public-profile/${userId}`);
-  };
-
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInHours = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-    );
-
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours === 1) return '1 hr';
-    if (diffInHours < 24) return `${diffInHours} hrs`;
-
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays === 1) return '1 day';
-    return `${diffInDays} days`;
   };
 
   const getPostTypeColor = (postType: string) => {
@@ -222,7 +207,7 @@ const TipsTripsAdviceScreen: React.FC = () => {
                     </div>
                   </div>
                   <span className="text-sm text-gray-500">
-                    {formatTimeAgo(post.created_at)}
+                    {formatTimeAgoNoSuffix(post.created_at)}
                   </span>
                 </div>
 
