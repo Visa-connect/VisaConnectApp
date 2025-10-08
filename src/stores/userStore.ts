@@ -97,17 +97,7 @@ export const useUserStore = create<UserStore>()(
             };
 
             // Ensure the notification store is hydrated before use to avoid race conditions
-            const persistApi: any = (useNotificationStore as any).persist;
-            if (persistApi?.hasHydrated?.()) {
-              hydrateAndFetch();
-            } else if (persistApi?.onFinishHydration) {
-              persistApi.onFinishHydration(() => {
-                hydrateAndFetch();
-              });
-            } else {
-              // Fallback: schedule on next tick
-              setTimeout(hydrateAndFetch, 0);
-            }
+            executeWhenHydrated(useNotificationStore, hydrateAndFetch);
           } catch (error) {
             console.error(
               'Failed to parse user data from localStorage:',
