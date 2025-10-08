@@ -795,20 +795,6 @@ export class PhoneMfaService {
         expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
       });
 
-      // For Firebase phone auth, we need to use the REST API
-      // Store session info for verification
-      phoneLoginSessions.set(sessionId, {
-        phoneNumber: formattedPhone,
-        userId: userQuery.rows[0].id,
-        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-      });
-
-      console.log('Phone login session created:', {
-        sessionId,
-        phoneNumber: formattedPhone,
-        userId: userQuery.rows[0].id,
-      });
-
       // Send SMS via Firebase Auth REST API
       try {
         const apiKey = config.firebase.webApiKey;
