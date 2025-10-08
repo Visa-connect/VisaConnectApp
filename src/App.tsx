@@ -45,6 +45,7 @@ import BusinessDetailScreen from './screens/admin/BusinessDetailScreen';
 import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
 import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
+import PhoneMfaEnrollScreen from './screens/PhoneMfaEnrollScreen';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import AuthenticatedLayout from './components/AuthenticatedLayout';
@@ -105,6 +106,16 @@ function App() {
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <SettingsScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/settings/mfa"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <PhoneMfaEnrollScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
