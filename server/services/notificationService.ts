@@ -63,7 +63,8 @@ export class NotificationService {
     const whereClause = whereConditions.join(' AND ');
 
     // Validate and sanitize order_by and order_direction to prevent SQL injection
-    const allowedOrderColumns = ['created_at', 'read_at', 'type', 'title'];
+    // Only allow indexed columns for optimal query performance
+    const allowedOrderColumns = ['created_at', 'read_at', 'type'];
     const orderBy = allowedOrderColumns.includes(filters.order_by || '')
       ? filters.order_by
       : 'created_at';

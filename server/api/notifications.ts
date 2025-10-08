@@ -2,7 +2,36 @@ import { Express, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { notificationService } from '../services/notificationService';
 import { AppError, ErrorCode } from '../types/errors';
-import { NotificationFilters } from '../types/notifications';
+import { NotificationFilters, NotificationType } from '../types/notifications';
+
+// Type guard for NotificationType
+function isValidNotificationType(type: unknown): type is NotificationType {
+  const validTypes: NotificationType[] = [
+    'meetup_interest',
+    'job_applicant',
+    'chat_message',
+    'meetup_updated',
+    'job_updated',
+    'application_status_changed',
+    'meetup_reminder',
+    'system_announcement',
+  ];
+  return (
+    typeof type === 'string' && validTypes.includes(type as NotificationType)
+  );
+}
+
+// Type guard for order_by field
+function isValidOrderBy(orderBy: unknown): orderBy is 'created_at' | 'read_at' {
+  return orderBy === 'created_at' || orderBy === 'read_at';
+}
+
+// Type guard for order_direction field
+function isValidOrderDirection(
+  direction: unknown
+): direction is 'ASC' | 'DESC' {
+  return direction === 'ASC' || direction === 'DESC';
+}
 
 export default function notificationsApi(app: Express) {
   // Get notifications for the authenticated user
@@ -25,14 +54,28 @@ export default function notificationsApi(app: Express) {
           order_direction = 'DESC',
         } = req.query;
 
+        // Validate notification type
+        const validatedType =
+          type && isValidNotificationType(type) ? type : undefined;
+
+        // Validate order_by
+        const validatedOrderBy = isValidOrderBy(order_by)
+          ? order_by
+          : 'created_at';
+
+        // Validate order_direction
+        const validatedOrderDirection = isValidOrderDirection(order_direction)
+          ? order_direction
+          : 'DESC';
+
         const filters: NotificationFilters = {
           user_id: userId,
-          type: type as any,
+          type: validatedType,
           read: read === 'true' ? true : read === 'false' ? false : undefined,
           limit: parseInt(limit as string),
           offset: parseInt(offset as string),
-          order_by: order_by as any,
-          order_direction: order_direction as any,
+          order_by: validatedOrderBy,
+          order_direction: validatedOrderDirection,
         };
 
         const result = await notificationService.getNotifications(filters);
