@@ -36,12 +36,10 @@ const Chat: React.FC<ChatProps> = ({
     resumeFileName: '',
   });
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const endOfMessagesRef = useRef<HTMLDivElement>(null);
-  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   // Listen to messages in this conversation with real-time updates via WebSocket
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !user) return;
 
     setIsLoading(true);
 
@@ -51,6 +49,14 @@ const Chat: React.FC<ChatProps> = ({
         const initialMessages = await chatService.getMessages(conversationId);
         setMessages(initialMessages);
         setIsLoading(false);
+
+        // Mark messages as read when conversation is opened
+        try {
+          await chatService.markMessagesAsRead(conversationId, user.uid);
+        } catch (error) {
+          console.error('Error marking messages as read:', error);
+          // Don't fail the conversation load if mark as read fails
+        }
 
         // Auto-scroll to bottom after initial messages load
         setTimeout(smoothScrollToBottom, 50);
@@ -83,7 +89,7 @@ const Chat: React.FC<ChatProps> = ({
     return () => {
       websocketService.unsubscribeFromConversation(conversationId);
     };
-  }, [conversationId]);
+  }, [conversationId, user]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -98,32 +104,12 @@ const Chat: React.FC<ChatProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Scroll to bottom of messages container only
+  // Scroll to bottom of messages container only (prevent scrolling parent containers)
   const smoothScrollToBottom = () => {
-    // Prefer a sentinel element for reliable scrolling
-    if (endOfMessagesRef.current) {
-      endOfMessagesRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'end',
-      });
-      // Also ensure the input area is visible (especially on mobile)
-      if (inputContainerRef.current) {
-        inputContainerRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-        });
-      }
-      return;
-    }
     if (messagesContainerRef.current) {
       const container = messagesContainerRef.current;
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-      if (inputContainerRef.current) {
-        inputContainerRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'end',
-        });
-      }
+      // Use scrollTo to keep scroll confined to this container only
+      container.scrollTop = container.scrollHeight;
     }
   };
 
@@ -303,7 +289,7 @@ const Chat: React.FC<ChatProps> = ({
       {/* Messages Area */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 p-4 space-y-4 overflow-y-auto"
+        className="flex-1 px-2 py-4 space-y-4 overflow-y-auto"
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
@@ -346,7 +332,7 @@ const Chat: React.FC<ChatProps> = ({
                 }`}
               >
                 <div
-                  className={`max-w-[75%] md:max-w-md px-4 py-3 rounded-2xl ${
+                  className={`max-w-[85%] md:max-w-lg px-4 py-3 rounded-2xl ${
                     isOwnMessage
                       ? 'bg-gray-200 text-gray-900 shadow-sm border border-gray-300'
                       : 'bg-white text-gray-900 shadow-sm border border-gray-200'
@@ -372,14 +358,10 @@ const Chat: React.FC<ChatProps> = ({
             );
           })
         )}
-        <div ref={endOfMessagesRef} />
       </div>
 
       {/* Message Input */}
-      <div
-        ref={inputContainerRef}
-        className="p-4 bg-gray-50 border-t border-gray-200"
-      >
+      <div className="px-2 py-4 bg-gray-50 border-t border-gray-200">
         <form
           onSubmit={handleSendMessage}
           className="flex items-center space-x-3"

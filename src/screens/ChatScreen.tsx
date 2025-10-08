@@ -92,67 +92,69 @@ const ChatScreen: React.FC = () => {
   // If a conversation is selected, show the chat view
   if (selectedConversationId) {
     return (
-      <div className="flex flex-col bg-gray-50 h-full">
-        {/* Chat Header */}
-        <div className="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center relative">
-          <button
-            onClick={() => {
-              setSelectedConversationId('');
-              // If we came from a direct conversation URL, go back to chat list
-              if (conversationId) {
-                navigate('/chat');
-              }
-            }}
-            className="absolute left-4 z-10 hover:bg-gray-100 rounded-lg p-2 transition-colors"
-          >
-            <svg
-              className="w-6 h-6 text-gray-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      <div className="flex flex-col h-full bg-gray-50">
+        {/* Chat Header - Fixed at top */}
+        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200 shadow-sm z-10">
+          <div className="relative px-4 py-3 flex items-center">
+            <button
+              onClick={() => {
+                setSelectedConversationId('');
+                // If we came from a direct conversation URL, go back to chat list
+                if (conversationId) {
+                  navigate('/chat');
+                }
+              }}
+              className="absolute left-4 z-10 hover:bg-gray-100 rounded-lg p-2 transition-colors"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
+              <svg
+                className="w-6 h-6 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
 
-          {/* Centered User Info */}
-          <div className="flex items-center justify-center flex-1">
-            {otherUserPhoto ? (
-              <img
-                src={otherUserPhoto}
-                alt={otherUserName}
-                onClick={() => navigate(`/public-profile/${otherUserId}`)}
-                className="w-10 h-10 rounded-full object-cover mr-3 cursor-pointer hover:opacity-80 transition-opacity"
-              />
-            ) : (
-              <div
-                onClick={() => navigate(`/public-profile/${otherUserId}`)}
-                className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <span className="text-gray-600 font-medium">
-                  {(otherUserDetails?.fullName || otherUserName)
-                    .charAt(0)
-                    .toUpperCase()}
-                </span>
+            {/* Centered User Info */}
+            <div className="flex items-center justify-center flex-1">
+              {otherUserPhoto ? (
+                <img
+                  src={otherUserPhoto}
+                  alt={otherUserName}
+                  onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                  className="w-10 h-10 rounded-full object-cover mr-3 cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div
+                  onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                  className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <span className="text-gray-600 font-medium">
+                    {(otherUserDetails?.fullName || otherUserName)
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="text-center">
+                <h2
+                  onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                  className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+                >
+                  {otherUserDetails?.fullName || otherUserName}
+                </h2>
               </div>
-            )}
-            <div className="text-center">
-              <h2
-                onClick={() => navigate(`/public-profile/${otherUserId}`)}
-                className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                {otherUserDetails?.fullName || otherUserName}
-              </h2>
             </div>
           </div>
         </div>
 
-        {/* Chat Messages */}
+        {/* Chat Messages - Takes remaining space and handles its own scrolling */}
         <div className="flex-1 overflow-hidden max-w-4xl mx-auto w-full">
           <Chat
             conversationId={selectedConversationId}
