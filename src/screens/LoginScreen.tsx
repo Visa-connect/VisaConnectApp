@@ -119,10 +119,15 @@ const SignInScreen: React.FC = () => {
       let recaptchaToken: string;
       try {
         recaptchaToken = await executeRecaptcha();
-        console.log(
-          'reCAPTCHA token obtained:',
-          recaptchaToken ? 'success' : 'failed'
-        );
+        // ✅ Add this logging
+        console.log('🔍 FRONTEND DEBUG:', {
+          tokenGenerated: !!recaptchaToken,
+          tokenLength: recaptchaToken?.length,
+          tokenStart: recaptchaToken?.substring(0, 50),
+          siteKey: '6Lc0X-QrAAAAALeq7oHiP6IK6C642fKGCeERAs8d',
+          currentDomain: window.location.hostname,
+          currentOrigin: window.location.origin,
+        });
       } catch (recaptchaError) {
         console.error('reCAPTCHA verification failed:', recaptchaError);
         setApiError('reCAPTCHA verification failed. Please try again.');
@@ -480,7 +485,7 @@ const SignInScreen: React.FC = () => {
               <VerificationCodeInput
                 value={verificationCode}
                 onChange={setVerificationCode}
-                onComplete={handleMfaVerification}
+                // onComplete={handleMfaVerification}
                 error={apiError}
                 disabled={submitting}
               />
