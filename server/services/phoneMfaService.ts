@@ -638,9 +638,18 @@ export class PhoneMfaService {
    * Send MFA verification code during login
    */
   async sendLoginMfaCode(
-    userId: string
+    userId: string,
+    recaptchaToken?: string // Add this parameter
   ): Promise<{ sessionId: string; maskedPhone: string }> {
     let updatedSessionId: string | undefined;
+
+    console.log('=== MFA RECAPTCHA DEBUG ===');
+    console.log('Token received:', {
+      hasToken: !!recaptchaToken,
+      length: recaptchaToken?.length,
+    });
+    console.log('===========================');
+
     try {
       // Check if user has MFA enabled
       const mfaEnabled = await this.isMfaEnabled(userId);
@@ -688,6 +697,16 @@ export class PhoneMfaService {
           throw new Error('Firebase Web API Key not configured');
         }
 
+        // Validate recaptchaToken is provided
+        if (!recaptchaToken) {
+          throw new Error('reCAPTCHA token is required for MFA verification');
+        }
+
+        console.log('Sending MFA SMS via Firebase Auth REST API:', {
+          phoneNumber,
+          hasRecaptchaToken: !!recaptchaToken,
+        });
+
         const response = await fetch(
           `https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=${apiKey}`,
           {
@@ -697,7 +716,7 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: phoneNumber,
-              recaptchaToken: 'test-recaptcha-token', // In production, this should be a real reCAPTCHA token
+              recaptchaToken: recaptchaToken, // Use the actual token
             }),
           }
         );
@@ -705,6 +724,7 @@ export class PhoneMfaService {
         const data = (await response.json()) as any;
 
         if (!response.ok) {
+          console.error('Firebase Auth API Error Details:', data);
           throw new Error(
             data.error?.message || 'Failed to send verification code'
           );
@@ -722,16 +742,21 @@ export class PhoneMfaService {
         console.log(`MFA code sent to ${phoneNumber}`);
       } catch (error: any) {
         console.error('Firebase phone auth error:', error);
-        // Fallback to test mode for development
-        console.log(`[FALLBACK] Using test mode for ${phoneNumber}`);
-        console.log(`[TEST] Test verification code: 123456`);
+
+        // Only fallback in development
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[FALLBACK] Using test mode for ${phoneNumber}`);
+          console.log(`[TEST] Test verification code: 123456`);
+        } else {
+          throw error; // In production, fail properly
+        }
       }
 
       // Mask phone number for display (show last 4 digits)
       const maskedPhone = phoneNumber.replace(/\d(?=\d{4})/g, '*');
 
       return {
-        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
+        sessionId: updatedSessionId || sessionId,
         maskedPhone,
       };
     } catch (error) {

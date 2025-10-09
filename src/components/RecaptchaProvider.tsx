@@ -47,6 +47,7 @@ export const RecaptchaProvider: React.FC<RecaptchaProviderProps> = ({
 
   const siteKey = config?.recaptcha?.siteKey || fallbackSiteKey;
   const recaptcha = useRecaptcha({ siteKey, size }); // Updated to v2
+  console.log('Using site key:', siteKey);
 
   return (
     <RecaptchaContext.Provider
