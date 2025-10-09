@@ -27,7 +27,6 @@ export const RecaptchaProvider: React.FC<RecaptchaProviderProps> = ({
   fallbackSiteKey = '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V',
 }) => {
   const [config, setConfig] = useState<PublicConfig | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -38,7 +37,7 @@ export const RecaptchaProvider: React.FC<RecaptchaProviderProps> = ({
         console.error('Failed to fetch config, using fallback:', error);
         setConfig({ recaptcha: { siteKey: fallbackSiteKey } });
       } finally {
-        setIsLoading(false);
+        // no-op
       }
     };
 

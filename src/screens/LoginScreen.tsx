@@ -67,8 +67,8 @@ const SignInScreen: React.FC = () => {
   // reCAPTCHA context
   const {
     executeRecaptcha,
-    isLoading: recaptchaLoading,
-    error: recaptchaError,
+    // isLoading: recaptchaLoading,
+    // error: recaptchaError,
   } = useRecaptchaContext();
 
   // Phone login state
