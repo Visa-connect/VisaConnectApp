@@ -250,7 +250,7 @@ export default function phoneMfaApi(app: Express) {
    */
   app.post('/api/auth/phone-login', async (req: Request, res: Response) => {
     try {
-      const { phoneNumber, countryCode } = req.body;
+      const { phoneNumber, countryCode, recaptchaToken } = req.body;
 
       console.log('Phone login request:', { phoneNumber, countryCode });
 
@@ -266,7 +266,8 @@ export default function phoneMfaApi(app: Express) {
       // We'll need to modify the service to handle phone-based lookup
       const result = await phoneMfaService.sendPhoneLoginCode(
         phoneNumber,
-        countryCode as CountryCode
+        countryCode as CountryCode,
+        recaptchaToken
       );
 
       res.json({
@@ -345,7 +346,8 @@ export default function phoneMfaApi(app: Express) {
     '/api/auth/resend-phone-login-code',
     async (req: Request, res: Response) => {
       try {
-        const { sessionId, phoneNumber, countryCode } = req.body;
+        const { sessionId, phoneNumber, countryCode, recaptchaToken } =
+          req.body;
 
         console.log('Resend phone login code request:', {
           sessionId,
@@ -357,7 +359,8 @@ export default function phoneMfaApi(app: Express) {
         if (sessionId) {
           try {
             const result = await phoneMfaService.resendPhoneLoginCode(
-              sessionId
+              sessionId,
+              recaptchaToken
             );
             res.json({
               success: true,
@@ -384,7 +387,8 @@ export default function phoneMfaApi(app: Express) {
 
         const result = await phoneMfaService.sendPhoneLoginCode(
           phoneNumber,
-          countryCode as CountryCode
+          countryCode as CountryCode,
+          recaptchaToken
         );
 
         res.json({

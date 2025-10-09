@@ -5,6 +5,7 @@ import { apiPostPublic } from '../api';
 import { useUserStore } from '../stores/userStore';
 import VerificationCodeInput from '../components/VerificationCodeInput';
 import PhoneInput, { CountryCode } from '../components/PhoneInput';
+import { useRecaptchaContext } from '../components/RecaptchaProvider';
 import logo from '../assets/images/logo.png';
 
 // Types for login response
@@ -63,6 +64,13 @@ const SignInScreen: React.FC = () => {
   // Login method toggle
   const [loginMethod, setLoginMethod] = useState<'phone' | 'email'>('phone');
 
+  // reCAPTCHA context
+  const {
+    executeRecaptcha,
+    isLoading: recaptchaLoading,
+    error: recaptchaError,
+  } = useRecaptchaContext();
+
   // Phone login state
   const [phoneNumber, setPhoneNumber] = useState('');
   const [countryCode, setCountryCode] = useState<CountryCode>('US');
@@ -107,6 +115,20 @@ const SignInScreen: React.FC = () => {
       setSubmitting(true);
       setApiError('');
 
+      // Execute reCAPTCHA verification
+      let recaptchaToken: string;
+      try {
+        recaptchaToken = await executeRecaptcha();
+        console.log(
+          'reCAPTCHA token obtained:',
+          recaptchaToken ? 'success' : 'failed'
+        );
+      } catch (recaptchaError) {
+        console.error('reCAPTCHA verification failed:', recaptchaError);
+        setApiError('reCAPTCHA verification failed. Please try again.');
+        return;
+      }
+      console.log('recaptchaToken', recaptchaToken);
       // Send verification code to phone number
       const response = await fetch('/api/auth/phone-login', {
         method: 'POST',
@@ -116,6 +138,7 @@ const SignInScreen: React.FC = () => {
         body: JSON.stringify({
           phoneNumber: phoneNumber.replace(/\D/g, ''),
           countryCode,
+          recaptchaToken,
         }),
       });
 
@@ -142,6 +165,23 @@ const SignInScreen: React.FC = () => {
       setSubmitting(true);
       setApiError('');
 
+      // Execute reCAPTCHA verification for resend
+      let recaptchaToken: string;
+      try {
+        recaptchaToken = await executeRecaptcha();
+        console.log(
+          'reCAPTCHA token for resend:',
+          recaptchaToken ? 'success' : 'failed'
+        );
+      } catch (recaptchaError) {
+        console.error(
+          'reCAPTCHA verification failed for resend:',
+          recaptchaError
+        );
+        setApiError('reCAPTCHA verification failed. Please try again.');
+        return;
+      }
+
       const endpoint =
         loginMethod === 'phone'
           ? '/api/auth/resend-phone-login-code'
@@ -154,6 +194,7 @@ const SignInScreen: React.FC = () => {
         },
         body: JSON.stringify({
           sessionId,
+          recaptchaToken,
           ...(loginMethod === 'phone' && { phoneNumber, countryCode }),
         }),
       });

@@ -11,6 +11,7 @@ import jobsApi from './jobs';
 import applicationsApi from './applications';
 import notificationsApi from './notifications';
 import phoneMfaApi from './phoneMfa';
+import { registerConfigRoutes } from './config';
 
 /**
  * Centralized API service registration
@@ -32,6 +33,7 @@ export function registerApiRoutes(app: Express): void {
   applicationsApi(app);
   notificationsApi(app);
   phoneMfaApi(app);
+  registerConfigRoutes(app);
 
   console.log('✅ All API routes registered successfully');
 }

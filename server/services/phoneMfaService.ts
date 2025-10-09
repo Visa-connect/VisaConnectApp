@@ -8,31 +8,94 @@ import { AppError, ErrorCode } from '../types/errors';
 import { formatToE164, CountryCode } from '../utils/phoneValidation';
 import { config } from '../config/env';
 import admin from 'firebase-admin';
+import jwt from 'jsonwebtoken';
+import { recaptchaService } from './recaptchaService';
 
-interface VerificationSession {
+interface VerificationSessionData {
   sessionInfo: string;
-  expiresAt: Date;
+  expiresAt: number;
+  type: 'enrollment' | 'login_mfa' | 'phone_login';
 }
 
-interface PhoneLoginSession {
+interface PhoneLoginSessionData {
   phoneNumber: string;
   userId: string;
   expiresAt: number;
   firebaseVerificationId?: string;
 }
 
-// In-memory store for verification sessions (use Redis in production)
-const verificationSessions = new Map<string, VerificationSession>();
+// JWT secret for session tokens (use environment variable in production)
+const SESSION_JWT_SECRET =
+  process.env.SESSION_JWT_SECRET || 'dev-session-secret';
 
-// In-memory store for phone login sessions
-const phoneLoginSessions = new Map<string, PhoneLoginSession>();
-
-// Rate limiting store (userId -> {count, resetTime})
+// Rate limiting store (userId -> {count, resetTime}) - TODO: Move to Redis in production
 const rateLimitStore = new Map<string, { count: number; resetTime: Date }>();
 
 export class PhoneMfaService {
   private readonly MAX_ATTEMPTS_PER_HOUR = 5;
   private readonly SESSION_EXPIRY_MINUTES = 10;
+
+  /**
+   * Validate Firebase configuration for phone authentication
+   */
+  private async validateFirebaseConfig(): Promise<void> {
+    const apiKey = config.firebase.webApiKey;
+    if (!apiKey) {
+      throw new Error(
+        'Firebase Web API Key not configured in environment variables'
+      );
+    }
+
+    // Test Firebase API connectivity
+    try {
+      const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/projects?key=${apiKey}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error('Firebase API Key validation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        throw new Error(
+          'Firebase Web API Key is invalid or has insufficient permissions'
+        );
+      }
+
+      console.log('✅ Firebase API Key validation successful');
+    } catch (error) {
+      console.error('❌ Firebase API Key validation failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a JWT session token
+   */
+  private createSessionToken(
+    data: VerificationSessionData | PhoneLoginSessionData
+  ): string {
+    return jwt.sign(data, SESSION_JWT_SECRET, {
+      expiresIn: `${this.SESSION_EXPIRY_MINUTES}m`,
+    });
+  }
+
+  /**
+   * Verify and decode a JWT session token
+   */
+  private verifySessionToken<T>(token: string): T | null {
+    try {
+      return jwt.verify(token, SESSION_JWT_SECRET) as T;
+    } catch (error) {
+      return null;
+    }
+  }
 
   /**
    * Generate Firebase ID token for authenticated user
@@ -124,6 +187,7 @@ export class PhoneMfaService {
     countryCode: CountryCode = 'US',
     recaptchaToken?: string
   ): Promise<{ sessionId: string; message: string }> {
+    let updatedSessionId: string | undefined;
     try {
       // Check rate limiting
       this.checkRateLimit(userId);
@@ -156,21 +220,18 @@ export class PhoneMfaService {
       // You'll need to use Firebase Auth REST API or a third-party SMS service
       // For now, we'll create a session and return a sessionId
 
-      // Generate a session ID
-      const sessionId = `session_${userId}_${Date.now()}`;
-      const expiresAt = new Date(
-        Date.now() + this.SESSION_EXPIRY_MINUTES * 60 * 1000
-      );
-
-      // Store session (in production, use Redis)
-      verificationSessions.set(sessionId, {
+      // Create stateless session token for MFA enrollment
+      const sessionData: VerificationSessionData = {
         sessionInfo: JSON.stringify({
           userId,
           phoneNumber: e164Phone,
           verified: false,
         }),
-        expiresAt,
-      });
+        expiresAt: Date.now() + this.SESSION_EXPIRY_MINUTES * 60 * 1000,
+        type: 'enrollment',
+      };
+
+      const sessionId = this.createSessionToken(sessionData);
 
       // Increment rate limit
       this.incrementRateLimit(userId);
@@ -191,7 +252,7 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: e164Phone,
-              recaptchaToken: recaptchaToken || 'test-token',
+              recaptchaToken: recaptchaToken || 'test-recaptcha-token',
             }),
           }
         );
@@ -204,11 +265,14 @@ export class PhoneMfaService {
           );
         }
 
-        // Update session with Firebase verification ID
-        verificationSessions.set(sessionId, {
+        // Create new session token with Firebase verification ID
+        const updatedSessionData: VerificationSessionData = {
           sessionInfo: data.sessionInfo,
-          expiresAt,
-        });
+          expiresAt: Date.now() + this.SESSION_EXPIRY_MINUTES * 60 * 1000,
+          type: 'enrollment',
+        };
+
+        updatedSessionId = this.createSessionToken(updatedSessionData);
 
         console.log(`SMS verification code sent to ${e164Phone}`);
       } catch (error: any) {
@@ -219,7 +283,7 @@ export class PhoneMfaService {
       }
 
       return {
-        sessionId,
+        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
         message: `Verification code sent to ${e164Phone}`,
       };
     } catch (error) {
@@ -241,8 +305,11 @@ export class PhoneMfaService {
   async resendEnrollmentCode(
     sessionId: string
   ): Promise<{ sessionId: string; message: string }> {
+    let updatedSessionId: string | undefined;
     try {
-      const session = verificationSessions.get(sessionId);
+      // Verify and decode the JWT session token
+      const session =
+        this.verifySessionToken<VerificationSessionData>(sessionId);
       if (!session) {
         throw new AppError(
           'Invalid or expired session',
@@ -251,8 +318,7 @@ export class PhoneMfaService {
         );
       }
 
-      if (session.expiresAt < new Date()) {
-        verificationSessions.delete(sessionId);
+      if (session.expiresAt < Date.now()) {
         throw new AppError('Session expired', ErrorCode.SESSION_EXPIRED, 400);
       }
 
@@ -278,7 +344,7 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: phoneNumber,
-              recaptchaToken: 'test-token',
+              recaptchaToken: 'test-recaptcha-token',
             }),
           }
         );
@@ -291,11 +357,14 @@ export class PhoneMfaService {
           );
         }
 
-        // Update session with new Firebase verification ID
-        verificationSessions.set(sessionId, {
+        // Create new session token with updated Firebase verification ID
+        const updatedSessionData: VerificationSessionData = {
           sessionInfo: data.sessionInfo,
           expiresAt: session.expiresAt,
-        });
+          type: 'enrollment',
+        };
+
+        updatedSessionId = this.createSessionToken(updatedSessionData);
 
         // Increment rate limit
         this.incrementRateLimit(userId);
@@ -309,7 +378,7 @@ export class PhoneMfaService {
       }
 
       return {
-        sessionId,
+        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
         message: `Verification code resent to ${phoneNumber}`,
       };
     } catch (error) {
@@ -331,8 +400,11 @@ export class PhoneMfaService {
   async resendLoginMfaCode(
     sessionId: string
   ): Promise<{ sessionId: string; maskedPhone: string }> {
+    let updatedSessionId: string | undefined;
     try {
-      const session = verificationSessions.get(sessionId);
+      // Verify and decode the JWT session token
+      const session =
+        this.verifySessionToken<VerificationSessionData>(sessionId);
       if (!session) {
         throw new AppError(
           'Invalid or expired session',
@@ -341,8 +413,7 @@ export class PhoneMfaService {
         );
       }
 
-      if (session.expiresAt < new Date()) {
-        verificationSessions.delete(sessionId);
+      if (session.expiresAt < Date.now()) {
         throw new AppError('Session expired', ErrorCode.SESSION_EXPIRED, 400);
       }
 
@@ -368,7 +439,7 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: phoneNumber,
-              recaptchaToken: 'test-token',
+              recaptchaToken: 'test-recaptcha-token',
             }),
           }
         );
@@ -381,11 +452,14 @@ export class PhoneMfaService {
           );
         }
 
-        // Update session with new Firebase verification ID
-        verificationSessions.set(sessionId, {
+        // Create new session token with updated Firebase verification ID
+        const updatedSessionData: VerificationSessionData = {
           sessionInfo: data.sessionInfo,
           expiresAt: session.expiresAt,
-        });
+          type: 'login_mfa',
+        };
+
+        updatedSessionId = this.createSessionToken(updatedSessionData);
 
         // Increment rate limit
         this.incrementRateLimit(userId);
@@ -402,7 +476,7 @@ export class PhoneMfaService {
       const maskedPhone = phoneNumber.replace(/\d(?=\d{4})/g, '*');
 
       return {
-        sessionId,
+        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
         maskedPhone,
       };
     } catch (error) {
@@ -426,8 +500,9 @@ export class PhoneMfaService {
     verificationCode: string
   ): Promise<{ success: boolean; userId: string; phoneNumber: string }> {
     try {
-      // Get session
-      const session = verificationSessions.get(sessionId);
+      // Verify and decode the JWT session token
+      const session =
+        this.verifySessionToken<VerificationSessionData>(sessionId);
       if (!session) {
         throw new AppError(
           'Invalid or expired verification session',
@@ -437,8 +512,7 @@ export class PhoneMfaService {
       }
 
       // Check if session expired
-      if (new Date() > session.expiresAt) {
-        verificationSessions.delete(sessionId);
+      if (session.expiresAt < Date.now()) {
         throw new AppError(
           'Verification session expired',
           ErrorCode.SESSION_EXPIRED,
@@ -472,8 +546,7 @@ export class PhoneMfaService {
         [phoneNumber, userId]
       );
 
-      // Clean up session
-      verificationSessions.delete(sessionId);
+      // No need to clean up session - JWT tokens are stateless
 
       return {
         success: true,
@@ -567,6 +640,7 @@ export class PhoneMfaService {
   async sendLoginMfaCode(
     userId: string
   ): Promise<{ sessionId: string; maskedPhone: string }> {
+    let updatedSessionId: string | undefined;
     try {
       // Check if user has MFA enabled
       const mfaEnabled = await this.isMfaEnabled(userId);
@@ -591,20 +665,18 @@ export class PhoneMfaService {
       // Check rate limiting
       this.checkRateLimit(userId);
 
-      // Generate session
-      const sessionId = `login_mfa_${userId}_${Date.now()}`;
-      const expiresAt = new Date(
-        Date.now() + this.SESSION_EXPIRY_MINUTES * 60 * 1000
-      );
-
-      verificationSessions.set(sessionId, {
+      // Create stateless session token for login MFA
+      const sessionData: VerificationSessionData = {
         sessionInfo: JSON.stringify({
           userId,
           phoneNumber,
           type: 'login_mfa',
         }),
-        expiresAt,
-      });
+        expiresAt: Date.now() + this.SESSION_EXPIRY_MINUTES * 60 * 1000,
+        type: 'login_mfa',
+      };
+
+      const sessionId = this.createSessionToken(sessionData);
 
       // Increment rate limit
       this.incrementRateLimit(userId);
@@ -625,7 +697,7 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: phoneNumber,
-              recaptchaToken: 'test-token', // In production, this should be a real reCAPTCHA token
+              recaptchaToken: 'test-recaptcha-token', // In production, this should be a real reCAPTCHA token
             }),
           }
         );
@@ -638,11 +710,14 @@ export class PhoneMfaService {
           );
         }
 
-        // Update session with Firebase verification ID
-        verificationSessions.set(sessionId, {
+        // Create new session token with Firebase verification ID
+        const updatedSessionData: VerificationSessionData = {
           sessionInfo: data.sessionInfo,
-          expiresAt,
-        });
+          expiresAt: Date.now() + this.SESSION_EXPIRY_MINUTES * 60 * 1000,
+          type: 'login_mfa',
+        };
+
+        updatedSessionId = this.createSessionToken(updatedSessionData);
 
         console.log(`MFA code sent to ${phoneNumber}`);
       } catch (error: any) {
@@ -656,7 +731,7 @@ export class PhoneMfaService {
       const maskedPhone = phoneNumber.replace(/\d(?=\d{4})/g, '*');
 
       return {
-        sessionId,
+        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
         maskedPhone,
       };
     } catch (error) {
@@ -680,8 +755,9 @@ export class PhoneMfaService {
     verificationCode: string
   ): Promise<{ success: boolean; userId: string }> {
     try {
-      // Get session
-      const session = verificationSessions.get(sessionId);
+      // Verify and decode the JWT session token
+      const session =
+        this.verifySessionToken<VerificationSessionData>(sessionId);
       if (!session) {
         throw new AppError(
           'Invalid or expired MFA session',
@@ -691,8 +767,7 @@ export class PhoneMfaService {
       }
 
       // Check if session expired
-      if (new Date() > session.expiresAt) {
-        verificationSessions.delete(sessionId);
+      if (session.expiresAt < Date.now()) {
         throw new AppError(
           'MFA session expired',
           ErrorCode.SESSION_EXPIRED,
@@ -722,8 +797,7 @@ export class PhoneMfaService {
         );
       }
 
-      // Clean up session
-      verificationSessions.delete(sessionId);
+      // No need to clean up session - JWT tokens are stateless
 
       return {
         success: true,
@@ -750,9 +824,23 @@ export class PhoneMfaService {
    */
   async sendPhoneLoginCode(
     phoneNumber: string,
-    countryCode: CountryCode
+    countryCode: CountryCode,
+    recaptchaToken?: string
   ): Promise<{ sessionId: string; maskedPhone: string }> {
+    let updatedSessionId: string | undefined;
     try {
+      // Verify reCAPTCHA token if provided
+      if (recaptchaToken) {
+        const isRecaptchaValid = await recaptchaService.verifyForPhoneAuth(
+          recaptchaToken
+        );
+        if (!isRecaptchaValid) {
+          console.warn(
+            'reCAPTCHA verification failed - continuing with test mode'
+          );
+        }
+      }
+
       // Format phone number to E.164
       const formattedPhone = formatToE164(phoneNumber, countryCode);
       if (!formattedPhone) {
@@ -783,24 +871,29 @@ export class PhoneMfaService {
         phoneVerified: userQuery.rows[0].phone_verified,
       });
 
-      // Create session for phone login
-      const sessionId = `phone_login_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
-
-      // Store session with phone number and user ID
-      phoneLoginSessions.set(sessionId, {
+      // Create stateless session token for phone login
+      const sessionData: PhoneLoginSessionData = {
         phoneNumber: formattedPhone,
         userId: userQuery.rows[0].id,
         expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-      });
+      };
+
+      const sessionId = this.createSessionToken(sessionData);
 
       // Send SMS via Firebase Auth REST API
       try {
+        // Validate Firebase configuration first
+        await this.validateFirebaseConfig();
+
         const apiKey = config.firebase.webApiKey;
         if (!apiKey) {
           throw new Error('Firebase Web API Key not configured');
         }
+
+        console.log('Sending SMS via Firebase Auth REST API:', {
+          phoneNumber: formattedPhone,
+          apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT_SET',
+        });
 
         const response = await fetch(
           `https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=${apiKey}`,
@@ -811,26 +904,39 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: formattedPhone,
-              recaptchaToken: 'test-token', // In production, this should be a real reCAPTCHA token
+              recaptchaToken: '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V',
+              // recaptchaToken: recaptchaToken || 'test-recaptcha-token', // Use real token if provided, fallback to test token
             }),
           }
         );
 
         const data = (await response.json()) as any;
+        console.log('Firebase Auth API RESPONSE :', data);
+        console.log('Firebase Auth API DATA:', response);
+
+        // console.log('Firebase Auth API Response:', {
+        //   status: response.status,
+        //   ok: response.ok,
+        //   error: data.error,
+        // });
 
         if (!response.ok) {
+          console.error('Firebase Auth API Error Details:', data);
           throw new Error(
             data.error?.message || 'Failed to send verification code'
           );
         }
 
-        // Store the session info with verification ID
-        phoneLoginSessions.set(sessionId, {
+        // Update session data with Firebase verification ID and create new token
+        const updatedSessionData: PhoneLoginSessionData = {
           phoneNumber: formattedPhone,
           userId: userQuery.rows[0].id,
           expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
           firebaseVerificationId: data.sessionInfo,
-        });
+        };
+
+        // Create new session token with Firebase verification ID
+        updatedSessionId = this.createSessionToken(updatedSessionData);
 
         console.log(`SMS verification code sent to ${formattedPhone}`);
       } catch (error: any) {
@@ -847,7 +953,7 @@ export class PhoneMfaService {
       );
 
       return {
-        sessionId,
+        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
         maskedPhone,
       };
     } catch (error) {
@@ -869,10 +975,25 @@ export class PhoneMfaService {
    * @returns Updated session info
    */
   async resendPhoneLoginCode(
-    sessionId: string
+    sessionId: string,
+    recaptchaToken?: string
   ): Promise<{ sessionId: string; maskedPhone: string }> {
+    let updatedSessionId: string | undefined;
     try {
-      const session = phoneLoginSessions.get(sessionId);
+      // Verify reCAPTCHA token if provided
+      if (recaptchaToken) {
+        const isRecaptchaValid = await recaptchaService.verifyForPhoneAuth(
+          recaptchaToken
+        );
+        if (!isRecaptchaValid) {
+          console.warn(
+            'reCAPTCHA verification failed for resend - continuing with test mode'
+          );
+        }
+      }
+
+      // Verify and decode the JWT session token
+      const session = this.verifySessionToken<PhoneLoginSessionData>(sessionId);
       if (!session) {
         throw new AppError(
           'Invalid or expired session',
@@ -882,7 +1003,6 @@ export class PhoneMfaService {
       }
 
       if (session.expiresAt < Date.now()) {
-        phoneLoginSessions.delete(sessionId);
         throw new AppError('Session expired', ErrorCode.SESSION_EXPIRED, 400);
       }
 
@@ -905,7 +1025,7 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: session.phoneNumber,
-              recaptchaToken: 'test-token', // In production, this should be a real reCAPTCHA token
+              recaptchaToken: recaptchaToken || 'test-recaptcha-token', // Use real token if provided, fallback to test token
             }),
           }
         );
@@ -918,13 +1038,15 @@ export class PhoneMfaService {
           );
         }
 
-        // Update session with new Firebase verification ID
-        phoneLoginSessions.set(sessionId, {
+        // Create new session token with updated Firebase verification ID
+        const updatedSessionData: PhoneLoginSessionData = {
           phoneNumber: session.phoneNumber,
           userId: session.userId,
           expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
           firebaseVerificationId: data.sessionInfo,
-        });
+        };
+
+        updatedSessionId = this.createSessionToken(updatedSessionData);
 
         // Increment rate limit
         this.incrementRateLimit(session.userId);
@@ -944,7 +1066,7 @@ export class PhoneMfaService {
       );
 
       return {
-        sessionId,
+        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
         maskedPhone,
       };
     } catch (error) {
@@ -978,11 +1100,11 @@ export class PhoneMfaService {
         sessionId,
         verificationCode: verificationCode ? '***' : 'missing',
       });
-      console.log('Available sessions:', Array.from(phoneLoginSessions.keys()));
 
-      const session = phoneLoginSessions.get(sessionId);
+      // Verify and decode the JWT session token
+      const session = this.verifySessionToken<PhoneLoginSessionData>(sessionId);
       if (!session) {
-        console.log('Session not found for ID:', sessionId);
+        console.log('Invalid or expired session token:', sessionId);
         throw new AppError(
           'Invalid or expired session',
           ErrorCode.SESSION_EXPIRED,
@@ -991,7 +1113,6 @@ export class PhoneMfaService {
       }
 
       if (session.expiresAt < Date.now()) {
-        phoneLoginSessions.delete(sessionId);
         throw new AppError('Session expired', ErrorCode.SESSION_EXPIRED, 400);
       }
 
