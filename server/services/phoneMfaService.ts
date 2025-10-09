@@ -946,7 +946,7 @@ export class PhoneMfaService {
 
         const data = (await response.json()) as any;
         console.log('Firebase Auth API RESPONSE:', data);
-        console.log('Firebase Auth API RESPONSE ERRORS:', data.errors);
+        console.log('Firebase Auth API RESPONSE ERRORS:', data.error.errors);
 
         if (!response.ok) {
           console.error('Firebase Auth API Error Details:', data);
