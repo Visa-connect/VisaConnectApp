@@ -828,18 +828,29 @@ export class PhoneMfaService {
     recaptchaToken?: string
   ): Promise<{ sessionId: string; maskedPhone: string }> {
     let updatedSessionId: string | undefined;
+
+    console.log('=== RECAPTCHA DEBUG ===');
+    console.log('Token received:', {
+      token: recaptchaToken,
+      type: typeof recaptchaToken,
+      length: recaptchaToken?.length,
+      firstChars: recaptchaToken?.substring(0, 30),
+      lastChars: recaptchaToken?.substring(recaptchaToken?.length - 30),
+    });
+    console.log('======================');
+
     try {
-      // Verify reCAPTCHA token if provided
-      if (recaptchaToken) {
-        const isRecaptchaValid = await recaptchaService.verifyForPhoneAuth(
-          recaptchaToken
-        );
-        if (!isRecaptchaValid) {
-          console.warn(
-            'reCAPTCHA verification failed - continuing with test mode'
-          );
-        }
-      }
+      // ❌ REMOVE THIS - Don't verify yourself, let Firebase do it
+      // if (recaptchaToken) {
+      //   const isRecaptchaValid = await recaptchaService.verifyForPhoneAuth(
+      //     recaptchaToken
+      //   );
+      //   if (!isRecaptchaValid) {
+      //     console.warn(
+      //       'reCAPTCHA verification failed - continuing with test mode'
+      //     );
+      //   }
+      // }
 
       // Format phone number to E.164
       const formattedPhone = formatToE164(phoneNumber, countryCode);
@@ -852,7 +863,6 @@ export class PhoneMfaService {
       }
 
       // Check if phone number exists in our database
-      // For phone login, we allow any user with this phone number (verified or not)
       const userQuery = await pool.query(
         'SELECT id, phone_number, phone_verified FROM users WHERE phone_number = $1',
         [formattedPhone]
@@ -882,7 +892,6 @@ export class PhoneMfaService {
 
       // Send SMS via Firebase Auth REST API
       try {
-        // Validate Firebase configuration first
         await this.validateFirebaseConfig();
 
         const apiKey = config.firebase.webApiKey;
@@ -893,6 +902,7 @@ export class PhoneMfaService {
         console.log('Sending SMS via Firebase Auth REST API:', {
           phoneNumber: formattedPhone,
           apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT_SET',
+          hasRecaptchaToken: !!recaptchaToken,
         });
 
         const response = await fetch(
@@ -904,21 +914,13 @@ export class PhoneMfaService {
             },
             body: JSON.stringify({
               phoneNumber: formattedPhone,
-              recaptchaToken: '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V',
-              // recaptchaToken: recaptchaToken || 'test-recaptcha-token', // Use real token if provided, fallback to test token
+              recaptchaToken: recaptchaToken, // ✅ Use the actual token from frontend
             }),
           }
         );
 
         const data = (await response.json()) as any;
-        console.log('Firebase Auth API RESPONSE :', data);
-        console.log('Firebase Auth API DATA:', response);
-
-        // console.log('Firebase Auth API Response:', {
-        //   status: response.status,
-        //   ok: response.ok,
-        //   error: data.error,
-        // });
+        console.log('Firebase Auth API RESPONSE:', data);
 
         if (!response.ok) {
           console.error('Firebase Auth API Error Details:', data);
@@ -927,21 +929,19 @@ export class PhoneMfaService {
           );
         }
 
-        // Update session data with Firebase verification ID and create new token
+        // Update session data with Firebase verification ID
         const updatedSessionData: PhoneLoginSessionData = {
           phoneNumber: formattedPhone,
           userId: userQuery.rows[0].id,
-          expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+          expiresAt: Date.now() + 10 * 60 * 1000,
           firebaseVerificationId: data.sessionInfo,
         };
 
-        // Create new session token with Firebase verification ID
         updatedSessionId = this.createSessionToken(updatedSessionData);
 
         console.log(`SMS verification code sent to ${formattedPhone}`);
       } catch (error: any) {
         console.error('Firebase phone auth error:', error);
-        // Fallback to test mode for development
         console.log(`[FALLBACK] Using test mode for ${formattedPhone}`);
         console.log(`[TEST] Test verification code: 123456`);
       }
@@ -953,7 +953,7 @@ export class PhoneMfaService {
       );
 
       return {
-        sessionId: updatedSessionId || sessionId, // Use updated session ID if Firebase SMS succeeded
+        sessionId: updatedSessionId || sessionId,
         maskedPhone,
       };
     } catch (error) {
