@@ -32,7 +32,7 @@ export const configService = {
       // Return default config as fallback
       return {
         recaptcha: {
-          siteKey: '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V', // Default test key
+          siteKey: '6Lc0X-QrAAAAALeq7oHiP6IK6C642fKGCeERAs8d', // Default test key
         },
       };
     }

@@ -6,7 +6,7 @@
 
    ```bash
    # Backend .env
-   RECAPTCHA_SITE_KEY=6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V
+   RECAPTCHA_SITE_KEY=6Lc0X-QrAAAAALeq7oHiP6IK6C642fKGCeERAs8d
    RECAPTCHA_SECRET_KEY=your_secret_key_here
    ```
 

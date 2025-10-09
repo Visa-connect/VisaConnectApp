@@ -26,7 +26,7 @@ interface RecaptchaProviderProps {
 
 export const RecaptchaProvider: React.FC<RecaptchaProviderProps> = ({
   children,
-  fallbackSiteKey = '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V', // ⚠️ Update this to your v2 site key
+  fallbackSiteKey = '6Lc0X-QrAAAAALeq7oHiP6IK6C642fKGCeERAs8d', // ⚠️ Update this to your v2 site key
   size = 'invisible',
 }) => {
   const [config, setConfig] = useState<PublicConfig | null>(null);

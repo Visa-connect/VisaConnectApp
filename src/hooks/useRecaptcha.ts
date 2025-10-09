@@ -27,7 +27,7 @@ interface UseRecaptchaV2Return {
 }
 
 export const useRecaptcha = ({
-  siteKey = '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V',
+  siteKey = '6Lc0X-QrAAAAALeq7oHiP6IK6C642fKGCeERAs8d',
   size = 'invisible',
 }: UseRecaptchaV2Options): UseRecaptchaV2Return => {
   const [isLoading, setIsLoading] = useState(false);

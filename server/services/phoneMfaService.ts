@@ -854,16 +854,6 @@ export class PhoneMfaService {
   ): Promise<{ sessionId: string; maskedPhone: string }> {
     let updatedSessionId: string | undefined;
 
-    console.log('=== RECAPTCHA DEBUG ===');
-    console.log('Token received:', {
-      token: recaptchaToken,
-      type: typeof recaptchaToken,
-      length: recaptchaToken?.length,
-      firstChars: recaptchaToken?.substring(0, 30),
-      lastChars: recaptchaToken?.substring(recaptchaToken?.length - 30),
-    });
-    console.log('======================');
-
     try {
       // ❌ REMOVE THIS - Don't verify yourself, let Firebase do it
       // if (recaptchaToken) {
@@ -949,7 +939,6 @@ export class PhoneMfaService {
         console.log('Firebase Auth API RESPONSE ERRORS:', data.error.errors);
 
         if (!response.ok) {
-          console.error('Firebase Auth API Error Details:', data);
           throw new Error(
             data.error?.message || 'Failed to send verification code'
           );
