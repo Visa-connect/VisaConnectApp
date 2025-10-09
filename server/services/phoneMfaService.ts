@@ -32,7 +32,7 @@ const SESSION_JWT_SECRET =
 const rateLimitStore = new Map<string, { count: number; resetTime: Date }>();
 
 export class PhoneMfaService {
-  private readonly MAX_ATTEMPTS_PER_HOUR = 5;
+  private readonly MAX_ATTEMPTS_PER_HOUR = 6;
   private readonly SESSION_EXPIRY_MINUTES = 10;
 
   /**
