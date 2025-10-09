@@ -4,39 +4,39 @@ declare global {
   interface Window {
     grecaptcha: {
       ready: (callback: () => void) => void;
-      execute: (
-        siteKey: string,
-        options: { action: string }
-      ) => Promise<string>;
       render: (element: string | HTMLElement, options: any) => number;
       getResponse: (widgetId?: number) => string;
       reset: (widgetId?: number) => void;
+      execute: (widgetId?: number) => void;
     };
   }
 }
 
-interface UseRecaptchaOptions {
+interface UseRecaptchaV2Options {
   siteKey?: string;
-  action?: string;
+  size?: 'invisible' | 'normal';
 }
 
-interface UseRecaptchaReturn {
+interface UseRecaptchaV2Return {
   executeRecaptcha: () => Promise<string>;
+  resetRecaptcha: () => void;
   isLoading: boolean;
   error: string | null;
   isReady: boolean;
+  widgetId: number | null;
 }
 
 export const useRecaptcha = ({
-  siteKey = '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V', // Default test key
-  action = 'submit',
-}: UseRecaptchaOptions): UseRecaptchaReturn => {
+  siteKey = '6LelP-MrAAAAAOpk2tRqiK2wz2UAWI_yULbibn6V',
+  size = 'invisible',
+}: UseRecaptchaV2Options): UseRecaptchaV2Return => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [widgetId, setWidgetId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Load reCAPTCHA script if not already loaded
+    // Load reCAPTCHA v2 script
     const loadRecaptchaScript = () => {
       if (window.grecaptcha) {
         setIsReady(true);
@@ -44,13 +44,14 @@ export const useRecaptcha = ({
       }
 
       const script = document.createElement('script');
-      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+      // Note: No render parameter for v2
+      script.src = 'https://www.google.com/recaptcha/api.js';
       script.async = true;
       script.defer = true;
       script.onload = () => {
         window.grecaptcha.ready(() => {
           setIsReady(true);
-          console.log('reCAPTCHA script loaded and ready');
+          console.log('reCAPTCHA v2 script loaded and ready');
         });
       };
       script.onerror = () => {
@@ -60,7 +61,7 @@ export const useRecaptcha = ({
     };
 
     loadRecaptchaScript();
-  }, [siteKey]);
+  }, []);
 
   const executeRecaptcha = useCallback(async (): Promise<string> => {
     if (!window.grecaptcha || !isReady) {
@@ -71,24 +72,58 @@ export const useRecaptcha = ({
     setError(null);
 
     try {
-      // Execute reCAPTCHA v3 (invisible)
-      const token = await window.grecaptcha.execute(siteKey, { action });
-      return token;
+      return new Promise((resolve, reject) => {
+        // Create a container if it doesn't exist
+        let container = document.getElementById('recaptcha-container');
+        if (!container) {
+          container = document.createElement('div');
+          container.id = 'recaptcha-container';
+          document.body.appendChild(container);
+        }
+
+        // Render the reCAPTCHA widget
+        const id = window.grecaptcha.render(container, {
+          sitekey: siteKey,
+          size: size,
+          callback: (token: string) => {
+            setIsLoading(false);
+            resolve(token);
+          },
+          'error-callback': () => {
+            setIsLoading(false);
+            reject(new Error('reCAPTCHA verification failed'));
+          },
+        });
+
+        setWidgetId(id);
+
+        // For invisible reCAPTCHA, execute immediately
+        if (size === 'invisible') {
+          window.grecaptcha.execute(id);
+        }
+      });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'reCAPTCHA execution failed';
       setError(errorMessage);
+      setIsLoading(false);
       console.error('reCAPTCHA execution failed:', err);
       throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
     }
-  }, [siteKey, action, isReady]);
+  }, [siteKey, size, isReady]);
+
+  const resetRecaptcha = useCallback(() => {
+    if (widgetId !== null && window.grecaptcha) {
+      window.grecaptcha.reset(widgetId);
+    }
+  }, [widgetId]);
 
   return {
     executeRecaptcha,
+    resetRecaptcha,
     isLoading,
     error,
     isReady,
+    widgetId,
   };
 };
