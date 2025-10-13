@@ -39,10 +39,6 @@ export enum ErrorCode {
   FORBIDDEN = 'FORBIDDEN',
   CONFLICT = 'CONFLICT',
   INVALID_INPUT = 'INVALID_INPUT',
-
-  // MFA errors
-  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
-  SESSION_EXPIRED = 'SESSION_EXPIRED',
 }
 
 export class AppError extends Error {

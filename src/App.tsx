@@ -47,7 +47,6 @@ import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
 import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
 import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
-// import PhoneMfaEnrollScreen from './screens/PhoneMfaEnrollScreen'; // Disabled phone MFA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import AuthenticatedLayout from './components/AuthenticatedLayout';
@@ -119,17 +118,6 @@ function App() {
             </AuthenticatedRoute>
           }
         />
-        {/* Phone MFA route disabled */}
-        {/* <Route
-          path="/settings/mfa"
-          element={
-            <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <PhoneMfaEnrollScreen />
-              </AuthenticatedLayout>
-            </AuthenticatedRoute>
-          }
-        /> */}
         <Route
           path="/edit-profile"
           element={
