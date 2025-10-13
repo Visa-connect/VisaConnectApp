@@ -187,3 +187,23 @@ export async function resetPassword(
     { email }
   );
 }
+
+// Change email functions (authenticated endpoints)
+export async function initiateEmailChange(
+  newEmail: string,
+  password: string
+): Promise<{ success: boolean; message: string }> {
+  return apiPost<{ success: boolean; message: string }>(
+    '/api/auth/change-email',
+    { newEmail, password }
+  );
+}
+
+export async function verifyEmailChange(
+  verificationToken: string
+): Promise<{ success: boolean; message: string }> {
+  return apiPost<{ success: boolean; message: string }>(
+    '/api/auth/verify-email-change',
+    { verificationToken }
+  );
+}

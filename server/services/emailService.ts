@@ -809,6 +809,302 @@ If you need help, contact us at ${FROM_EMAIL}
 This is an automated email from VisaConnect.
     `;
   }
+
+  /**
+   * Send email change verification email to new email address
+   */
+  async sendEmailChangeVerificationEmail(
+    newEmail: string,
+    verificationToken: string
+  ): Promise<boolean> {
+    if (!this.sendGrid) {
+      console.log(
+        '📧 Email service not available, skipping email change verification email'
+      );
+      return false;
+    }
+
+    try {
+      const subject = 'Verify Your New Email Address - VisaConnect';
+
+      const htmlContent = this.generateEmailChangeVerificationEmailHTML(
+        newEmail,
+        verificationToken
+      );
+      const textContent = this.generateEmailChangeVerificationEmailText(
+        newEmail,
+        verificationToken
+      );
+
+      const msg = {
+        to: newEmail,
+        from: FROM_EMAIL,
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await this.sendGrid.send(msg);
+      console.log(`✅ Email change verification email sent to ${newEmail}`);
+      return true;
+    } catch (error: any) {
+      console.error(
+        '❌ Failed to send email change verification email:',
+        error.response
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Send email change confirmation email to new email address
+   */
+  async sendEmailChangeConfirmationEmail(
+    newEmail: string,
+    oldEmail: string
+  ): Promise<boolean> {
+    if (!this.sendGrid) {
+      console.log(
+        '📧 Email service not available, skipping email change confirmation email'
+      );
+      return false;
+    }
+
+    try {
+      const subject = 'Email Address Successfully Changed - VisaConnect';
+
+      const htmlContent = this.generateEmailChangeConfirmationEmailHTML(
+        newEmail,
+        oldEmail
+      );
+      const textContent = this.generateEmailChangeConfirmationEmailText(
+        newEmail,
+        oldEmail
+      );
+
+      const msg = {
+        to: newEmail,
+        from: FROM_EMAIL,
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await this.sendGrid.send(msg);
+      console.log(`✅ Email change confirmation email sent to ${newEmail}`);
+      return true;
+    } catch (error: any) {
+      console.error(
+        '❌ Failed to send email change confirmation email:',
+        error.response
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Generate HTML content for email change verification email
+   */
+  private generateEmailChangeVerificationEmailHTML(
+    newEmail: string,
+    verificationToken: string
+  ): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your New Email Address</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #3B82F6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .verification-info { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+          .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 14px; }
+          .button { display: inline-block; background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .warning { background-color: #FEF3C7; border: 1px solid #F59E0B; color: #92400E; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Verify Your New Email Address</h1>
+            <p>Complete your email address change for VisaConnect</p>
+          </div>
+          <div class="content">
+            <div class="verification-info">
+              <h2>Email Address Change Request</h2>
+              <p>You requested to change your VisaConnect account email address to:</p>
+              <p style="font-size: 18px; font-weight: bold; color: #3B82F6;">${newEmail}</p>
+              <p>Enter this verification code in the VisaConnect app to complete your email change:</p>
+              <div style="background-color: #f3f4f6; border: 2px solid #3B82F6; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                <p style="font-size: 32px; font-weight: bold; color: #3B82F6; margin: 0; letter-spacing: 4px;">${verificationToken}</p>
+              </div>
+              <p style="color: #6B7280; font-size: 14px;">This code will expire in 24 hours.</p>
+            </div>
+            <div class="warning">
+              <strong>⚠️ Important Security Information:</strong>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>This verification code will expire in 24 hours</li>
+                <li>If you didn't request this email change, please ignore this email</li>
+                <li>Your current email address will remain active until verification is complete</li>
+                <li>Never share this verification code with anyone</li>
+              </ul>
+            </div>
+            <p>To complete the email change:</p>
+            <ol style="margin: 10px 0; padding-left: 20px; color: #6B7280;">
+              <li>Open the VisaConnect app</li>
+              <li>Go to Settings → Change Email</li>
+              <li>Enter the verification code: <strong>${verificationToken}</strong></li>
+            </ol>
+          </div>
+          <div class="footer">
+            <p>This is an automated email from VisaConnect</p>
+            <p>If you need help, contact us at ${FROM_EMAIL}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate text content for email change verification email
+   */
+  private generateEmailChangeVerificationEmailText(
+    newEmail: string,
+    verificationToken: string
+  ): string {
+    return `
+Verify Your New Email Address - VisaConnect
+
+Complete your email address change for VisaConnect
+
+Email Address Change Request
+
+You requested to change your VisaConnect account email address to:
+${newEmail}
+
+To verify this new email address, enter this verification code in the VisaConnect app:
+${verificationToken}
+
+⚠️ Important Security Information:
+- This verification code will expire in 24 hours
+- If you didn't request this email change, please ignore this email
+- Your current email address will remain active until verification is complete
+- Never share this verification code with anyone
+
+To complete the email change:
+1. Open the VisaConnect app
+2. Go to Settings → Change Email
+3. Enter the verification code: ${verificationToken}
+
+If you need help, contact us at ${FROM_EMAIL}
+
+This is an automated email from VisaConnect.
+    `;
+  }
+
+  /**
+   * Generate HTML content for email change confirmation email
+   */
+  private generateEmailChangeConfirmationEmailHTML(
+    newEmail: string,
+    oldEmail: string
+  ): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email Address Successfully Changed</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .confirmation-info { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+          .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 14px; }
+          .button { display: inline-block; background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .info { background-color: #EBF8FF; border: 1px solid #3B82F6; color: #1E40AF; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>✅ Email Address Changed Successfully!</h1>
+            <p>Your VisaConnect account has been updated</p>
+          </div>
+          <div class="content">
+            <div class="confirmation-info">
+              <h2>Email Change Confirmed</h2>
+              <p>Your VisaConnect account email address has been successfully changed:</p>
+              <div style="margin: 20px 0; padding: 15px; background-color: #f3f4f6; border-radius: 6px;">
+                <p style="margin: 5px 0;"><strong>Previous Email:</strong> ${oldEmail}</p>
+                <p style="margin: 5px 0;"><strong>New Email:</strong> ${newEmail}</p>
+              </div>
+              <p>You can now use your new email address to sign in to VisaConnect.</p>
+              <a href="${
+                config.email.appUrl || 'https://visaconnect.com'
+              }" class="button">Sign In to VisaConnect</a>
+            </div>
+            <div class="info">
+              <strong>ℹ️ What's Next:</strong>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>Use your new email address (${newEmail}) to sign in</li>
+                <li>All future notifications will be sent to this new address</li>
+                <li>Your account settings and data remain unchanged</li>
+                <li>If you need to change your email again, you can do so in Settings</li>
+              </ul>
+            </div>
+          </div>
+          <div class="footer">
+            <p>This is an automated confirmation from VisaConnect</p>
+            <p>If you need help, contact us at ${FROM_EMAIL}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate text content for email change confirmation email
+   */
+  private generateEmailChangeConfirmationEmailText(
+    newEmail: string,
+    oldEmail: string
+  ): string {
+    return `
+✅ Email Address Changed Successfully!
+
+Your VisaConnect account has been updated
+
+Email Change Confirmed
+
+Your VisaConnect account email address has been successfully changed:
+
+Previous Email: ${oldEmail}
+New Email: ${newEmail}
+
+You can now use your new email address to sign in to VisaConnect.
+
+Sign In to VisaConnect: ${config.email.appUrl || 'https://visaconnect.com'}
+
+ℹ️ What's Next:
+- Use your new email address (${newEmail}) to sign in
+- All future notifications will be sent to this new address
+- Your account settings and data remain unchanged
+- If you need to change your email again, you can do so in Settings
+
+If you need help, contact us at ${FROM_EMAIL}
+
+This is an automated confirmation from VisaConnect.
+    `;
+  }
 }
 
 export const emailService = new EmailService();

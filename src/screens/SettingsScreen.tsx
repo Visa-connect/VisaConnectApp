@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DrawerMenu from '../components/DrawerMenu';
 import ResponsiveTest from '../components/ResponsiveTest';
 import Modal from '../components/Modal';
-import { resetPassword } from '../api';
+import { resetPassword, initiateEmailChange, verifyEmailChange } from '../api';
 import { useUserStore } from '../stores/userStore';
 import {
   UserIcon,
@@ -28,6 +28,16 @@ const SettingsScreen: React.FC = () => {
     title: string;
     message: string;
   } | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailModalContent, setEmailModalContent] = useState<{
+    type: 'form' | 'success' | 'error' | 'verification';
+    title: string;
+    message: string;
+  } | null>(null);
+  const [newEmail, setNewEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [verificationToken, setVerificationToken] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useUserStore();
 
   const handleLogout = () => {
@@ -72,6 +82,112 @@ const SettingsScreen: React.FC = () => {
           'An error occurred while sending the password reset email. Please try again.',
       });
       setShowPasswordModal(true);
+    }
+  };
+
+  const handleChangeEmail = () => {
+    setNewEmail('');
+    setPassword('');
+    setEmailModalContent({
+      type: 'form',
+      title: 'Change Email Address',
+      message:
+        'Enter your new email address and current password to change your email.',
+    });
+    setShowEmailModal(true);
+  };
+
+  const handleEmailSubmit = async () => {
+    if (!newEmail.trim() || !password.trim()) {
+      setEmailModalContent({
+        type: 'error',
+        title: 'Error',
+        message: 'Please fill in all fields.',
+      });
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      setEmailModalContent({
+        type: 'error',
+        title: 'Error',
+        message: 'Please enter a valid email address.',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await initiateEmailChange(newEmail, password);
+      if (result.success) {
+        setEmailModalContent({
+          type: 'verification',
+          title: 'Check Your Email',
+          message:
+            "We've sent a verification email to your new address. Please check your inbox and follow the instructions.",
+        });
+      } else {
+        setEmailModalContent({
+          type: 'error',
+          title: 'Failed',
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error('Email change error:', error);
+      setEmailModalContent({
+        type: 'error',
+        title: 'Error',
+        message:
+          'An error occurred while changing your email. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEmailVerification = async () => {
+    if (!verificationToken.trim()) {
+      setEmailModalContent({
+        type: 'error',
+        title: 'Error',
+        message: 'Please enter the verification code from your email.',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = await verifyEmailChange(verificationToken);
+      if (result.success) {
+        setEmailModalContent({
+          type: 'success',
+          title: 'Email Changed Successfully!',
+          message: result.message,
+        });
+        // Clear the form data
+        setNewEmail('');
+        setPassword('');
+        setVerificationToken('');
+      } else {
+        setEmailModalContent({
+          type: 'error',
+          title: 'Verification Failed',
+          message: result.message,
+        });
+      }
+    } catch (error) {
+      console.error('Email verification error:', error);
+      setEmailModalContent({
+        type: 'error',
+        title: 'Error',
+        message:
+          'An error occurred while verifying your email. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -296,6 +412,141 @@ const SettingsScreen: React.FC = () => {
             OK
           </button>
         </div>
+      </Modal>
+
+      {/* Email Change Modal */}
+      <Modal
+        isOpen={showEmailModal}
+        onClose={() => setShowEmailModal(false)}
+        title={emailModalContent?.title}
+        showCloseButton={true}
+        size="md"
+      >
+        {emailModalContent?.type === 'form' ? (
+          <div className="space-y-4">
+            <p className="text-gray-700 mb-4">{emailModalContent?.message}</p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Email Address
+              </label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter new email address"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter your current password"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                disabled={isSubmitting}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailSubmit}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Verification'}
+              </button>
+            </div>
+          </div>
+        ) : emailModalContent?.type === 'verification' ? (
+          <div className="space-y-4">
+            <div className="text-center mb-6">
+              <div className="flex justify-center mb-4">
+                <EnvelopeIcon className="w-12 h-12 text-blue-500" />
+              </div>
+              <p className="text-gray-700 mb-4">{emailModalContent?.message}</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Check your new email address:</strong> {newEmail}
+                </p>
+                <p className="text-sm text-blue-700 mt-2">
+                  Click the verification link in the email, then enter the
+                  verification code below.
+                </p>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Verification Code
+              </label>
+              <input
+                type="text"
+                value={verificationToken}
+                onChange={(e) => setVerificationToken(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter verification code from email"
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={() => {
+                  setEmailModalContent({
+                    type: 'form',
+                    title: 'Change Email Address',
+                    message:
+                      'Enter your new email address and current password to change your email.',
+                  });
+                  setVerificationToken('');
+                }}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                disabled={isSubmitting}
+              >
+                Back
+              </button>
+              <button
+                onClick={handleEmailVerification}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Verifying...' : 'Verify Email'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="flex justify-center mb-4">
+              {emailModalContent?.type === 'success' ? (
+                <CheckCircleIcon className="w-12 h-12 text-green-500" />
+              ) : (
+                <ExclamationTriangleIcon className="w-12 h-12 text-red-500" />
+              )}
+            </div>
+            <p className="text-gray-700 mb-6 leading-relaxed">
+              {emailModalContent?.message}
+            </p>
+            <button
+              onClick={() => setShowEmailModal(false)}
+              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                emailModalContent?.type === 'success'
+                  ? 'bg-green-600 hover:bg-green-700 text-white'
+                  : 'bg-red-600 hover:bg-red-700 text-white'
+              }`}
+            >
+              OK
+            </button>
+          </div>
+        )}
       </Modal>
 
       {/* Responsive Test Component */}

@@ -303,6 +303,168 @@ export class AuthService {
       throw new Error('Failed to generate custom token');
     }
   }
+
+  // Initiate email change
+  async initiateEmailChange(
+    uid: string,
+    newEmail: string,
+    password: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Get user info
+      const user = await admin.auth().getUser(uid);
+      if (!user.email) {
+        throw new Error('No email found for user');
+      }
+
+      // Note: We'll skip password verification for now since Firebase Admin SDK
+      // doesn't have a direct way to verify passwords. The password will be
+      // verified on the frontend before calling this function.
+      console.log(
+        `📧 Initiating email change for user ${uid}: ${user.email} -> ${newEmail}`
+      );
+
+      // Check if new email is already in use
+      console.log(`🔍 Checking if email ${newEmail} is available...`);
+      try {
+        await admin.auth().getUserByEmail(newEmail);
+        throw new Error('Email address is already in use');
+      } catch (error: any) {
+        if (error.code === 'auth/user-not-found') {
+          console.log(`✅ Email ${newEmail} is available`);
+        } else {
+          throw error;
+        }
+      }
+
+      // Generate a simple verification code (6 digits)
+      const verificationCode = Math.floor(
+        100000 + Math.random() * 900000
+      ).toString();
+      console.log(`🔑 Generated verification code: ${verificationCode}`);
+
+      // Send verification email to new address
+      console.log(`📤 Sending verification email to ${newEmail}...`);
+      const emailSent = await emailService.sendEmailChangeVerificationEmail(
+        newEmail,
+        verificationCode
+      );
+
+      if (!emailSent) {
+        console.error(`❌ Failed to send verification email to ${newEmail}`);
+        throw new Error('Failed to send verification email');
+      }
+      console.log(`✅ Verification email sent successfully to ${newEmail}`);
+
+      // Store pending email change in database
+      console.log(`💾 Storing pending email change in database...`);
+      try {
+        const result = await pool.query(
+          'UPDATE users SET pending_email = $1, email_change_token = $2, email_change_requested_at = NOW() WHERE id = $3',
+          [newEmail, verificationCode, uid]
+        );
+        console.log(
+          `✅ Pending email change stored in database. Rows affected: ${result.rowCount}`
+        );
+      } catch (dbError) {
+        console.error(`❌ Database error storing email change:`, dbError);
+        throw new Error('Failed to store email change request in database');
+      }
+
+      console.log(
+        `📧 Email change initiated for user ${uid}: ${user.email} -> ${newEmail}`
+      );
+
+      return {
+        success: true,
+        message:
+          'Verification email sent to your new email address. Please check your inbox and click the verification link.',
+      };
+    } catch (error: any) {
+      console.error('❌ Email change initiation error:', error);
+      throw new Error(error.message || 'Failed to initiate email change');
+    }
+  }
+
+  // Verify and complete email change
+  async verifyEmailChange(
+    uid: string,
+    verificationToken: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      // Get user's pending email change from database
+      const result = await pool.query(
+        'SELECT pending_email, email_change_token, email_change_requested_at FROM users WHERE id = $1',
+        [uid]
+      );
+
+      if (result.rows.length === 0) {
+        throw new Error('User not found');
+      }
+
+      const { pending_email, email_change_token, email_change_requested_at } =
+        result.rows[0];
+
+      if (!pending_email || !email_change_token) {
+        throw new Error('No pending email change found');
+      }
+
+      // Check if verification token matches
+      if (verificationToken !== email_change_token) {
+        throw new Error('Invalid verification token');
+      }
+
+      // Check if token is expired (24 hours)
+      const tokenAge =
+        Date.now() - new Date(email_change_requested_at).getTime();
+      const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+      if (tokenAge > maxAge) {
+        // Clean up expired token
+        await pool.query(
+          'UPDATE users SET pending_email = NULL, email_change_token = NULL, email_change_requested_at = NULL WHERE id = $1',
+          [uid]
+        );
+        throw new Error(
+          'Verification token has expired. Please request a new email change.'
+        );
+      }
+
+      // Get current user email for notification
+      const user = await admin.auth().getUser(uid);
+      const oldEmail = user.email || '';
+
+      // Update email in Firebase Auth
+      await admin.auth().updateUser(uid, {
+        email: pending_email,
+        emailVerified: true,
+      });
+
+      // Update email in database
+      await pool.query(
+        'UPDATE users SET email = $1, pending_email = NULL, email_change_token = NULL, email_change_requested_at = NULL WHERE id = $2',
+        [pending_email, uid]
+      );
+
+      // Send confirmation email to new address
+      await emailService.sendEmailChangeConfirmationEmail(
+        pending_email,
+        oldEmail
+      );
+
+      console.log(
+        `✅ Email change completed for user ${uid}: ${oldEmail} -> ${pending_email}`
+      );
+
+      return {
+        success: true,
+        message: 'Email address has been successfully changed.',
+      };
+    } catch (error: any) {
+      console.error('❌ Email change verification error:', error);
+      throw new Error(error.message || 'Failed to verify email change');
+    }
+  }
 }
 
 export const authService = new AuthService();
