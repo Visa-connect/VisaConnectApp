@@ -15,7 +15,7 @@ import { uploadTipsPhoto } from '../services/firebaseStorageService';
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
   fileFilter: (req, file, cb) => {
     // Accept image files only
@@ -29,6 +29,22 @@ const upload = multer({
 });
 
 export default function tipsTripsAdviceApi(app: Express) {
+  // Multer error handling middleware
+  app.use((error: any, req: Request, res: Response, next: any) => {
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File too large. Maximum file size is 10MB.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${error.message}`,
+      });
+    }
+    next(error);
+  });
   // Create a new Tips, Trips, or Advice post
   app.post(
     '/api/tips-trips-advice',

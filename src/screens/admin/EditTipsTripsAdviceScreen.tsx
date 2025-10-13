@@ -317,7 +317,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                       photos
                     </p>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, WebP up to 10MB
                     </p>
                   </div>
                   <input
