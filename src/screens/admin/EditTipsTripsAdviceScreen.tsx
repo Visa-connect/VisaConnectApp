@@ -137,16 +137,6 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       }));
 
       setPhotos((prev) => [...prev, ...newPhotos]);
-
-      // Log compression results
-      compressionResults.forEach((result, index) => {
-        console.log(`Photo ${index + 1} compressed:`, {
-          originalSize: formatFileSize(result.originalSize),
-          compressedSize: formatFileSize(result.compressedSize),
-          compressionRatio: `${result.compressionRatio}%`,
-          dimensions: `${result.dimensions.original.width}x${result.dimensions.original.height} → ${result.dimensions.compressed.width}x${result.dimensions.compressed.height}`,
-        });
-      });
     } catch (error) {
       console.error('Error compressing images:', error);
       setError('Failed to compress images. Please try again.');
@@ -200,17 +190,6 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
           existingPhotoIds: existingPhotos.map((p) => p.id),
         }), // Photos to keep
       };
-
-      console.log('Frontend sending update data:', {
-        title: updateData.title,
-        description: updateData.description,
-        post_type: updateData.post_type,
-        hasNewPhotos,
-        newPhotosCount: newPhotos.length,
-        hasDeletedPhotos,
-        existingPhotosCount: existingPhotos.length,
-        existingPhotoIds: existingPhotos.map((p) => p.id),
-      });
 
       await adminTipsTripsAdviceService.updatePost(postId, updateData);
       navigate('/admin/tipsTripsAndAdvice');

@@ -273,15 +273,16 @@ export default function tipsTripsAdviceApi(app: Express) {
 
         let photosToKeep: number[] = [];
         if (existingPhotoIds) {
-          if (Array.isArray(existingPhotoIds)) {
-            photosToKeep = existingPhotoIds.map((id: string) =>
-              parseInt(id.trim())
-            );
-          } else if (typeof existingPhotoIds === 'string') {
-            photosToKeep = existingPhotoIds
-              .split(',')
-              .map((id: string) => parseInt(id.trim()));
+          // API contract: existingPhotoIds must be an array of photo IDs
+          if (!Array.isArray(existingPhotoIds)) {
+            return res.status(400).json({
+              success: false,
+              message: 'existingPhotoIds must be an array of photo IDs',
+            });
           }
+          photosToKeep = existingPhotoIds.map((id: string) =>
+            parseInt(id.trim())
+          );
         }
 
         console.log('Parsed photosToKeep:', photosToKeep);
@@ -341,8 +342,6 @@ export default function tipsTripsAdviceApi(app: Express) {
           ...(uploadedPhotos.length > 0 && { photos: uploadedPhotos }),
           ...(photosToKeep.length > 0 && { photosToKeep }),
         };
-
-        console.log('Updating post with data:', updateData);
 
         await tipsTripsAdviceService.updatePost(postId, updateData, userId);
 
