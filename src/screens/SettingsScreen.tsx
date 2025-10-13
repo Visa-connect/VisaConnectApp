@@ -5,7 +5,7 @@ import ResponsiveTest from '../components/ResponsiveTest';
 import Modal from '../components/Modal';
 import { resetPassword, initiateEmailChange, verifyEmailChange } from '../api';
 import { openVisaConnectEmail } from '../utils/emailUtils';
-import { isValidEmail, VALIDATION_MESSAGES } from '../utils/validation';
+import { isValidEmail } from '../utils/validation';
 import { useUserStore } from '../stores/userStore';
 import {
   UserIcon,

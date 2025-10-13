@@ -69,7 +69,6 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       try {
         setLoadingPost(true);
         const postData = await adminTipsTripsAdviceService.getPostById(postId);
-        console.log('Fetched post data from API for edit:', postData);
         setPost(postData);
         setFormData({
           title: postData.title,
