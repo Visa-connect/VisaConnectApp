@@ -199,13 +199,16 @@ router.post(
       console.log('📧 Email change request received:', {
         userId: req.user?.uid,
         newEmail: req.body.newEmail,
-        hasPassword: !!req.body.password
+        hasPassword: !!req.body.password,
       });
 
       const { newEmail, password } = req.body;
 
       if (!newEmail || !password) {
-        console.log('❌ Missing required fields:', { newEmail: !!newEmail, password: !!password });
+        console.log('❌ Missing required fields:', {
+          newEmail: !!newEmail,
+          password: !!password,
+        });
         return res.status(400).json({
           success: false,
           message: 'New email and password are required',
@@ -222,7 +225,9 @@ router.post(
         });
       }
 
-      console.log('✅ Validation passed, calling authService.initiateEmailChange...');
+      console.log(
+        '✅ Validation passed, calling authService.initiateEmailChange...'
+      );
       const result = await authService.initiateEmailChange(
         req.user!.uid,
         newEmail,

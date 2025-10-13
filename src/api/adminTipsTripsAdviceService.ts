@@ -1,6 +1,7 @@
 import {
   adminApiGet,
   adminApiPost,
+  adminApiPostFormData,
   adminApiPut,
   adminApiDelete,
 } from './adminApi';
@@ -80,10 +81,31 @@ class AdminTipsTripsAdviceService {
 
   // Create new post with admin authentication
   async createPost(postData: CreatePostData): Promise<TipsTripsAdvicePost> {
-    return adminApiPost<TipsTripsAdvicePost>(
-      '/api/tips-trips-advice',
-      postData
-    );
+    // Check if we have photos (File objects)
+    const hasPhotos = postData.photos && postData.photos.length > 0;
+
+    if (hasPhotos) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      formData.append('title', postData.title);
+      formData.append('description', postData.description);
+      formData.append('post_type', postData.post_type);
+
+      postData.photos?.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+
+      return adminApiPostFormData<TipsTripsAdvicePost>(
+        '/api/tips-trips-advice',
+        formData
+      );
+    } else {
+      // Use JSON for posts without photos
+      return adminApiPost<TipsTripsAdvicePost>(
+        '/api/tips-trips-advice',
+        postData
+      );
+    }
   }
 
   // Update post with admin authentication

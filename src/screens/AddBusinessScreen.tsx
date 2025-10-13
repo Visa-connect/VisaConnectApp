@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { BusinessApiService, BusinessSubmission } from '../api/businessApi';
-import { uploadBusinessLogo } from '../api/cloudinary';
+import { uploadBusinessLogo } from '../api/firebaseStorage';
 
 const AddBusinessScreen: React.FC = () => {
   const navigate = useNavigate();

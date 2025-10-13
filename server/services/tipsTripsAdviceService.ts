@@ -59,13 +59,22 @@ export class TipsTripsAdviceService {
         if (postData.photos && postData.photos.length > 0) {
           for (let i = 0; i < postData.photos.length; i++) {
             const photo = postData.photos[i];
+
+            // Validate that photo_url is not null or empty
+            if (!photo.photo_url) {
+              console.error(`Photo ${i + 1} is missing photo_url:`, photo);
+              throw new Error(
+                `Photo ${i + 1} is missing required photo_url field`
+              );
+            }
+
             await client.query(
               `INSERT INTO tips_trips_advice_photos (post_id, photo_url, photo_public_id, display_order)
                VALUES ($1, $2, $3, $4)`,
               [
                 postId,
                 photo.photo_url,
-                photo.photo_public_id,
+                photo.photo_public_id || null, // Allow null for photo_public_id
                 photo.display_order || i + 1,
               ]
             );

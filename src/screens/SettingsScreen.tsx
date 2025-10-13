@@ -99,6 +99,7 @@ const SettingsScreen: React.FC = () => {
 
   const handleEmailSubmit = async () => {
     if (!newEmail.trim() || !password.trim()) {
+      console.log('missing fields');
       setEmailModalContent({
         type: 'error',
         title: 'Error',
@@ -110,6 +111,7 @@ const SettingsScreen: React.FC = () => {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
+      console.log('invalid email');
       setEmailModalContent({
         type: 'error',
         title: 'Error',
@@ -121,6 +123,7 @@ const SettingsScreen: React.FC = () => {
     setIsSubmitting(true);
     try {
       const result = await initiateEmailChange(newEmail, password);
+      console.log('email change result', result);
       if (result.success) {
         setEmailModalContent({
           type: 'verification',
@@ -224,7 +227,7 @@ const SettingsScreen: React.FC = () => {
       icon: UserIcon,
       onClick: () => navigate('/edit-profile'),
     },
-    { label: 'Change Email', icon: LockClosedIcon, onClick: () => {} },
+    { label: 'Change Email', icon: LockClosedIcon, onClick: handleChangeEmail },
     {
       label: 'Change Password',
       icon: LockClosedIcon,
@@ -303,11 +306,13 @@ const SettingsScreen: React.FC = () => {
                 const isEditProfile = item.label === 'Edit profile';
                 const isEmailVisaConnect = item.label === 'Email VisaConnect';
                 const isChangePassword = item.label === 'Change Password';
+                const isChangeEmail = item.label === 'Change Email';
                 const isEnabled =
                   isLogout ||
                   isEditProfile ||
                   isEmailVisaConnect ||
-                  isChangePassword;
+                  isChangePassword ||
+                  isChangeEmail;
 
                 return (
                   <button

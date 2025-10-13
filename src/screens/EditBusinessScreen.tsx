@@ -4,7 +4,7 @@ import { ArrowLeftIcon, CloudArrowUpIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import { BusinessApiService, BusinessSubmission } from '../api/businessApi';
-import { uploadBusinessLogo } from '../api/cloudinary';
+import { uploadBusinessLogo } from '../api/firebaseStorage';
 
 const EditBusinessScreen: React.FC = () => {
   const navigate = useNavigate();

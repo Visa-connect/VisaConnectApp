@@ -86,12 +86,14 @@ export async function apiGet<T>(url: string): Promise<T> {
 
 export async function apiPost<T>(url: string, body: any): Promise<T> {
   const makeRequest = async (): Promise<Response> => {
+    console.log('URL', `${API_BASE_URL}${url}`);
     const res = await fetch(`${API_BASE_URL}${url}`, {
       method: 'POST',
       headers: defaultHeaders(),
       body: JSON.stringify(body),
     });
     if (!res.ok) {
+      console.log('error', await res.text());
       const error = new Error(await res.text()) as ApiError;
       error.status = res.status;
       throw error;
@@ -100,7 +102,9 @@ export async function apiPost<T>(url: string, body: any): Promise<T> {
   };
 
   const res = await handleTokenRefresh(makeRequest);
-  return res.json();
+  const jsonData = await res.json();
+  console.log('res', jsonData);
+  return jsonData;
 }
 
 // Public POST for registration/login (no auth required)
@@ -193,6 +197,7 @@ export async function initiateEmailChange(
   newEmail: string,
   password: string
 ): Promise<{ success: boolean; message: string }> {
+  console.log('starting email change');
   return apiPost<{ success: boolean; message: string }>(
     '/api/auth/change-email',
     { newEmail, password }

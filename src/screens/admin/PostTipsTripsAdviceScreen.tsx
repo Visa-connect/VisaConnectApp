@@ -64,8 +64,7 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // TODO: Implement photo upload to Cloudinary
-      // For now, we'll create the post without photos
+      // Create the post data with files
       const postData: CreatePostData = {
         title: formData.title,
         description: formData.description,
@@ -73,11 +72,23 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
         photos: photos.map((photo) => photo.file),
       };
 
+      console.log('Creating post with data:', {
+        title: postData.title,
+        description: postData.description,
+        post_type: postData.post_type,
+        photosCount: postData.photos?.length || 0,
+        photoNames: postData.photos?.map((p) => p.name) || [],
+      });
+
       await adminTipsTripsAdviceService.createPost(postData);
       navigate('/admin/tipsTripsAndAdvice');
     } catch (err) {
       console.error('Error creating post:', err);
-      setError('Failed to create post. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create post. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
