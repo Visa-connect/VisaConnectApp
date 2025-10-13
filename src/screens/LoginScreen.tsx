@@ -42,7 +42,7 @@ interface LoginResponse {
     profile_photo_public_id?: string;
     bio?: string;
   };
-  token?: string; // Firebase ID token for authenticated API calls
+  token: string; // Firebase ID token for authenticated API calls - always present on successful login
 }
 
 const Input = React.forwardRef<
@@ -106,11 +106,9 @@ const SignInScreen: React.FC = () => {
         }
       );
 
-      if (loginResponse.user) {
-        // Store the Firebase ID token if provided by backend
-        if (loginResponse.token) {
-          setToken(loginResponse.token);
-        }
+      if (loginResponse.success) {
+        // Store the Firebase ID token (always present on successful login)
+        setToken(loginResponse.token);
 
         const userData = {
           uid: loginResponse.user.id,

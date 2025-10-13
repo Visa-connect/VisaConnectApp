@@ -100,7 +100,6 @@ const SettingsScreen: React.FC = () => {
 
   const handleEmailSubmit = async () => {
     if (!newEmail.trim() || !password.trim()) {
-      console.log('missing fields');
       setEmailModalContent({
         type: 'error',
         title: 'Error',
@@ -112,7 +111,6 @@ const SettingsScreen: React.FC = () => {
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
-      console.log('invalid email');
       setEmailModalContent({
         type: 'error',
         title: 'Error',
@@ -124,7 +122,6 @@ const SettingsScreen: React.FC = () => {
     setIsSubmitting(true);
     try {
       const result = await initiateEmailChange(newEmail, password);
-      console.log('email change result', result);
       if (result.success) {
         setEmailModalContent({
           type: 'verification',
@@ -140,7 +137,6 @@ const SettingsScreen: React.FC = () => {
         });
       }
     } catch (error) {
-      console.error('Email change error:', error);
       setEmailModalContent({
         type: 'error',
         title: 'Error',

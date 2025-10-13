@@ -90,14 +90,10 @@ export const compressImage = async (
             }
 
             // Create new File object
-            const compressedFile = new File(
-              [finalBlob],
-              file.name,
-              {
-                type: `image/${format}`,
-                lastModified: Date.now(),
-              }
-            );
+            const compressedFile = new File([finalBlob], file.name, {
+              type: `image/${format}`,
+              lastModified: Date.now(),
+            });
 
             resolve({
               file: compressedFile,
@@ -195,7 +191,11 @@ const compressWithReducedQuality = async (
 export const compressImages = async (
   files: File[],
   options: CompressionOptions = {},
-  onProgress?: (completed: number, total: number, result?: CompressionResult) => void
+  onProgress?: (
+    completed: number,
+    total: number,
+    result?: CompressionResult
+  ) => void
 ): Promise<CompressionResult[]> => {
   const results: CompressionResult[] = [];
 

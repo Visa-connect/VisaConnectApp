@@ -194,7 +194,6 @@ export async function initiateEmailChange(
   newEmail: string,
   password: string
 ): Promise<{ success: boolean; message: string }> {
-  console.log('starting email change');
   return apiPost<{ success: boolean; message: string }>(
     '/api/auth/change-email',
     { newEmail, password }

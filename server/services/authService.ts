@@ -9,7 +9,14 @@ export interface AuthResponse {
   success: boolean;
   message: string;
   user: User;
-  token?: string; // Firebase ID token for authenticated API calls
+  token: string; // Firebase ID token for authenticated API calls - always present on successful login
+}
+
+export interface RegistrationResponse {
+  success: boolean;
+  message: string;
+  user: User;
+  token?: string; // Optional for registration - may not be present if auto-login fails
 }
 
 export interface LoginData {
@@ -34,7 +41,9 @@ export interface RegisterData {
 
 export class AuthService {
   // Register a new user
-  async registerUser(registerData: RegisterData): Promise<AuthResponse> {
+  async registerUser(
+    registerData: RegisterData
+  ): Promise<RegistrationResponse> {
     try {
       // 1. Create Firebase user account
       const firebaseUser = await admin.auth().createUser({
@@ -88,6 +97,7 @@ export class AuthService {
           success: true,
           message: 'User registered successfully. Please log in.',
           user: userProfile,
+          // No token provided - user needs to log in manually
         };
       }
 
