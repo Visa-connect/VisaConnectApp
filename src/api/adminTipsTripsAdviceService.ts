@@ -3,6 +3,7 @@ import {
   adminApiPost,
   adminApiPostFormData,
   adminApiPut,
+  adminApiPutFormData,
   adminApiDelete,
 } from './adminApi';
 
@@ -23,8 +24,8 @@ export interface TipsTripsAdvicePost {
   };
   photos?: {
     id: string;
-    url: string;
-    public_id: string;
+    photo_url: string;
+    photo_public_id: string;
   }[];
   likes_count: number;
   comments_count: number;
@@ -113,10 +114,34 @@ class AdminTipsTripsAdviceService {
     postId: string,
     postData: UpdatePostData
   ): Promise<TipsTripsAdvicePost> {
-    return adminApiPut<TipsTripsAdvicePost>(
-      `/api/tips-trips-advice/${postId}`,
-      postData
-    );
+    // Check if we have photos (File objects)
+    const hasPhotos = postData.photos && postData.photos.length > 0;
+
+    if (hasPhotos) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      if (postData.title) formData.append('title', postData.title);
+      if (postData.description)
+        formData.append('description', postData.description);
+      if (postData.post_type) formData.append('post_type', postData.post_type);
+      if (postData.is_active !== undefined)
+        formData.append('is_active', postData.is_active.toString());
+
+      postData.photos?.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+
+      return adminApiPutFormData<TipsTripsAdvicePost>(
+        `/api/tips-trips-advice/${postId}`,
+        formData
+      );
+    } else {
+      // Use JSON for updates without photos
+      return adminApiPut<TipsTripsAdvicePost>(
+        `/api/tips-trips-advice/${postId}`,
+        postData
+      );
+    }
   }
 
   // Delete post with admin authentication

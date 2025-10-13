@@ -46,6 +46,7 @@ import BusinessDetailScreen from './screens/admin/BusinessDetailScreen';
 import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
 import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
+import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
 // import PhoneMfaEnrollScreen from './screens/PhoneMfaEnrollScreen'; // Disabled phone MFA
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
@@ -455,6 +456,18 @@ function App() {
               <AdminRoute>
                 <AdminLayout>
                   <EditTipsTripsAdviceScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/tipsTripsAndAdvice/view/:postId"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <ViewTipsTripsAdviceScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>

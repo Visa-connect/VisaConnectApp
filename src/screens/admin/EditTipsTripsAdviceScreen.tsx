@@ -26,7 +26,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
   });
   const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
   const [existingPhotos, setExistingPhotos] = useState<
-    { id: number; url: string; public_id: string }[]
+    { id: number; photo_url: string; photo_public_id: string }[]
   >([]);
 
   useEffect(() => {
@@ -45,8 +45,8 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
         setExistingPhotos(
           (postData.photos || []).map((photo) => ({
             id: parseInt(photo.id),
-            url: photo.url,
-            public_id: photo.public_id,
+            photo_url: photo.photo_url,
+            photo_public_id: photo.photo_public_id,
           }))
         );
       } catch (err) {
@@ -243,7 +243,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                 {existingPhotos.map((photo, index) => (
                   <div key={photo.id} className="relative group">
                     <img
-                      src={photo.url}
+                      src={photo.photo_url}
                       alt={`Existing content ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg"
                     />
