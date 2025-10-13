@@ -10,7 +10,6 @@ import businessApi from './business';
 import jobsApi from './jobs';
 import applicationsApi from './applications';
 import notificationsApi from './notifications';
-import { registerConfigRoutes } from './config';
 
 /**
  * Centralized API service registration
@@ -31,7 +30,6 @@ export function registerApiRoutes(app: Express): void {
   jobsApi(app);
   applicationsApi(app);
   notificationsApi(app);
-  registerConfigRoutes(app);
 
   console.log('✅ All API routes registered successfully');
 }

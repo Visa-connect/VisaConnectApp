@@ -34,10 +34,6 @@ interface Config {
     adminDashboardUrl: string | undefined;
     appUrl: string | undefined;
   };
-  recaptcha: {
-    siteKey: string | undefined;
-    secretKey: string | undefined;
-  };
 }
 
 export const config: Config = {
@@ -68,9 +64,5 @@ export const config: Config = {
     fromEmail: process.env.FROM_EMAIL,
     adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL,
     appUrl: process.env.APP_URL,
-  },
-  recaptcha: {
-    siteKey: process.env.RECAPTCHA_SITE_KEY,
-    secretKey: process.env.RECAPTCHA_SECRET_KEY,
   },
 };

@@ -9,7 +9,6 @@ import LifestyleScreen from './screens/wizard/LifestyleScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import NotificationsScreen from './screens/NotificationsScreen';
 import SignInScreen from './screens/LoginScreen';
-import { RecaptchaProvider } from './components/RecaptchaProvider';
 import SettingsScreen from './screens/SettingsScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
 import AddBusinessScreen from './screens/AddBusinessScreen';
@@ -58,14 +57,7 @@ function App() {
         {/* Public routes - no authentication required */}
         <Route path="/" element={<LoginPage />} />
         <Route path="/create-account" element={<CreateAccountPage />} />
-        <Route
-          path="/sign-in"
-          element={
-            <RecaptchaProvider>
-              <SignInScreen />
-            </RecaptchaProvider>
-          }
-        />
+        <Route path="/sign-in" element={<SignInScreen />} />
 
         {/* Protected routes - authentication required */}
         <Route
