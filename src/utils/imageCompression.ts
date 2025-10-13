@@ -47,6 +47,9 @@ export const compressImage = async (
     }
 
     img.onload = () => {
+      // ✅ STEP 1: Revoke immediately - image is loaded, URL no longer needed
+      URL.revokeObjectURL(img.src);
+
       try {
         // Store original dimensions
         const originalDimensions = {
@@ -117,9 +120,12 @@ export const compressImage = async (
     };
 
     img.onerror = () => {
+      // ✅ STEP 2: Also revoke on error to prevent memory leak
+      URL.revokeObjectURL(img.src);
       reject(new Error('Failed to load image'));
     };
 
+    // ✅ STEP 3: Create blob URL and assign (executes last, triggers loading)
     img.src = URL.createObjectURL(file);
   });
 };

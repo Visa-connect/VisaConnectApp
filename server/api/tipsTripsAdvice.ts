@@ -79,10 +79,6 @@ export default function tipsTripsAdviceApi(app: Express) {
 
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            console.log(
-              `Uploading photo ${i + 1}/${files.length}: ${file.originalname}`
-            );
-
             const uploadResult = await uploadTipsPhoto(
               file.buffer,
               file.originalname,
@@ -125,19 +121,6 @@ export default function tipsTripsAdviceApi(app: Express) {
           post_type,
           photos: uploadedPhotos,
         };
-
-        console.log('Creating post with data:', {
-          title: postData.title,
-          description: postData.description,
-          post_type: postData.post_type,
-          photosCount: postData.photos?.length || 0,
-          photos: postData.photos?.map((photo, index) => ({
-            index,
-            photo_url: photo.photo_url,
-            photo_public_id: photo.photo_public_id,
-            display_order: photo.display_order,
-          })),
-        });
 
         const postId = await tipsTripsAdviceService.createPost(
           postData,
