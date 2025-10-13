@@ -22,12 +22,43 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { name: 'Social', path: '/social', key: 'social', enabled: true },
     { name: 'Chat', path: '/chat', key: 'chat', enabled: true },
     { name: 'Settings', path: '/settings', key: 'settings', enabled: true },
-    { name: 'Contact', path: '/contact', key: 'contact', enabled: false },
+    { name: 'Contact', path: '/contact', key: 'contact', enabled: true },
   ];
+
+  const handleEmailVisaConnect = () => {
+    const email = 'contact@visaconnectus.com';
+    const subject = encodeURIComponent('VisaConnect Support');
+    const body = encodeURIComponent('Hi VisaConnect team,\n\n');
+    const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
+
+    // Create and click a temporary link immediately (within user gesture)
+    try {
+      const tempLink = document.createElement('a');
+      tempLink.href = mailtoUrl;
+      tempLink.style.display = 'none';
+      document.body.appendChild(tempLink);
+      tempLink.click();
+      document.body.removeChild(tempLink);
+    } catch (error) {
+      console.error('Failed to open email client:', error);
+      // Fallback: show instructions
+      alert(
+        'Unable to open email client automatically.\n\n' +
+          'Please manually send an email to: ' +
+          email +
+          '\n' +
+          'Subject: VisaConnect Support'
+      );
+    }
+  };
 
   const handleNavClick = (item: (typeof navItems)[0]) => {
     if (item.enabled) {
-      navigate(item.path);
+      if (item.key === 'contact') {
+        handleEmailVisaConnect();
+      } else {
+        navigate(item.path);
+      }
     }
   };
 

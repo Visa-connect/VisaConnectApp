@@ -15,6 +15,7 @@ const AuthenticatedLayout: React.FC<AuthenticatedLayoutProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Determine current page based on pathname
+  // Note: Contact tab triggers email action, not navigation, so no path handling needed
   const getCurrentPage = (pathname: string): string => {
     if (pathname === '/dashboard') return 'dashboard';
     if (pathname === '/work') return 'work';

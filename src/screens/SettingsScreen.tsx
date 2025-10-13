@@ -132,7 +132,7 @@ const SettingsScreen: React.FC = () => {
     {
       label: 'Preferences',
       icon: InformationCircleIcon,
-      onClick: () => {},
+      onClick: () => navigate('/background'),
     },
     {
       label: 'Jobs applied to',
@@ -229,6 +229,7 @@ const SettingsScreen: React.FC = () => {
             </h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               {menuItemsPreferences.map((item, idx) => {
+                const isPreferences = item.label === 'Preferences';
                 const isMeetupsPosted = item.label === 'Meetups posted';
                 const isMeetupsInterested =
                   item.label === "Meetups I'm interested in";
@@ -236,6 +237,7 @@ const SettingsScreen: React.FC = () => {
                 const isJobsPosted =
                   item.label === 'Jobs posted (only for approved employers)';
                 const isEnabled =
+                  isPreferences ||
                   isMeetupsPosted ||
                   isMeetupsInterested ||
                   isJobsApplied ||
