@@ -10,7 +10,7 @@ import businessApi from './business';
 import jobsApi from './jobs';
 import applicationsApi from './applications';
 import notificationsApi from './notifications';
-import phoneMfaApi from './phoneMfa';
+// import phoneMfaApi from './phoneMfa';
 import { registerConfigRoutes } from './config';
 
 /**
@@ -32,7 +32,7 @@ export function registerApiRoutes(app: Express): void {
   jobsApi(app);
   applicationsApi(app);
   notificationsApi(app);
-  phoneMfaApi(app);
+  // phoneMfaApi(app); // Disabled phone MFA functionality
   registerConfigRoutes(app);
 
   console.log('✅ All API routes registered successfully');
@@ -51,5 +51,5 @@ export {
   jobsApi,
   applicationsApi,
   notificationsApi,
-  phoneMfaApi,
+  // phoneMfaApi, // Disabled phone MFA functionality
 };

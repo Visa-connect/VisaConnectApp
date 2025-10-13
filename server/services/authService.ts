@@ -15,7 +15,6 @@ export interface AuthResponse {
 export interface LoginData {
   email: string;
   password: string;
-  mfaVerified?: boolean; // Flag to skip MFA check after verification
 }
 
 export interface RegisterData {
@@ -153,26 +152,7 @@ export class AuthService {
       const authData = (await verifyPasswordResponse.json()) as any;
       const firebaseUid = authData.localId;
 
-      // 2. Check if user has MFA enabled (skip if already verified)
-      if (!loginData.mfaVerified) {
-        const mfaCheckQuery = await pool.query(
-          'SELECT mfa_enabled FROM users WHERE id = $1',
-          [firebaseUid]
-        );
-
-        if (
-          mfaCheckQuery.rows.length > 0 &&
-          mfaCheckQuery.rows[0].mfa_enabled
-        ) {
-          // MFA is enabled - return special response indicating MFA is required
-          return {
-            success: false,
-            message: 'MFA verification required',
-            requiresMfa: true,
-            userId: firebaseUid,
-          } as any;
-        }
-      }
+      // MFA check removed - phone verification disabled
 
       // 3. Generate a custom token using Firebase Admin SDK
       const customToken = await admin.auth().createCustomToken(firebaseUid);
