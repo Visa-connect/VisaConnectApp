@@ -63,9 +63,7 @@ export class TipsTripsAdviceService {
             // Validate that photo_url is not null or empty
             if (!photo.photo_url) {
               console.error(`Photo ${i + 1} is missing photo_url:`, photo);
-              throw new Error(
-                `Photo ${i + 1} is missing required photo_url field`
-              );
+              throw new Error(`Photo upload failed: missing image data`);
             }
 
             await client.query(

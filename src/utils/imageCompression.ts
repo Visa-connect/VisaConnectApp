@@ -21,6 +21,15 @@ export interface CompressionResult {
   };
 }
 
+// Constants for image compression
+const MIN_QUALITY = 0.1;
+const QUALITY_REDUCTION_STEP = 0.1;
+const DEFAULT_MAX_WIDTH = 1920;
+const DEFAULT_MAX_HEIGHT = 1080;
+const DEFAULT_QUALITY = 0.85;
+const DEFAULT_MAX_SIZE_KB = 2048; // 2MB
+const BYTES_PER_KB = 1024;
+
 /**
  * Compress an image file with the specified options
  */
@@ -29,11 +38,11 @@ export const compressImage = async (
   options: CompressionOptions = {}
 ): Promise<CompressionResult> => {
   const {
-    maxWidth = 1920,
-    maxHeight = 1080,
-    quality = 0.85,
+    maxWidth = DEFAULT_MAX_WIDTH,
+    maxHeight = DEFAULT_MAX_HEIGHT,
+    quality = DEFAULT_QUALITY,
     format = 'jpeg',
-    maxSizeKB = 2048, // 2MB default
+    maxSizeKB = DEFAULT_MAX_SIZE_KB,
   } = options;
 
   return new Promise((resolve, reject) => {
@@ -83,12 +92,12 @@ export const compressImage = async (
             // If the compressed image is still too large, reduce quality
             let finalBlob = blob;
 
-            if (blob.size > maxSizeKB * 1024 && quality > 0.1) {
+            if (blob.size > maxSizeKB * BYTES_PER_KB && quality > MIN_QUALITY) {
               finalBlob = await compressWithReducedQuality(
                 canvas,
                 format,
                 quality,
-                maxSizeKB * 1024
+                maxSizeKB * BYTES_PER_KB
               );
             }
 
@@ -167,7 +176,7 @@ const compressWithReducedQuality = async (
   let blob: Blob | null = null;
 
   // Reduce quality in steps until we meet the size target
-  while (quality > 0.1 && (!blob || blob.size > targetSizeBytes)) {
+  while (quality > MIN_QUALITY && (!blob || blob.size > targetSizeBytes)) {
     const currentQuality = quality; // Capture current quality value
     blob = await new Promise<Blob | null>((resolve) => {
       canvas.toBlob(
@@ -181,7 +190,7 @@ const compressWithReducedQuality = async (
       break;
     }
 
-    quality -= 0.1;
+    quality -= QUALITY_REDUCTION_STEP;
   }
 
   if (!blob) {
@@ -236,7 +245,7 @@ export const compressImages = async (
 export const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
 
-  const k = 1024;
+  const k = BYTES_PER_KB;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
