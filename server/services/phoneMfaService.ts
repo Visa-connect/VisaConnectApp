@@ -643,13 +643,6 @@ export class PhoneMfaService {
   ): Promise<{ sessionId: string; maskedPhone: string }> {
     let updatedSessionId: string | undefined;
 
-    console.log('=== MFA RECAPTCHA DEBUG ===');
-    console.log('Token received:', {
-      hasToken: !!recaptchaToken,
-      length: recaptchaToken?.length,
-    });
-    console.log('===========================');
-
     try {
       // Check if user has MFA enabled
       const mfaEnabled = await this.isMfaEnabled(userId);
@@ -855,18 +848,6 @@ export class PhoneMfaService {
     let updatedSessionId: string | undefined;
 
     try {
-      // ❌ REMOVE THIS - Don't verify yourself, let Firebase do it
-      // if (recaptchaToken) {
-      //   const isRecaptchaValid = await recaptchaService.verifyForPhoneAuth(
-      //     recaptchaToken
-      //   );
-      //   if (!isRecaptchaValid) {
-      //     console.warn(
-      //       'reCAPTCHA verification failed - continuing with test mode'
-      //     );
-      //   }
-      // }
-
       // Format phone number to E.164
       const formattedPhone = formatToE164(phoneNumber, countryCode);
       if (!formattedPhone) {
@@ -914,12 +895,6 @@ export class PhoneMfaService {
           throw new Error('Firebase Web API Key not configured');
         }
 
-        console.log('Sending SMS via Firebase Auth REST API:', {
-          phoneNumber: formattedPhone,
-          apiKey: apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT_SET',
-          hasRecaptchaToken: !!recaptchaToken,
-        });
-
         const response = await fetch(
           `https://identitytoolkit.googleapis.com/v1/accounts:sendVerificationCode?key=${apiKey}`,
           {
@@ -935,8 +910,6 @@ export class PhoneMfaService {
         );
 
         const data = (await response.json()) as any;
-        console.log('Firebase Auth API RESPONSE:', data);
-        // console.log('Firebase Auth API RESPONSE ERRORS:', data.error.errors);
 
         if (!response.ok) {
           throw new Error(
