@@ -11,10 +11,12 @@ import {
   TipsTripsAdvicePost,
   UpdatePostData,
 } from '../../api/adminTipsTripsAdviceService';
+import { useAdminStore } from '../../stores/adminStore';
 
 const EditTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
   const { postId } = useParams<{ postId: string }>();
+  const { state } = useAdminStore();
   const [loading, setLoading] = useState(false);
   const [loadingPost, setLoadingPost] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,12 +32,34 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
   >([]);
 
   useEffect(() => {
+    // First try to get the post from the admin store
+    if (state.selectedTipsTripsAdvicePost) {
+      const postData = state.selectedTipsTripsAdvicePost;
+      setPost(postData);
+      setFormData({
+        title: postData.title,
+        description: postData.description,
+        post_type: postData.post_type,
+      });
+      setExistingPhotos(
+        (postData.photos || []).map((photo: any) => ({
+          id: parseInt(photo.id),
+          photo_url: photo.photo_url,
+          photo_public_id: photo.photo_public_id,
+        }))
+      );
+      setLoadingPost(false);
+      return;
+    }
+
+    // Fallback: fetch from API if not in store
     const fetchPost = async () => {
       if (!postId) return;
 
       try {
         setLoadingPost(true);
         const postData = await adminTipsTripsAdviceService.getPostById(postId);
+        console.log('Fetched post data from API for edit:', postData);
         setPost(postData);
         setFormData({
           title: postData.title,
@@ -43,7 +67,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
           post_type: postData.post_type,
         });
         setExistingPhotos(
-          (postData.photos || []).map((photo) => ({
+          (postData.photos || []).map((photo: any) => ({
             id: parseInt(photo.id),
             photo_url: photo.photo_url,
             photo_public_id: photo.photo_public_id,
@@ -58,7 +82,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
     };
 
     fetchPost();
-  }, [postId]);
+  }, [postId, state.selectedTipsTripsAdvicePost]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -111,14 +135,31 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // TODO: Implement photo upload/delete to Cloudinary
-      // For now, we'll update the post without photo changes
+      // Handle photo updates
+      const newPhotos = photos.map((photo) => photo.file);
+      const hasNewPhotos = newPhotos.length > 0;
+      const hasDeletedPhotos = existingPhotos.length > 0; // If we started with photos but now have fewer
+
       const updateData: UpdatePostData = {
         title: formData.title,
         description: formData.description,
         post_type: formData.post_type,
-        photos: photos.map((photo) => photo.file),
+        ...(hasNewPhotos && { photos: newPhotos }), // New photos to add
+        ...(hasDeletedPhotos && {
+          existingPhotoIds: existingPhotos.map((p) => p.id),
+        }), // Photos to keep
       };
+
+      console.log('Frontend sending update data:', {
+        title: updateData.title,
+        description: updateData.description,
+        post_type: updateData.post_type,
+        hasNewPhotos,
+        newPhotosCount: newPhotos.length,
+        hasDeletedPhotos,
+        existingPhotosCount: existingPhotos.length,
+        existingPhotoIds: existingPhotos.map((p) => p.id),
+      });
 
       await adminTipsTripsAdviceService.updatePost(postId, updateData);
       navigate('/admin/tipsTripsAndAdvice');

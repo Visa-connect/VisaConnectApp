@@ -20,7 +20,6 @@ const ViewTipsTripsAdviceScreen: React.FC = () => {
   useEffect(() => {
     // First try to get the post from the admin store
     if (state.selectedTipsTripsAdvicePost) {
-      console.log('Using post from store:', state.selectedTipsTripsAdvicePost);
       setPost(state.selectedTipsTripsAdvicePost);
       setLoading(false);
       return;

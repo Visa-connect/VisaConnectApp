@@ -268,8 +268,24 @@ export default function tipsTripsAdviceApi(app: Express) {
           });
         }
 
-        const { title, description, post_type, is_active } = req.body;
+        const { title, description, post_type, is_active, existingPhotoIds } =
+          req.body;
         const files = req.files as Express.Multer.File[];
+
+        let photosToKeep: number[] = [];
+        if (existingPhotoIds) {
+          if (Array.isArray(existingPhotoIds)) {
+            photosToKeep = existingPhotoIds.map((id: string) =>
+              parseInt(id.trim())
+            );
+          } else if (typeof existingPhotoIds === 'string') {
+            photosToKeep = existingPhotoIds
+              .split(',')
+              .map((id: string) => parseInt(id.trim()));
+          }
+        }
+
+        console.log('Parsed photosToKeep:', photosToKeep);
 
         // Upload new photos if provided
         const uploadedPhotos = [];
@@ -324,6 +340,7 @@ export default function tipsTripsAdviceApi(app: Express) {
           ...(post_type && { post_type }),
           ...(is_active !== undefined && { is_active: is_active === 'true' }),
           ...(uploadedPhotos.length > 0 && { photos: uploadedPhotos }),
+          ...(photosToKeep.length > 0 && { photosToKeep }),
         };
 
         console.log('Updating post with data:', updateData);

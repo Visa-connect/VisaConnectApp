@@ -37,6 +37,12 @@ const TipsTripsAdviceListScreen: React.FC = () => {
   };
 
   const handleEdit = (postId: string) => {
+    // Find the post data from the current posts array
+    const post = posts.find((p) => p.id === postId);
+    if (post) {
+      // Store the selected post in the admin store
+      dispatch(adminActions.setSelectedTipsTripsAdvicePost(post));
+    }
     navigate(`/admin/tipsTripsAndAdvice/edit/${postId}`);
   };
 

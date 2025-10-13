@@ -90,6 +90,8 @@ export interface UpdateTipsTripsAdviceRequest {
     photo_public_id: string;
     display_order?: number;
   }[];
+  /** Optional: Array of existing photo IDs to keep */
+  photosToKeep?: number[];
 }
 
 export interface SearchTipsTripsAdviceRequest {
