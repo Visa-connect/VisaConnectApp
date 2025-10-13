@@ -221,7 +221,7 @@ export const uploadTipsPhoto = async (
   userId: string
 ): Promise<FileUploadResult> => {
   return uploadFile(buffer, originalName, mimetype, userId, {
-    maxSize: 5, // 5MB
+    maxSize: 10, // 10MB
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
     folder: 'tips-photos',
   });
