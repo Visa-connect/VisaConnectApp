@@ -693,6 +693,122 @@ Browse More Jobs: ${
 This is an automated confirmation from VisaConnect.
     `;
   }
+
+  /**
+   * Send password reset email to user
+   */
+  async sendPasswordResetEmail(
+    email: string,
+    resetLink: string
+  ): Promise<boolean> {
+    if (!this.sendGrid) {
+      console.log(
+        '📧 Email service not available, skipping password reset email'
+      );
+      return false;
+    }
+
+    try {
+      const subject = 'Password Reset - VisaConnect';
+
+      const htmlContent = this.generatePasswordResetEmailHTML(resetLink);
+      const textContent = this.generatePasswordResetEmailText(resetLink);
+
+      const msg = {
+        to: email,
+        from: FROM_EMAIL,
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      };
+
+      await this.sendGrid.send(msg);
+      console.log(`✅ Password reset email sent to ${email}`);
+      return true;
+    } catch (error: any) {
+      console.error('❌ Failed to send password reset email:', error.response);
+      return false;
+    }
+  }
+
+  /**
+   * Generate HTML content for password reset email
+   */
+  private generatePasswordResetEmailHTML(resetLink: string): string {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset - VisaConnect</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #3B82F6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .reset-info { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+          .footer { text-align: center; margin-top: 30px; color: #6B7280; font-size: 14px; }
+          .button { display: inline-block; background-color: #3B82F6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+          .warning { background-color: #FEF3C7; border: 1px solid #F59E0B; color: #92400E; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Password Reset Request</h1>
+            <p>Reset your VisaConnect account password</p>
+          </div>
+          <div class="content">
+            <div class="reset-info">
+              <h2>Reset Your Password</h2>
+              <p>We received a request to reset your password for your VisaConnect account.</p>
+              <p>Click the button below to reset your password:</p>
+              <a href="${resetLink}" class="button">Reset Password</a>
+            </div>
+            <div class="warning">
+              <strong>⚠️ Important Security Information:</strong>
+              <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>This link will expire in 1 hour for security reasons</li>
+                <li>If you didn't request this password reset, please ignore this email</li>
+                <li>Never share this link with anyone</li>
+              </ul>
+            </div>
+            <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #6B7280; font-size: 14px;">${resetLink}</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated email from VisaConnect</p>
+            <p>If you need help, contact us at ${FROM_EMAIL}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * Generate text content for password reset email
+   */
+  private generatePasswordResetEmailText(resetLink: string): string {
+    return `
+Password Reset Request - VisaConnect
+
+We received a request to reset your password for your VisaConnect account.
+
+To reset your password, click the following link:
+${resetLink}
+
+⚠️ Important Security Information:
+- This link will expire in 1 hour for security reasons
+- If you didn't request this password reset, please ignore this email
+- Never share this link with anyone
+
+If you need help, contact us at ${FROM_EMAIL}
+
+This is an automated email from VisaConnect.
+    `;
+  }
 }
 
 export const emailService = new EmailService();

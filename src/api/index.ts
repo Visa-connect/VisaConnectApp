@@ -177,3 +177,13 @@ export async function apiDelete<T>(url: string): Promise<T> {
   const res = await handleTokenRefresh(makeRequest);
   return res.json();
 }
+
+// Reset password function (public endpoint)
+export async function resetPassword(
+  email: string
+): Promise<{ success: boolean; message: string }> {
+  return apiPostPublic<{ success: boolean; message: string }>(
+    '/api/auth/reset-password',
+    { email }
+  );
+}

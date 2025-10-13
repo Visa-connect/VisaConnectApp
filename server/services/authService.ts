@@ -1,8 +1,9 @@
 import admin from 'firebase-admin';
 import pool from '../db/config';
 import { userService } from './userService';
-import { BasicUserData, CreateUserData, User } from './userService';
+import { User } from './userService';
 import { config } from '../config/env';
+import { emailService } from './emailService';
 
 export interface AuthResponse {
   success: boolean;
@@ -266,11 +267,30 @@ export class AuthService {
     try {
       const resetLink = await admin.auth().generatePasswordResetLink(email);
 
-      // In production, send this via your email service
-      console.log('Password reset link:', resetLink);
+      console.log('📧 Password reset request details:');
+      console.log('  To:', email);
+      console.log(
+        '  From:',
+        config.email.fromEmail || 'noreply@visaconnect.com'
+      );
+      console.log('  Subject: Password Reset - VisaConnect');
+      console.log('  Reset Link:', resetLink);
 
-      // await emailService.sendPasswordResetEmail(email, resetLink);
+      // Send the password reset email
+      const emailSent = await emailService.sendPasswordResetEmail(
+        email,
+        resetLink
+      );
+
+      if (!emailSent) {
+        console.warn(
+          '⚠️ Password reset email failed to send, but link was generated'
+        );
+        // Still log the link for development purposes
+        console.log('Password reset link for manual use:', resetLink);
+      }
     } catch (error) {
+      console.error('❌ Password reset error:', error);
       throw new Error('Failed to send password reset email');
     }
   }
