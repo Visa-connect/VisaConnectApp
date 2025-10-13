@@ -4,6 +4,7 @@ import DrawerMenu from '../components/DrawerMenu';
 import ResponsiveTest from '../components/ResponsiveTest';
 import Modal from '../components/Modal';
 import { resetPassword, initiateEmailChange, verifyEmailChange } from '../api';
+import { openVisaConnectEmail } from '../utils/emailUtils';
 import { useUserStore } from '../stores/userStore';
 import {
   UserIcon,
@@ -195,30 +196,7 @@ const SettingsScreen: React.FC = () => {
   };
 
   const handleEmailVisaConnect = () => {
-    const email = 'contact@visaconnectus.com';
-    const subject = encodeURIComponent('VisaConnect Support');
-    const body = encodeURIComponent('Hi VisaConnect team,\n\n');
-    const mailtoUrl = `mailto:${email}?subject=${subject}&body=${body}`;
-
-    // Create and click a temporary link immediately (within user gesture)
-    try {
-      const tempLink = document.createElement('a');
-      tempLink.href = mailtoUrl;
-      tempLink.style.display = 'none';
-      document.body.appendChild(tempLink);
-      tempLink.click();
-      document.body.removeChild(tempLink);
-    } catch (error) {
-      console.error('Failed to open email client:', error);
-      // Fallback: show instructions
-      alert(
-        'Unable to open email client automatically.\n\n' +
-          'Please manually send an email to: ' +
-          email +
-          '\n' +
-          'Subject: VisaConnect Support'
-      );
-    }
+    openVisaConnectEmail();
   };
 
   const menuItemsAccount = [

@@ -3,7 +3,6 @@ import { Auth } from 'firebase-admin/auth';
 
 const isAuthenticated =
   (auth: Auth) => async (req: Request, res: Response, next: NextFunction) => {
-    console.log('isAuthenticated');
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'No token provided.' });
