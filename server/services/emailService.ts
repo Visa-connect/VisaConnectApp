@@ -690,8 +690,7 @@ Browse More Jobs: ${
       config.email.appUrl || 'https://visaconnect.com'
     }/search-jobs
 
-This is an automated confirmation from VisaConnect.
-    `;
+This is an automated confirmation from VisaConnect.`;
   }
 
   /**

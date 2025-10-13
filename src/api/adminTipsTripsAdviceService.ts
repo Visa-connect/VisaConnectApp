@@ -6,6 +6,12 @@ import {
   adminApiDelete,
 } from './adminApi';
 
+export interface TipsTripsAdvicePhoto {
+  id: string;
+  photo_url: string;
+  photo_public_id: string;
+}
+
 export interface TipsTripsAdvicePost {
   id: string;
   title: string;
@@ -21,11 +27,7 @@ export interface TipsTripsAdvicePost {
     email: string;
     profile_photo_url: string | null;
   };
-  photos?: {
-    id: string;
-    photo_url: string;
-    photo_public_id: string;
-  }[];
+  photos?: TipsTripsAdvicePhoto[];
   likes_count: number;
   comments_count: number;
   is_liked?: boolean;

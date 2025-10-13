@@ -9,6 +9,7 @@ import Button from '../../components/Button';
 import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
+  TipsTripsAdvicePhoto,
   UpdatePostData,
 } from '../../api/adminTipsTripsAdviceService';
 import { useAdminStore } from '../../stores/adminStore';
@@ -51,13 +52,11 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
         post_type: postData.post_type,
       });
       setExistingPhotos(
-        (postData.photos || []).map(
-          (photo: NonNullable<TipsTripsAdvicePost['photos']>[0]) => ({
-            id: parseInt(photo.id),
-            photo_url: photo.photo_url,
-            photo_public_id: photo.photo_public_id,
-          })
-        )
+        (postData.photos || []).map((photo: TipsTripsAdvicePhoto) => ({
+          id: parseInt(photo.id),
+          photo_url: photo.photo_url,
+          photo_public_id: photo.photo_public_id,
+        }))
       );
       setLoadingPost(false);
       return;
@@ -78,13 +77,11 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
           post_type: postData.post_type,
         });
         setExistingPhotos(
-          (postData.photos || []).map(
-            (photo: NonNullable<TipsTripsAdvicePost['photos']>[0]) => ({
-              id: parseInt(photo.id),
-              photo_url: photo.photo_url,
-              photo_public_id: photo.photo_public_id,
-            })
-          )
+          (postData.photos || []).map((photo: TipsTripsAdvicePhoto) => ({
+            id: parseInt(photo.id),
+            photo_url: photo.photo_url,
+            photo_public_id: photo.photo_public_id,
+          }))
         );
       } catch (err) {
         console.error('Error fetching post:', err);

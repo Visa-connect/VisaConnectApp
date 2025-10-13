@@ -5,6 +5,7 @@ import ResponsiveTest from '../components/ResponsiveTest';
 import Modal from '../components/Modal';
 import { resetPassword, initiateEmailChange, verifyEmailChange } from '../api';
 import { openVisaConnectEmail } from '../utils/emailUtils';
+import { isValidEmail, VALIDATION_MESSAGES } from '../utils/validation';
 import { useUserStore } from '../stores/userStore';
 import {
   UserIcon,
@@ -109,8 +110,7 @@ const SettingsScreen: React.FC = () => {
     }
 
     // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
+    if (!isValidEmail(newEmail)) {
       setEmailModalContent({
         type: 'error',
         title: 'Error',

@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
+import { isValidEmail } from '../utils/validation';
 
 const router = express.Router();
 
@@ -216,8 +217,7 @@ router.post(
       }
 
       // Validate email format
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(newEmail)) {
+      if (!isValidEmail(newEmail)) {
         console.log('❌ Invalid email format:', newEmail);
         return res.status(400).json({
           success: false,
