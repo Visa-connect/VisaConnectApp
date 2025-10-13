@@ -1,5 +1,6 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { openVisaConnectEmail } from '../utils/emailUtils';
 
 interface DrawerMenuProps {
   open: boolean;
@@ -14,7 +15,7 @@ const menuItems = [
   { label: 'Social', route: '/social', key: 'social', enabled: true },
   { label: 'Chat', route: '/chat', key: 'chat', enabled: true },
   { label: 'Settings', route: '/settings', key: 'settings', enabled: true },
-  { label: 'Contact us', route: '/contact', key: 'contact', enabled: false },
+  { label: 'Contact us', route: '/contact', key: 'contact', enabled: true },
 ];
 
 const DrawerMenu: React.FC<DrawerMenuProps> = ({
@@ -25,10 +26,16 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({
 }) => {
   if (!open) return null;
 
+  const handleEmailVisaConnect = () => {
+    openVisaConnectEmail();
+  };
+
   const handleMenuItemClick = (item: (typeof menuItems)[0]) => {
     if (item.enabled) {
       onClose();
-      if (item.route) {
+      if (item.key === 'contact') {
+        handleEmailVisaConnect();
+      } else if (item.route) {
         navigate(item.route);
       }
     }

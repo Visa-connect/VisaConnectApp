@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
+import { openVisaConnectEmail } from '../utils/emailUtils';
 import logo from '../assets/images/logo.png';
 
 interface NavigationBarProps {
@@ -22,12 +23,20 @@ const NavigationBar: React.FC<NavigationBarProps> = ({
     { name: 'Social', path: '/social', key: 'social', enabled: true },
     { name: 'Chat', path: '/chat', key: 'chat', enabled: true },
     { name: 'Settings', path: '/settings', key: 'settings', enabled: true },
-    { name: 'Contact', path: '/contact', key: 'contact', enabled: false },
+    { name: 'Contact', path: '/contact', key: 'contact', enabled: true },
   ];
+
+  const handleEmailVisaConnect = () => {
+    openVisaConnectEmail();
+  };
 
   const handleNavClick = (item: (typeof navItems)[0]) => {
     if (item.enabled) {
-      navigate(item.path);
+      if (item.key === 'contact') {
+        handleEmailVisaConnect();
+      } else {
+        navigate(item.path);
+      }
     }
   };
 

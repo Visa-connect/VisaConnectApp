@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Business } from '../api/businessApi';
+import { TipsTripsAdvicePost } from '../api/adminTipsTripsAdviceService';
 
 // Types
 interface AdminState {
@@ -10,6 +11,8 @@ interface AdminState {
     approved: number;
     rejected: number;
   };
+  tipsTripsAdvicePosts: TipsTripsAdvicePost[];
+  selectedTipsTripsAdvicePost: TipsTripsAdvicePost | null;
   loading: boolean;
   error: string | null;
 }
@@ -20,6 +23,11 @@ type AdminAction =
   | { type: 'SET_BUSINESSES'; payload: Business[] }
   | { type: 'SET_COUNTS'; payload: AdminState['businessCounts'] }
   | { type: 'UPDATE_BUSINESS'; payload: Partial<Business> & { id: number } }
+  | { type: 'SET_TIPS_TRIPS_ADVICE_POSTS'; payload: TipsTripsAdvicePost[] }
+  | {
+      type: 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST';
+      payload: TipsTripsAdvicePost | null;
+    }
   | { type: 'CLEAR_ERROR' };
 
 // Initial state
@@ -31,6 +39,8 @@ const initialState: AdminState = {
     approved: 0,
     rejected: 0,
   },
+  tipsTripsAdvicePosts: [],
+  selectedTipsTripsAdvicePost: null,
   loading: false,
   error: null,
 };
@@ -57,6 +67,10 @@ const adminReducer = (state: AdminState, action: AdminAction): AdminState => {
             : business
         ),
       };
+    case 'SET_TIPS_TRIPS_ADVICE_POSTS':
+      return { ...state, tipsTripsAdvicePosts: action.payload };
+    case 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST':
+      return { ...state, selectedTipsTripsAdvicePost: action.payload };
     default:
       return state;
   }
@@ -112,5 +126,13 @@ export const adminActions = {
   updateBusiness: (business: Partial<Business> & { id: number }) => ({
     type: 'UPDATE_BUSINESS' as const,
     payload: business,
+  }),
+  setTipsTripsAdvicePosts: (posts: TipsTripsAdvicePost[]) => ({
+    type: 'SET_TIPS_TRIPS_ADVICE_POSTS' as const,
+    payload: posts,
+  }),
+  setSelectedTipsTripsAdvicePost: (post: TipsTripsAdvicePost | null) => ({
+    type: 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST' as const,
+    payload: post,
   }),
 };

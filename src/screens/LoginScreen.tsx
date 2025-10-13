@@ -42,7 +42,7 @@ interface LoginResponse {
     profile_photo_public_id?: string;
     bio?: string;
   };
-  token: string; // Firebase ID token for authenticated API calls
+  token: string; // Firebase ID token for authenticated API calls - always present on successful login
 }
 
 const Input = React.forwardRef<
@@ -58,10 +58,12 @@ const Input = React.forwardRef<
 Input.displayName = 'Input';
 
 const SignInScreen: React.FC = () => {
+  // Email/password login state
   const [form, setForm] = useState({
     email: '',
     password: '',
   });
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -95,7 +97,7 @@ const SignInScreen: React.FC = () => {
     setApiError('');
 
     try {
-      // Login with backend API
+      // Simple email/password login
       const loginResponse = await apiPostPublic<LoginResponse>(
         '/api/auth/login',
         {
@@ -104,13 +106,10 @@ const SignInScreen: React.FC = () => {
         }
       );
 
-      if (loginResponse.user) {
-        // Store the Firebase ID token if provided by backend
-        if (loginResponse.token) {
-          setToken(loginResponse.token);
-        }
+      if (loginResponse.success) {
+        // Store the Firebase ID token (always present on successful login)
+        setToken(loginResponse.token);
 
-        // Create user data object
         const userData = {
           uid: loginResponse.user.id,
           email: loginResponse.user.email,
@@ -120,7 +119,6 @@ const SignInScreen: React.FC = () => {
           current_location: loginResponse.user.current_location || {},
           occupation: loginResponse.user.occupation || '',
           employer: loginResponse.user.employer || '',
-          // Include all profile fields for completion calculation
           nationality: loginResponse.user.nationality,
           languages: loginResponse.user.languages || [],
           other_us_jobs: loginResponse.user.other_us_jobs || [],
@@ -142,32 +140,26 @@ const SignInScreen: React.FC = () => {
           bio: loginResponse.user.bio,
         };
 
-        // Store in Zustand store (this also updates localStorage for backward compatibility)
         setUser(userData);
+
+        // Store in localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (loginResponse.token) {
+          localStorage.setItem('token', loginResponse.token);
+        }
 
         // Navigate to dashboard
         navigate('/dashboard');
       } else {
-        throw new Error('Invalid response from server');
+        setApiError('Login failed. Please check your credentials.');
       }
     } catch (error: any) {
-      // Handle backend API errors
-      let userFriendlyError = 'Sign in failed';
-
-      if (error.message) {
-        if (error.message.includes('Invalid email or password')) {
-          userFriendlyError = 'Username and/or password is invalid';
-        } else if (error.message.includes('Authentication failed')) {
-          userFriendlyError = 'Authentication failed. Please try again.';
-        } else if (error.message.includes('Invalid response from server')) {
-          userFriendlyError = 'Server error. Please try again.';
-        } else {
-          userFriendlyError =
-            error.message || 'Sign in failed. Please try again.';
-        }
-      }
-
-      setApiError(userFriendlyError);
+      console.error('Login error:', error);
+      setApiError(
+        error.response?.data?.message ||
+          error.message ||
+          'Login failed. Please try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -184,56 +176,46 @@ const SignInScreen: React.FC = () => {
           <p className="text-gray-600 text-center">Sign in to your account</p>
         </div>
 
-        {/* Form */}
-        <form className="w-full" onSubmit={handleSubmit}>
-          {apiError && (
-            <div className="w-full bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-              <p className="text-red-600 text-sm">{apiError}</p>
-            </div>
-          )}
+        {/* Email/Password Login Form */}
+        <div className="w-full">
+          <form className="w-full" onSubmit={handleSubmit}>
+            {apiError && (
+              <div className="w-full bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <p className="text-red-600 text-sm">{apiError}</p>
+              </div>
+            )}
 
-          <div className="mb-4">
             <Input
-              name="email"
               type="email"
-              placeholder="Email address"
+              name="email"
+              placeholder="Email"
               value={form.email}
               onChange={handleChange}
-              required
+              disabled={submitting}
             />
             {errors.email && (
-              <span className="text-red-500 text-sm">{errors.email}</span>
+              <p className="text-red-500 text-sm -mt-2 mb-2">{errors.email}</p>
             )}
-          </div>
 
-          <div className="mb-6">
             <Input
-              name="password"
               type="password"
+              name="password"
               placeholder="Password"
               value={form.password}
               onChange={handleChange}
-              required
+              disabled={submitting}
             />
             {errors.password && (
-              <span className="text-red-500 text-sm">{errors.password}</span>
+              <p className="text-red-500 text-sm -mt-2 mb-2">
+                {errors.password}
+              </p>
             )}
-          </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full mb-4"
-            disabled={submitting}
-          >
-            {submitting ? 'Signing In...' : 'Sign In'}
-          </Button>
-        </form>
-
-        {/* Forgot Password */}
-        <button className="text-sky-500 underline text-base mb-6">
-          Forgot Password?
-        </button>
+            <Button type="submit" disabled={submitting} className="w-full">
+              {submitting ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+        </div>
 
         {/* Back to Welcome */}
         <button

@@ -59,13 +59,20 @@ export class TipsTripsAdviceService {
         if (postData.photos && postData.photos.length > 0) {
           for (let i = 0; i < postData.photos.length; i++) {
             const photo = postData.photos[i];
+
+            // Validate that photo_url is not null or empty
+            if (!photo.photo_url) {
+              console.error(`Photo ${i + 1} is missing photo_url:`, photo);
+              throw new Error(`Photo upload failed: missing image data`);
+            }
+
             await client.query(
               `INSERT INTO tips_trips_advice_photos (post_id, photo_url, photo_public_id, display_order)
                VALUES ($1, $2, $3, $4)`,
               [
                 postId,
                 photo.photo_url,
-                photo.photo_public_id,
+                photo.photo_public_id || null, // Allow null for photo_public_id
                 photo.display_order || i + 1,
               ]
             );
@@ -410,27 +417,56 @@ export class TipsTripsAdviceService {
           );
         }
 
-        // Update photos if provided
-        if (updateData.photos !== undefined) {
-          // Delete existing photos
-          await client.query(
-            'DELETE FROM tips_trips_advice_photos WHERE post_id = $1',
-            [postId]
-          );
+        // Handle photo updates with granular control
+        const hasPhotoChanges =
+          updateData.photos !== undefined ||
+          updateData.photosToKeep !== undefined;
 
-          // Insert new photos
-          for (let i = 0; i < updateData.photos.length; i++) {
-            const photo = updateData.photos[i];
-            await client.query(
-              `INSERT INTO tips_trips_advice_photos (post_id, photo_url, photo_public_id, display_order)
-               VALUES ($1, $2, $3, $4)`,
-              [
-                postId,
-                photo.photo_url,
-                photo.photo_public_id,
-                photo.display_order || i + 1,
-              ]
+        if (hasPhotoChanges) {
+          // If photosToKeep is provided, delete photos not in the list
+          if (updateData.photosToKeep !== undefined) {
+            if (updateData.photosToKeep.length === 0) {
+              // Delete all photos if none are specified to keep
+              await client.query(
+                'DELETE FROM tips_trips_advice_photos WHERE post_id = $1',
+                [postId]
+              );
+            } else {
+              // Delete photos not in the photosToKeep list
+              const placeholders = updateData.photosToKeep
+                .map((_, index) => `$${index + 2}`)
+                .join(',');
+              await client.query(
+                `DELETE FROM tips_trips_advice_photos WHERE post_id = $1 AND id NOT IN (${placeholders})`,
+                [postId, ...updateData.photosToKeep]
+              );
+            }
+          }
+
+          // Add new photos if provided
+          if (updateData.photos && updateData.photos.length > 0) {
+            // Get current photo count to determine display_order
+            const currentPhotoCountResult = await client.query(
+              'SELECT COUNT(*) as count FROM tips_trips_advice_photos WHERE post_id = $1',
+              [postId]
             );
+            const currentPhotoCount = parseInt(
+              currentPhotoCountResult.rows[0].count
+            );
+
+            for (let i = 0; i < updateData.photos.length; i++) {
+              const photo = updateData.photos[i];
+              await client.query(
+                `INSERT INTO tips_trips_advice_photos (post_id, photo_url, photo_public_id, display_order)
+                 VALUES ($1, $2, $3, $4)`,
+                [
+                  postId,
+                  photo.photo_url,
+                  photo.photo_public_id,
+                  photo.display_order || currentPhotoCount + i + 1,
+                ]
+              );
+            }
           }
         }
 

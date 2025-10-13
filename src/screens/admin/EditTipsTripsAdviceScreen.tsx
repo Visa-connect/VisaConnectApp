@@ -9,12 +9,20 @@ import Button from '../../components/Button';
 import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
+  TipsTripsAdvicePhoto,
   UpdatePostData,
 } from '../../api/adminTipsTripsAdviceService';
+import { useAdminStore } from '../../stores/adminStore';
+import {
+  compressImages,
+  formatFileSize,
+  CompressionResult,
+} from '../../utils/imageCompression';
 
 const EditTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
   const { postId } = useParams<{ postId: string }>();
+  const { state } = useAdminStore();
   const [loading, setLoading] = useState(false);
   const [loadingPost, setLoadingPost] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,12 +32,37 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
     description: '',
     post_type: 'tip' as 'tip' | 'trip' | 'advice',
   });
-  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
-  const [existingPhotos, setExistingPhotos] = useState<
-    { id: number; url: string; public_id: string }[]
+  const [photos, setPhotos] = useState<
+    { file: File; preview: string; compression?: CompressionResult }[]
   >([]);
+  const [existingPhotos, setExistingPhotos] = useState<
+    { id: number; photo_url: string; photo_public_id: string }[]
+  >([]);
+  const [compressing, setCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
 
   useEffect(() => {
+    // First try to get the post from the admin store
+    if (state.selectedTipsTripsAdvicePost) {
+      const postData = state.selectedTipsTripsAdvicePost;
+      setPost(postData);
+      setFormData({
+        title: postData.title,
+        description: postData.description,
+        post_type: postData.post_type,
+      });
+      setExistingPhotos(
+        (postData.photos || []).map((photo: TipsTripsAdvicePhoto) => ({
+          id: parseInt(photo.id),
+          photo_url: photo.photo_url,
+          photo_public_id: photo.photo_public_id,
+        }))
+      );
+      setLoadingPost(false);
+      return;
+    }
+
+    // Fallback: fetch from API if not in store
     const fetchPost = async () => {
       if (!postId) return;
 
@@ -43,10 +76,10 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
           post_type: postData.post_type,
         });
         setExistingPhotos(
-          (postData.photos || []).map((photo) => ({
+          (postData.photos || []).map((photo: TipsTripsAdvicePhoto) => ({
             id: parseInt(photo.id),
-            url: photo.url,
-            public_id: photo.public_id,
+            photo_url: photo.photo_url,
+            photo_public_id: photo.photo_public_id,
           }))
         );
       } catch (err) {
@@ -58,7 +91,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
     };
 
     fetchPost();
-  }, [postId]);
+  }, [postId, state.selectedTipsTripsAdvicePost]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -72,13 +105,45 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
     }));
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newPhotos = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-    setPhotos((prev) => [...prev, ...newPhotos]);
+
+    if (files.length === 0) return;
+
+    try {
+      setCompressing(true);
+      setCompressionProgress(0);
+
+      // Compress images with progress tracking
+      const compressionResults = await compressImages(
+        files,
+        {
+          maxWidth: 1920,
+          maxHeight: 1080,
+          quality: 0.85,
+          format: 'jpeg',
+          maxSizeKB: 2048, // 2MB target
+        },
+        (completed, total) => {
+          setCompressionProgress(Math.round((completed / total) * 100));
+        }
+      );
+
+      // Create new photos with compression info
+      const newPhotos = compressionResults.map((result) => ({
+        file: result.file,
+        preview: URL.createObjectURL(result.file),
+        compression: result,
+      }));
+
+      setPhotos((prev) => [...prev, ...newPhotos]);
+    } catch (error) {
+      console.error('Error compressing images:', error);
+      setError('Failed to compress images. Please try again.');
+    } finally {
+      setCompressing(false);
+      setCompressionProgress(0);
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -111,13 +176,19 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // TODO: Implement photo upload/delete to Cloudinary
-      // For now, we'll update the post without photo changes
+      // Handle photo updates
+      const newPhotos = photos.map((photo) => photo.file);
+      const hasNewPhotos = newPhotos.length > 0;
+      const hasDeletedPhotos = existingPhotos.length > 0; // If we started with photos but now have fewer
+
       const updateData: UpdatePostData = {
         title: formData.title,
         description: formData.description,
         post_type: formData.post_type,
-        photos: photos.map((photo) => photo.file),
+        ...(hasNewPhotos && { photos: newPhotos }), // New photos to add
+        ...(hasDeletedPhotos && {
+          existingPhotoIds: existingPhotos.map((p) => p.id),
+        }), // Photos to keep
       };
 
       await adminTipsTripsAdviceService.updatePost(postId, updateData);
@@ -243,7 +314,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                 {existingPhotos.map((photo, index) => (
                   <div key={photo.id} className="relative group">
                     <img
-                      src={photo.url}
+                      src={photo.photo_url}
                       alt={`Existing content ${index + 1}`}
                       className="w-full h-24 object-cover rounded-lg"
                     />
@@ -276,7 +347,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                       photos
                     </p>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, WebP up to 10MB
                     </p>
                   </div>
                   <input
@@ -284,10 +355,33 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                     multiple
                     accept="image/*"
                     onChange={handlePhotoChange}
+                    disabled={compressing}
                     className="hidden"
                   />
                 </label>
               </div>
+
+              {/* Compression Progress */}
+              {compressing && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm text-blue-700">
+                        Compressing images... {compressionProgress}%
+                      </p>
+                      <div className="mt-2 bg-blue-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${compressionProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* New Photo Previews */}
               {photos.length > 0 && (
@@ -306,6 +400,22 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
                       >
                         <XMarkIcon className="h-4 w-4" />
                       </button>
+
+                      {/* Compression Info */}
+                      {photo.compression && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1 rounded-b-lg">
+                          <div className="truncate">
+                            {photo.compression.compressionRatio > 0 && (
+                              <span className="text-green-400">
+                                -{photo.compression.compressionRatio}%
+                              </span>
+                            )}
+                            <span className="ml-1">
+                              {formatFileSize(photo.compression.compressedSize)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

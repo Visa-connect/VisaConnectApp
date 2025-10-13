@@ -12,7 +12,7 @@ import {
   MeetupCategory,
   CreateMeetupRequest,
 } from '../api/meetupService';
-import { uploadMeetupPhoto, deleteMeetupPhoto } from '../api/cloudinary';
+import { uploadMeetupPhoto, deleteMeetupPhoto } from '../api/firebaseStorage';
 import { LocationData } from '../types/location';
 
 interface PostMeetupForm {

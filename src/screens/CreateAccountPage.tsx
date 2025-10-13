@@ -7,6 +7,12 @@ import { apiPostPublic } from '../api';
 import logo from '../assets/images/logo.png';
 import { useUserStore } from '../stores/userStore';
 import { visaTypes } from '../utils/visaTypes';
+import {
+  isValidEmail,
+  isValidPassword,
+  isNotEmpty,
+  VALIDATION_MESSAGES,
+} from '../utils/validation';
 
 // Types for API responses
 interface RegisterResponse {
@@ -33,8 +39,6 @@ const Input = React.forwardRef<
 ));
 Input.displayName = 'Input';
 
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const CreateAccountPage: React.FC = () => {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
@@ -60,15 +64,18 @@ const CreateAccountPage: React.FC = () => {
 
   const validateStep1 = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!form.first_name.trim())
-      newErrors.first_name = 'First name is required.';
-    if (!form.last_name.trim()) newErrors.last_name = 'Last name is required.';
-    if (!form.email.trim()) newErrors.email = 'Email is required.';
-    else if (!emailRegex.test(form.email))
-      newErrors.email = 'Invalid email address.';
-    if (!form.password) newErrors.password = 'Password is required.';
-    else if (form.password.length < 6)
-      newErrors.password = 'Password must be at least 6 characters.';
+    if (!isNotEmpty(form.first_name))
+      newErrors.first_name = VALIDATION_MESSAGES.FIELD_REQUIRED;
+    if (!isNotEmpty(form.last_name))
+      newErrors.last_name = VALIDATION_MESSAGES.FIELD_REQUIRED;
+    if (!isNotEmpty(form.email))
+      newErrors.email = VALIDATION_MESSAGES.EMAIL_REQUIRED;
+    else if (!isValidEmail(form.email))
+      newErrors.email = VALIDATION_MESSAGES.EMAIL_INVALID;
+    if (!form.password)
+      newErrors.password = VALIDATION_MESSAGES.PASSWORD_REQUIRED;
+    else if (!isValidPassword(form.password))
+      newErrors.password = VALIDATION_MESSAGES.PASSWORD_TOO_SHORT;
     if (!form.confirmPassword)
       newErrors.confirmPassword = 'Please confirm your password.';
     else if (form.password !== form.confirmPassword)

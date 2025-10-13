@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
-import { uploadProfilePhoto } from '../api/cloudinary';
+import { uploadProfilePhoto } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
 
 const EditProfileScreen: React.FC = () => {

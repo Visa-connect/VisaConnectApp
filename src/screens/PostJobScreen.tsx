@@ -5,7 +5,7 @@ import Modal from '../components/Modal';
 import LocationInput from '../components/LocationInput';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { JobsApiService, JobSubmission } from '../api/jobsApi';
-import { uploadBusinessLogo } from '../api/cloudinary';
+import { uploadBusinessLogo } from '../api/firebaseStorage';
 import { HandRaisedIcon } from '@heroicons/react/24/outline';
 import { LocationData } from '../types/location';
 

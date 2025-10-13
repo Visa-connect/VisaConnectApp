@@ -1,9 +1,16 @@
 import {
   adminApiGet,
   adminApiPost,
-  adminApiPut,
+  adminApiPostFormData,
+  adminApiPutFormData,
   adminApiDelete,
 } from './adminApi';
+
+export interface TipsTripsAdvicePhoto {
+  id: string;
+  photo_url: string;
+  photo_public_id: string;
+}
 
 export interface TipsTripsAdvicePost {
   id: string;
@@ -20,11 +27,7 @@ export interface TipsTripsAdvicePost {
     email: string;
     profile_photo_url: string | null;
   };
-  photos?: {
-    id: string;
-    url: string;
-    public_id: string;
-  }[];
+  photos?: TipsTripsAdvicePhoto[];
   likes_count: number;
   comments_count: number;
   is_liked?: boolean;
@@ -50,7 +53,8 @@ export interface UpdatePostData {
   description?: string;
   post_type?: 'tip' | 'trip' | 'advice';
   is_active?: boolean;
-  photos?: File[];
+  photos?: File[]; // New photos to add
+  existingPhotoIds?: number[]; // IDs of existing photos to keep
 }
 
 class AdminTipsTripsAdviceService {
@@ -80,10 +84,31 @@ class AdminTipsTripsAdviceService {
 
   // Create new post with admin authentication
   async createPost(postData: CreatePostData): Promise<TipsTripsAdvicePost> {
-    return adminApiPost<TipsTripsAdvicePost>(
-      '/api/tips-trips-advice',
-      postData
-    );
+    // Check if we have photos (File objects)
+    const hasPhotos = postData.photos && postData.photos.length > 0;
+
+    if (hasPhotos) {
+      // Use FormData for file uploads
+      const formData = new FormData();
+      formData.append('title', postData.title);
+      formData.append('description', postData.description);
+      formData.append('post_type', postData.post_type);
+
+      postData.photos?.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+
+      return adminApiPostFormData<TipsTripsAdvicePost>(
+        '/api/tips-trips-advice',
+        formData
+      );
+    } else {
+      // Use JSON for posts without photos
+      return adminApiPost<TipsTripsAdvicePost>(
+        '/api/tips-trips-advice',
+        postData
+      );
+    }
   }
 
   // Update post with admin authentication
@@ -91,9 +116,32 @@ class AdminTipsTripsAdviceService {
     postId: string,
     postData: UpdatePostData
   ): Promise<TipsTripsAdvicePost> {
-    return adminApiPut<TipsTripsAdvicePost>(
+    // Always use FormData since the backend expects multipart/form-data
+    const formData = new FormData();
+    if (postData.title) formData.append('title', postData.title);
+    if (postData.description)
+      formData.append('description', postData.description);
+    if (postData.post_type) formData.append('post_type', postData.post_type);
+    if (postData.is_active !== undefined)
+      formData.append('is_active', postData.is_active.toString());
+
+    // Add new photos if provided
+    if (postData.photos && postData.photos.length > 0) {
+      postData.photos.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+    }
+
+    // Add existing photo IDs to keep
+    if (postData.existingPhotoIds && postData.existingPhotoIds.length > 0) {
+      postData.existingPhotoIds.forEach((photoId) => {
+        formData.append('existingPhotoIds', photoId.toString());
+      });
+    }
+
+    return adminApiPutFormData<TipsTripsAdvicePost>(
       `/api/tips-trips-advice/${postId}`,
-      postData
+      formData
     );
   }
 

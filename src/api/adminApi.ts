@@ -33,6 +33,48 @@ export async function adminApiPost<T>(url: string, body: any): Promise<T> {
   return res.json();
 }
 
+export async function adminApiPostFormData<T>(
+  url: string,
+  formData: FormData
+): Promise<T> {
+  const token = getAdminToken();
+  if (!token) {
+    throw new Error('No admin authentication token found');
+  }
+
+  const res = await fetch(`${API_BASE_URL}${url}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type - let browser set it with boundary for FormData
+    },
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function adminApiPutFormData<T>(
+  url: string,
+  formData: FormData
+): Promise<T> {
+  const token = getAdminToken();
+  if (!token) {
+    throw new Error('No admin authentication token found');
+  }
+
+  const res = await fetch(`${API_BASE_URL}${url}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // Don't set Content-Type - let browser set it with boundary for FormData
+    },
+    body: formData,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
 export async function adminApiPut<T>(url: string, body: any): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${url}`, {
     method: 'PUT',

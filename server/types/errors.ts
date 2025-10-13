@@ -38,6 +38,7 @@ export enum ErrorCode {
   NOT_FOUND = 'NOT_FOUND',
   FORBIDDEN = 'FORBIDDEN',
   CONFLICT = 'CONFLICT',
+  INVALID_INPUT = 'INVALID_INPUT',
 }
 
 export class AppError extends Error {

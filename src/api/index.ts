@@ -100,7 +100,8 @@ export async function apiPost<T>(url: string, body: any): Promise<T> {
   };
 
   const res = await handleTokenRefresh(makeRequest);
-  return res.json();
+  const jsonData = await res.json();
+  return jsonData;
 }
 
 // Public POST for registration/login (no auth required)
@@ -176,4 +177,34 @@ export async function apiDelete<T>(url: string): Promise<T> {
 
   const res = await handleTokenRefresh(makeRequest);
   return res.json();
+}
+
+// Reset password function (public endpoint)
+export async function resetPassword(
+  email: string
+): Promise<{ success: boolean; message: string }> {
+  return apiPostPublic<{ success: boolean; message: string }>(
+    '/api/auth/reset-password',
+    { email }
+  );
+}
+
+// Change email functions (authenticated endpoints)
+export async function initiateEmailChange(
+  newEmail: string,
+  password: string
+): Promise<{ success: boolean; message: string }> {
+  return apiPost<{ success: boolean; message: string }>(
+    '/api/auth/change-email',
+    { newEmail, password }
+  );
+}
+
+export async function verifyEmailChange(
+  verificationToken: string
+): Promise<{ success: boolean; message: string }> {
+  return apiPost<{ success: boolean; message: string }>(
+    '/api/auth/verify-email-change',
+    { verificationToken }
+  );
 }

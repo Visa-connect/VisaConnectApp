@@ -10,7 +10,7 @@ import {
   ApplicationsApiService,
   ApplicationSubmission,
 } from '../api/applicationsApi';
-import { uploadResume } from '../api/cloudinary';
+import { uploadResume } from '../api/firebaseStorage';
 import { visaTypes, startDateOptions } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
 

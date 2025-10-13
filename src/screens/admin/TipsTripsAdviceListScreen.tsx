@@ -5,9 +5,11 @@ import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../../api/adminTipsTripsAdviceService';
+import { useAdminStore, adminActions } from '../../stores/adminStore';
 
 const TipsTripsAdviceListScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { dispatch } = useAdminStore();
   const [posts, setPosts] = useState<TipsTripsAdvicePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,12 @@ const TipsTripsAdviceListScreen: React.FC = () => {
   };
 
   const handleEdit = (postId: string) => {
+    // Find the post data from the current posts array
+    const post = posts.find((p) => p.id === postId);
+    if (post) {
+      // Store the selected post in the admin store
+      dispatch(adminActions.setSelectedTipsTripsAdvicePost(post));
+    }
     navigate(`/admin/tipsTripsAndAdvice/edit/${postId}`);
   };
 
@@ -51,7 +59,13 @@ const TipsTripsAdviceListScreen: React.FC = () => {
   };
 
   const handleView = (postId: string) => {
-    navigate(`/tips-trips-advice/${postId}`);
+    // Find the post data from the current posts array
+    const post = posts.find((p) => p.id === postId);
+    if (post) {
+      // Store the selected post in the admin store
+      dispatch(adminActions.setSelectedTipsTripsAdvicePost(post));
+    }
+    navigate(`/admin/tipsTripsAndAdvice/view/${postId}`);
   };
 
   const getPostTypeColor = (postType: string) => {

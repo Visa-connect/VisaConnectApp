@@ -1,4 +1,5 @@
 import { Express, Request, Response } from 'express';
+import multer from 'multer';
 import { authenticateUser } from '../middleware/auth';
 import { tipsTripsAdviceService } from '../services/tipsTripsAdviceService';
 import { AppError, ErrorCode } from '../types/errors';
@@ -8,12 +9,47 @@ import {
   SearchTipsTripsAdviceRequest,
   AddCommentRequest,
 } from '../types/tipsTripsAdvice';
+import { uploadTipsPhoto } from '../services/firebaseStorageService';
+
+// Configure multer for memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept image files only
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type. Allowed: images (JPG, PNG, WebP)'));
+    }
+  },
+});
 
 export default function tipsTripsAdviceApi(app: Express) {
+  // Multer error handling middleware
+  app.use((error: any, req: Request, res: Response, next: any) => {
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File too large. Maximum file size is 10MB.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${error.message}`,
+      });
+    }
+    next(error);
+  });
   // Create a new Tips, Trips, or Advice post
   app.post(
     '/api/tips-trips-advice',
     authenticateUser,
+    upload.array('photos', 10), // Allow up to 10 photos
     async (req: Request, res: Response) => {
       try {
         const userId = req.user?.uid;
@@ -25,7 +61,66 @@ export default function tipsTripsAdviceApi(app: Express) {
           });
         }
 
-        const postData: CreateTipsTripsAdviceRequest = req.body;
+        const { title, description, post_type } = req.body;
+        const files = req.files as Express.Multer.File[];
+
+        // Validate required fields
+        if (!title || !description || !post_type) {
+          return res.status(400).json({
+            success: false,
+            message: 'Title, description, and post type are required',
+          });
+        }
+
+        // Upload photos to Firebase Storage first
+        const uploadedPhotos = [];
+        if (files && files.length > 0) {
+          console.log(`Uploading ${files.length} photos for post creation`);
+
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const uploadResult = await uploadTipsPhoto(
+              file.buffer,
+              file.originalname,
+              file.mimetype,
+              userId
+            );
+
+            if (
+              uploadResult.success &&
+              uploadResult.url &&
+              uploadResult.fileName
+            ) {
+              uploadedPhotos.push({
+                photo_url: uploadResult.url,
+                photo_public_id: uploadResult.fileName,
+                display_order: i + 1,
+              });
+              console.log(
+                `✅ Photo ${i + 1} uploaded successfully: ${uploadResult.url}`
+              );
+            } else {
+              console.error(
+                `❌ Failed to upload photo ${i + 1}:`,
+                uploadResult.error
+              );
+              return res.status(500).json({
+                success: false,
+                message: `Failed to upload photo ${i + 1}: ${
+                  uploadResult.error
+                }`,
+              });
+            }
+          }
+        }
+
+        // Create the post data object
+        const postData: CreateTipsTripsAdviceRequest = {
+          title,
+          description,
+          post_type,
+          photos: uploadedPhotos,
+        };
 
         const postId = await tipsTripsAdviceService.createPost(
           postData,
@@ -150,6 +245,7 @@ export default function tipsTripsAdviceApi(app: Express) {
   app.put(
     '/api/tips-trips-advice/:postId',
     authenticateUser,
+    upload.array('photos', 10), // Allow up to 10 photos
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
@@ -171,7 +267,81 @@ export default function tipsTripsAdviceApi(app: Express) {
           });
         }
 
-        const updateData: UpdateTipsTripsAdviceRequest = req.body;
+        const { title, description, post_type, is_active, existingPhotoIds } =
+          req.body;
+        const files = req.files as Express.Multer.File[];
+
+        let photosToKeep: number[] = [];
+        if (existingPhotoIds) {
+          // API contract: existingPhotoIds must be an array of photo IDs
+          if (!Array.isArray(existingPhotoIds)) {
+            return res.status(400).json({
+              success: false,
+              message: 'existingPhotoIds must be an array of photo IDs',
+            });
+          }
+          photosToKeep = existingPhotoIds.map((id: string) =>
+            parseInt(id.trim())
+          );
+        }
+
+        console.log('Parsed photosToKeep:', photosToKeep);
+
+        // Upload new photos if provided
+        const uploadedPhotos = [];
+        if (files && files.length > 0) {
+          console.log(`Uploading ${files.length} new photos for post update`);
+
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            console.log(
+              `Uploading photo ${i + 1}/${files.length}: ${file.originalname}`
+            );
+
+            const uploadResult = await uploadTipsPhoto(
+              file.buffer,
+              file.originalname,
+              file.mimetype,
+              userId
+            );
+
+            if (
+              uploadResult.success &&
+              uploadResult.url &&
+              uploadResult.fileName
+            ) {
+              uploadedPhotos.push({
+                photo_url: uploadResult.url,
+                photo_public_id: uploadResult.fileName,
+                display_order: i + 1,
+              });
+              console.log(
+                `✅ Photo ${i + 1} uploaded successfully: ${uploadResult.url}`
+              );
+            } else {
+              console.error(
+                `❌ Failed to upload photo ${i + 1}:`,
+                uploadResult.error
+              );
+              return res.status(500).json({
+                success: false,
+                message: `Failed to upload photo ${i + 1}: ${
+                  uploadResult.error
+                }`,
+              });
+            }
+          }
+        }
+
+        // Create the update data object
+        const updateData: UpdateTipsTripsAdviceRequest = {
+          ...(title && { title }),
+          ...(description && { description }),
+          ...(post_type && { post_type }),
+          ...(is_active !== undefined && { is_active: is_active === 'true' }),
+          ...(uploadedPhotos.length > 0 && { photos: uploadedPhotos }),
+          ...(photosToKeep.length > 0 && { photosToKeep }),
+        };
 
         await tipsTripsAdviceService.updatePost(postId, updateData, userId);
 

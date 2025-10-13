@@ -438,4 +438,50 @@ export default function photoApi(app: Express) {
       }
     }
   );
+
+  // Upload tips/trips/advice photos with Firebase Storage
+  app.post(
+    '/api/photo/upload-tips-photo',
+    authenticateUser,
+    upload.single('photo'),
+    async (req: Request, res: Response) => {
+      try {
+        const userId = req.user?.uid;
+        if (!userId) {
+          return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ error: 'No file uploaded' });
+        }
+
+        // Upload to Firebase Storage
+        const uploadResult = await uploadTipsPhoto(
+          req.file.buffer,
+          req.file.originalname,
+          req.file.mimetype,
+          userId
+        );
+
+        if (!uploadResult.success) {
+          return res.status(400).json({
+            error: 'Upload failed',
+            details: uploadResult.error,
+          });
+        }
+
+        res.json({
+          success: true,
+          url: uploadResult.url,
+          fileName: uploadResult.fileName,
+        });
+      } catch (error) {
+        console.error('Error in tips photo upload endpoint:', error);
+        res.status(500).json({
+          error: 'Failed to upload tips photo',
+          details: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
 }

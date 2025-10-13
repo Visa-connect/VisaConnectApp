@@ -10,6 +10,11 @@ import {
   adminTipsTripsAdviceService,
   CreatePostData,
 } from '../../api/adminTipsTripsAdviceService';
+import {
+  compressImages,
+  formatFileSize,
+  CompressionResult,
+} from '../../utils/imageCompression';
 
 const PostTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +25,11 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
     description: '',
     post_type: 'tip' as 'tip' | 'trip' | 'advice',
   });
-  const [photos, setPhotos] = useState<{ file: File; preview: string }[]>([]);
+  const [photos, setPhotos] = useState<
+    { file: File; preview: string; compression?: CompressionResult }[]
+  >([]);
+  const [compressing, setCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -34,13 +43,55 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
     }));
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newPhotos = files.map((file) => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }));
-    setPhotos((prev) => [...prev, ...newPhotos]);
+
+    if (files.length === 0) return;
+
+    try {
+      setCompressing(true);
+      setCompressionProgress(0);
+
+      // Compress images with progress tracking
+      const compressionResults = await compressImages(
+        files,
+        {
+          maxWidth: 1920,
+          maxHeight: 1080,
+          quality: 0.85,
+          format: 'jpeg',
+          maxSizeKB: 2048, // 2MB target
+        },
+        (completed, total) => {
+          setCompressionProgress(Math.round((completed / total) * 100));
+        }
+      );
+
+      // Create new photos with compression info
+      const newPhotos = compressionResults.map((result) => ({
+        file: result.file,
+        preview: URL.createObjectURL(result.file),
+        compression: result,
+      }));
+
+      setPhotos((prev) => [...prev, ...newPhotos]);
+
+      // Log compression results
+      compressionResults.forEach((result, index) => {
+        console.log(`Photo ${index + 1} compressed:`, {
+          originalSize: formatFileSize(result.originalSize),
+          compressedSize: formatFileSize(result.compressedSize),
+          compressionRatio: `${result.compressionRatio}%`,
+          dimensions: `${result.dimensions.original.width}x${result.dimensions.original.height} → ${result.dimensions.compressed.width}x${result.dimensions.compressed.height}`,
+        });
+      });
+    } catch (error) {
+      console.error('Error compressing images:', error);
+      setError('Failed to compress images. Please try again.');
+    } finally {
+      setCompressing(false);
+      setCompressionProgress(0);
+    }
   };
 
   const removePhoto = (index: number) => {
@@ -64,8 +115,7 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
       setLoading(true);
       setError(null);
 
-      // TODO: Implement photo upload to Cloudinary
-      // For now, we'll create the post without photos
+      // Create the post data with files
       const postData: CreatePostData = {
         title: formData.title,
         description: formData.description,
@@ -73,11 +123,23 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
         photos: photos.map((photo) => photo.file),
       };
 
+      console.log('Creating post with data:', {
+        title: postData.title,
+        description: postData.description,
+        post_type: postData.post_type,
+        photosCount: postData.photos?.length || 0,
+        photoNames: postData.photos?.map((p) => p.name) || [],
+      });
+
       await adminTipsTripsAdviceService.createPost(postData);
       navigate('/admin/tipsTripsAndAdvice');
     } catch (err) {
       console.error('Error creating post:', err);
-      setError('Failed to create post. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to create post. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -183,7 +245,7 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
                       photos
                     </p>
                     <p className="text-xs text-gray-500">
-                      PNG, JPG, GIF up to 10MB
+                      PNG, JPG, WebP up to 10MB
                     </p>
                   </div>
                   <input
@@ -191,10 +253,33 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
                     multiple
                     accept="image/*"
                     onChange={handlePhotoChange}
+                    disabled={compressing}
                     className="hidden"
                   />
                 </label>
               </div>
+
+              {/* Compression Progress */}
+              {compressing && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    </div>
+                    <div className="ml-3 flex-1">
+                      <p className="text-sm text-blue-700">
+                        Compressing images... {compressionProgress}%
+                      </p>
+                      <div className="mt-2 bg-blue-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${compressionProgress}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Photo Previews */}
               {photos.length > 0 && (
@@ -213,6 +298,22 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
                       >
                         <XMarkIcon className="h-4 w-4" />
                       </button>
+
+                      {/* Compression Info */}
+                      {photo.compression && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs p-1 rounded-b-lg">
+                          <div className="truncate">
+                            {photo.compression.compressionRatio > 0 && (
+                              <span className="text-green-400">
+                                -{photo.compression.compressionRatio}%
+                              </span>
+                            )}
+                            <span className="ml-1">
+                              {formatFileSize(photo.compression.compressedSize)}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
