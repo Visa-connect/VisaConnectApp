@@ -48,6 +48,9 @@ import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen
 import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
 import UsersListScreen from './screens/admin/UsersListScreen';
 import EmployersListScreen from './screens/admin/EmployersListScreen';
+import ReportsListScreen from './screens/admin/ReportsListScreen';
+import AdminReportViewScreen from './screens/admin/AdminReportViewScreen';
+import AdminReportEditScreen from './screens/admin/AdminReportEditScreen';
 import AdminUserViewScreen from './screens/admin/AdminUserViewScreen';
 import AdminUserEditScreen from './screens/admin/AdminUserEditScreen';
 import AdminEmployerViewScreen from './screens/admin/AdminEmployerViewScreen';
@@ -550,6 +553,42 @@ function App() {
               <AdminRoute>
                 <AdminLayout>
                   <AdminEmployerEditScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <ReportsListScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/reports/:reportId"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <AdminReportViewScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/reports/:reportId/edit"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <AdminReportEditScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>

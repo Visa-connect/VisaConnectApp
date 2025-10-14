@@ -3,6 +3,7 @@ import { Business } from '../api/businessApi';
 import { TipsTripsAdvicePost } from '../api/adminTipsTripsAdviceService';
 import { AdminUser } from '../api/adminUserService';
 import { AdminEmployer } from '../api/adminEmployerService';
+import { Report } from '../api/reportService';
 
 // Types
 interface AdminState {
@@ -25,6 +26,14 @@ interface AdminState {
   selectedUser: AdminUser | null;
   employers: AdminEmployer[];
   selectedEmployer: AdminEmployer | null;
+  reports: Report[];
+  reportCounts: {
+    all: number;
+    pending: number;
+    resolved: number;
+    removed: number;
+  };
+  selectedReport: Report | null;
   loading: boolean;
   error: string | null;
 }
@@ -45,6 +54,10 @@ type AdminAction =
   | { type: 'SET_SELECTED_USER'; payload: AdminUser | null }
   | { type: 'SET_EMPLOYERS'; payload: AdminEmployer[] }
   | { type: 'SET_SELECTED_EMPLOYER'; payload: AdminEmployer | null }
+  | { type: 'SET_REPORTS'; payload: Report[] }
+  | { type: 'SET_REPORT_COUNTS'; payload: AdminState['reportCounts'] }
+  | { type: 'SET_SELECTED_REPORT'; payload: Report | null }
+  | { type: 'UPDATE_REPORT'; payload: Partial<Report> & { id: number } }
   | { type: 'CLEAR_ERROR' };
 
 // Initial state
@@ -68,6 +81,14 @@ const initialState: AdminState = {
   selectedUser: null,
   employers: [],
   selectedEmployer: null,
+  reports: [],
+  reportCounts: {
+    all: 0,
+    pending: 0,
+    resolved: 0,
+    removed: 0,
+  },
+  selectedReport: null,
   loading: false,
   error: null,
 };
@@ -108,6 +129,21 @@ const adminReducer = (state: AdminState, action: AdminAction): AdminState => {
       return { ...state, employers: action.payload };
     case 'SET_SELECTED_EMPLOYER':
       return { ...state, selectedEmployer: action.payload };
+    case 'SET_REPORTS':
+      return { ...state, reports: action.payload, loading: false };
+    case 'SET_REPORT_COUNTS':
+      return { ...state, reportCounts: action.payload };
+    case 'SET_SELECTED_REPORT':
+      return { ...state, selectedReport: action.payload };
+    case 'UPDATE_REPORT':
+      return {
+        ...state,
+        reports: state.reports.map((report) =>
+          report.id === action.payload.id
+            ? { ...report, ...action.payload }
+            : report
+        ),
+      };
     default:
       return state;
   }
@@ -191,5 +227,21 @@ export const adminActions = {
   setSelectedEmployer: (employer: AdminEmployer | null) => ({
     type: 'SET_SELECTED_EMPLOYER' as const,
     payload: employer,
+  }),
+  setReports: (reports: Report[]) => ({
+    type: 'SET_REPORTS' as const,
+    payload: reports,
+  }),
+  setReportCounts: (reportCounts: AdminState['reportCounts']) => ({
+    type: 'SET_REPORT_COUNTS' as const,
+    payload: reportCounts,
+  }),
+  setSelectedReport: (report: Report | null) => ({
+    type: 'SET_SELECTED_REPORT' as const,
+    payload: report,
+  }),
+  updateReport: (report: Partial<Report> & { id: number }) => ({
+    type: 'UPDATE_REPORT' as const,
+    payload: report,
   }),
 };

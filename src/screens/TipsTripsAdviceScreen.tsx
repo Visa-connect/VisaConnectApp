@@ -212,26 +212,31 @@ const TipsTripsAdviceScreen: React.FC = () => {
                 </div>
 
                 {/* Post Content */}
-                <div className="px-6 py-4">
-                  <button
-                    onClick={() => handlePostClick(post.id)}
-                    className="text-xl font-bold text-blue-600 mb-3 hover:text-blue-800 transition-colors text-left"
-                  >
+                <button
+                  onClick={() => handlePostClick(post.id)}
+                  className="text-xl text-blue-600 mb-3 hover:text-blue-800 transition-colors text-left"
+                >
+                  <div className="px-6 py-4 font-bold">
                     {post.title}
-                  </button>
-                  <p className="text-gray-700 leading-relaxed mb-4">
-                    {post.description}
-                  </p>
-                </div>
+                    <p className="text-gray-700 leading-relaxed mb-4 font-normal">
+                      {post.description}
+                    </p>
+                  </div>
+                </button>
 
                 {/* Post Image */}
                 {post.photos && post.photos.length > 0 && (
-                  <div className="relative">
-                    <img
-                      src={post.photos[0].photo_url}
-                      alt={post.title}
-                      className="w-full h-64 object-cover"
-                    />
+                  <div className="relative flex items-center justify-center bg-gray-100">
+                    <button
+                      onClick={() => handlePostClick(post.id)}
+                      className="w-full"
+                    >
+                      <img
+                        src={post.photos[0].photo_url}
+                        alt={post.title}
+                        className="w-full h-64 object-contain object-center"
+                      />
+                    </button>
                   </div>
                 )}
 

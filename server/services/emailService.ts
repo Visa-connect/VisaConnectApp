@@ -33,6 +33,16 @@ export interface JobApplicationEmailData {
   jobId: number;
 }
 
+export interface NewReportEmailData {
+  reportId: string;
+  reporterId: string;
+  targetType: 'job' | 'meetup';
+  targetId: string;
+  reason: string;
+  reportedAt: Date;
+  adminDashboardUrl?: string;
+}
+
 export class EmailService {
   private sendGrid: any;
 
@@ -1102,6 +1112,202 @@ Sign In to VisaConnect: ${config.email.appUrl || 'https://visaconnect.com'}
 If you need help, contact us at ${FROM_EMAIL}
 
 This is an automated confirmation from VisaConnect.
+    `;
+  }
+
+  /**
+   * Send new report notification to admin
+   */
+  async sendNewReportNotification(data: NewReportEmailData): Promise<boolean> {
+    if (!this.sendGrid) {
+      console.log('📧 Email service not available, skipping notification');
+      return false;
+    }
+
+    try {
+      const subject = `New ${data.targetType} Report: ${data.reportId.slice(
+        -8
+      )}`;
+
+      const htmlContent = this.generateNewReportEmailHTML(data);
+      const textContent = this.generateNewReportEmailText(data);
+
+      // Support multiple recipients via comma-separated list in ADMIN_EMAIL
+      const adminRecipients = String(ADMIN_EMAIL)
+        .split(',')
+        .map((email) => email.trim())
+        .filter((email) => email.length > 0);
+
+      const msg = {
+        to: adminRecipients,
+        from: FROM_EMAIL,
+        subject: subject,
+        text: textContent,
+        html: htmlContent,
+      };
+      await this.sendGrid.send(msg);
+      console.log(
+        `✅ New report notification sent to ${adminRecipients.join(', ')}`
+      );
+      return true;
+    } catch (error: any) {
+      console.error(
+        '❌ Failed to send new report notification:',
+        error.response || error.message
+      );
+      return false;
+    }
+  }
+
+  /**
+   * Generate HTML content for new report notification email
+   */
+  private generateNewReportEmailHTML(data: NewReportEmailData): string {
+    const dashboardUrl =
+      data.adminDashboardUrl ||
+      config.email.adminDashboardUrl ||
+      'https://admin.visaconnect.com';
+    const reportUrl = `${dashboardUrl}/reports/${data.reportId}`;
+
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New Report - VisaConnect Admin</title>
+    </head>
+    <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f8fafc;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 32px; text-align: center;">
+          <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">🚨 New Report</h1>
+          <p style="color: #e2e8f0; margin: 8px 0 0 0; font-size: 16px;">VisaConnect Admin Notification</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 32px;">
+          <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+            <h2 style="color: #92400e; margin: 0 0 8px 0; font-size: 18px;">⚠️ Action Required</h2>
+            <p style="color: #92400e; margin: 0; font-size: 14px;">A new ${
+              data.targetType
+            } has been reported and requires your review.</p>
+          </div>
+
+          <!-- Report Details -->
+          <div style="background-color: #f8fafc; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+            <h3 style="color: #1f2937; margin: 0 0 16px 0; font-size: 20px;">Report Details</h3>
+            
+            <div style="margin-bottom: 12px;">
+              <strong style="color: #374151; font-size: 14px;">Report ID:</strong>
+              <span style="color: #6b7280; font-family: monospace; font-size: 14px; margin-left: 8px;">${
+                data.reportId
+              }</span>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <strong style="color: #374151; font-size: 14px;">Target Type:</strong>
+              <span style="color: #6b7280; font-size: 14px; margin-left: 8px; text-transform: capitalize;">${
+                data.targetType
+              }</span>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <strong style="color: #374151; font-size: 14px;">Target ID:</strong>
+              <span style="color: #6b7280; font-family: monospace; font-size: 14px; margin-left: 8px;">${
+                data.targetId
+              }</span>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <strong style="color: #374151; font-size: 14px;">Reporter ID:</strong>
+              <span style="color: #6b7280; font-family: monospace; font-size: 14px; margin-left: 8px;">${
+                data.reporterId
+              }</span>
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <strong style="color: #374151; font-size: 14px;">Reported At:</strong>
+              <span style="color: #6b7280; font-size: 14px; margin-left: 8px;">${data.reportedAt.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <!-- Report Reason -->
+          <div style="background-color: #f8fafc; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+            <h3 style="color: #1f2937; margin: 0 0 16px 0; font-size: 20px;">Report Reason</h3>
+            <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px;">
+              <p style="color: #374151; margin: 0; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${
+                data.reason
+              }</p>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <div style="text-align: center; margin-bottom: 24px;">
+            <a href="${reportUrl}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; padding: 16px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+              🔍 Review Report
+            </a>
+          </div>
+
+          <!-- Admin Info -->
+          <div style="background-color: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 16px;">
+            <h4 style="color: #0c4a6e; margin: 0 0 8px 0; font-size: 16px;">ℹ️ Admin Information</h4>
+            <p style="color: #0369a1; margin: 0; font-size: 14px;">
+              You can review this report in the admin dashboard. Please take appropriate action based on the report reason and content.
+            </p>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; margin: 0; font-size: 14px;">
+            This is an automated notification from VisaConnect Admin Dashboard.
+          </p>
+          <p style="color: #9ca3af; margin: 8px 0 0 0; font-size: 12px;">
+            If you need assistance, contact the development team.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+  }
+
+  /**
+   * Generate text content for new report notification email
+   */
+  private generateNewReportEmailText(data: NewReportEmailData): string {
+    const dashboardUrl =
+      data.adminDashboardUrl ||
+      config.email.adminDashboardUrl ||
+      'https://admin.visaconnect.com';
+    const reportUrl = `${dashboardUrl}/reports/${data.reportId}`;
+
+    return `
+New Report - VisaConnect Admin
+
+⚠️ ACTION REQUIRED: A new ${
+      data.targetType
+    } has been reported and requires your review.
+
+Report Details:
+- Report ID: ${data.reportId}
+- Target Type: ${data.targetType}
+- Target ID: ${data.targetId}
+- Reporter ID: ${data.reporterId}
+- Reported At: ${data.reportedAt.toLocaleString()}
+
+Report Reason:
+${data.reason}
+
+🔍 Review Report: ${reportUrl}
+
+Admin Information:
+You can review this report in the admin dashboard. Please take appropriate action based on the report reason and content.
+
+---
+This is an automated notification from VisaConnect Admin Dashboard.
+If you need assistance, contact the development team.
     `;
   }
 }

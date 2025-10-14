@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
+import { ReportButton } from '../components/ReportButton';
 import { meetupService, Meetup } from '../api/meetupService';
 
 // Remove the local interface since we're using the one from the service
@@ -216,6 +217,17 @@ const MeetupDetailsScreen: React.FC = () => {
                 ? 'Interest Expressed ✓'
                 : "I'm Interested"}
             </Button>
+
+            {/* Report Button */}
+            {meetupId && (
+              <div className="flex justify-center">
+                <ReportButton
+                  targetType="meetup"
+                  targetId={meetupId}
+                  className="mt-4"
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
