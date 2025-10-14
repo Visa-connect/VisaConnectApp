@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
-import { AdminEmployer } from '../../api/adminEmployerService';
+import {
+  AdminEmployer,
+  adminEmployerService,
+} from '../../api/adminEmployerService';
 
 const EmployersListScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -67,8 +70,7 @@ const EmployersListScreen: React.FC = () => {
   const handleDelete = async (employerId: number | string) => {
     if (window.confirm('Are you sure you want to delete this employer?')) {
       try {
-        // TODO: Implement delete employer API call
-        console.log('Delete employer:', employerId);
+        await adminEmployerService.deleteEmployer(employerId);
         await fetchEmployers(); // Refresh the list
       } catch (err) {
         console.error('Error deleting employer:', err);
