@@ -28,29 +28,56 @@ export const ReportModerationModal: React.FC<ReportModerationModalProps> = ({
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      await onConfirm(notes.trim() || undefined);
+      await onConfirm(notes);
       setNotes('');
     } catch (error) {
-      console.error('Error moderating report:', error);
+      console.error('Error in moderation:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
-      setNotes('');
-      onClose();
+    setNotes('');
+    onClose();
+  };
+
+  const getActionDetails = () => {
+    switch (action) {
+      case 'resolve':
+        return {
+          title: 'Resolve Report',
+          description:
+            'Mark this report as resolved. The post will remain visible.',
+          icon: CheckCircleIcon,
+          iconColor: 'text-green-600',
+          buttonColor: 'bg-green-600 hover:bg-green-700',
+          buttonText: 'Resolve Report',
+        };
+      case 'remove':
+        return {
+          title: 'Remove Post',
+          description:
+            'Mark this report as resolved and remove the reported post.',
+          icon: XCircleIcon,
+          iconColor: 'text-red-600',
+          buttonColor: 'bg-red-600 hover:bg-red-700',
+          buttonText: 'Remove Post',
+        };
+      default:
+        return {
+          title: 'Moderate Report',
+          description: 'Take action on this report.',
+          icon: ExclamationTriangleIcon,
+          iconColor: 'text-orange-600',
+          buttonColor: 'bg-orange-600 hover:bg-orange-700',
+          buttonText: 'Submit Action',
+        };
     }
   };
 
-  if (!report || !action) return null;
-
-  const isResolve = action === 'resolve';
-  const actionText = isResolve ? 'Resolve' : 'Remove';
-  const actionDescription = isResolve
-    ? 'This will mark the report as resolved and keep the post visible.'
-    : 'This will mark the report as removed and hide the post from users.';
+  const actionDetails = getActionDetails();
+  const IconComponent = actionDetails.icon;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -79,128 +106,100 @@ export const ReportModerationModal: React.FC<ReportModerationModalProps> = ({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100">
-                  {isResolve ? (
-                    <CheckCircleIcon className="w-6 h-6 text-green-600" />
-                  ) : (
-                    <ExclamationTriangleIcon className="w-6 h-6 text-red-600" />
-                  )}
+                <div className="flex items-center mb-4">
+                  <div
+                    className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100`}
+                  >
+                    <IconComponent
+                      className={`h-6 w-6 ${actionDetails.iconColor}`}
+                    />
+                  </div>
                 </div>
 
                 <Dialog.Title
                   as="h3"
                   className="text-lg font-medium leading-6 text-gray-900 text-center mb-2"
                 >
-                  {actionText} Report
+                  {actionDetails.title}
                 </Dialog.Title>
 
-                <div className="mt-2">
+                <div className="mb-4">
                   <p className="text-sm text-gray-500 text-center mb-4">
-                    {actionDescription}
+                    {actionDetails.description}
                   </p>
 
-                  {/* Report Details */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <div className="text-sm">
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium text-gray-700">
-                          Report ID:
-                        </span>
-                        <span className="text-gray-600">
-                          {report.report_id.substring(0, 8)}...
-                        </span>
+                  {report && (
+                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                      <div className="text-xs text-gray-600">
+                        <strong>Report ID:</strong>{' '}
+                        {report.report_id?.slice(-8)}...
                       </div>
-                      <div className="flex justify-between mb-2">
-                        <span className="font-medium text-gray-700">
-                          Target:
-                        </span>
-                        <span className="text-gray-600 capitalize">
-                          {report.target_type}
-                        </span>
+                      <div className="text-xs text-gray-600">
+                        <strong>Target:</strong> {report.target_type} -{' '}
+                        {report.target_id?.slice(-8)}...
                       </div>
-                      <div className="mb-2">
-                        <span className="font-medium text-gray-700 block mb-1">
-                          Reason:
-                        </span>
-                        <p className="text-gray-600 text-xs bg-white p-2 rounded border">
-                          {report.reason}
-                        </p>
+                      <div className="text-xs text-gray-600 mt-1">
+                        <strong>Reason:</strong>{' '}
+                        {report.reason?.substring(0, 100)}
+                        {report.reason?.length > 100 && '...'}
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Notes Input */}
-                  <div className="mb-4">
+                  <div>
                     <label
                       htmlFor="notes"
-                      className="block text-sm font-medium text-gray-700 mb-1"
+                      className="block text-sm font-medium text-gray-700 mb-2"
                     >
                       Admin Notes (Optional)
                     </label>
                     <textarea
                       id="notes"
-                      rows={3}
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Add any notes about this decision..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      disabled={isSubmitting}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      placeholder="Add any notes about your decision..."
                     />
                   </div>
-
-                  {/* Warning for Remove Action */}
-                  {!isResolve && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
-                      <div className="flex">
-                        <ExclamationTriangleIcon className="h-5 w-5 text-red-400 mt-0.5 mr-2" />
-                        <div className="text-sm">
-                          <p className="text-red-800 font-medium">Warning</p>
-                          <p className="text-red-700">
-                            This action will hide the post from all users. This
-                            action cannot be undone.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                <div className="mt-6 flex space-x-3">
+                <div className="flex justify-end space-x-3">
                   <button
                     type="button"
-                    className="flex-1 inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     onClick={handleClose}
-                    disabled={isSubmitting}
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
-                    className={`flex-1 inline-flex justify-center px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      isResolve
-                        ? 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-                        : 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-                    }`}
+                    className={`inline-flex justify-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-blue-500 ${actionDetails.buttonColor}`}
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? (
-                      <div className="flex items-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Processing...
-                      </div>
-                    ) : (
-                      <>
-                        {isResolve ? (
-                          <CheckCircleIcon className="w-4 h-4 mr-1" />
-                        ) : (
-                          <XCircleIcon className="w-4 h-4 mr-1" />
-                        )}
-                        {actionText}
-                      </>
-                    )}
+                    {isSubmitting ? 'Processing...' : actionDetails.buttonText}
                   </button>
                 </div>
+
+                {action === 'remove' && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex">
+                      <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">
+                          Warning
+                        </h3>
+                        <div className="mt-1 text-sm text-red-700">
+                          <p>
+                            This action will remove the reported content. This
+                            cannot be undone.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   EyeIcon,
+  PencilIcon,
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -52,6 +53,14 @@ const ReportsListScreen: React.FC = () => {
       dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
     }
     navigate(`/admin/reports/${reportId}`);
+  };
+
+  const handleEdit = (reportId: string) => {
+    const report = reports.find((r) => r.report_id === reportId);
+    if (report) {
+      dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
+    }
+    navigate(`/admin/reports/${reportId}/edit`);
   };
 
   const handleResolve = (report: any) => {
@@ -279,9 +288,6 @@ const ReportsListScreen: React.FC = () => {
                       <div className="text-sm font-medium text-gray-900">
                         {report.report_id.substring(0, 8)}...
                       </div>
-                      <div className="text-sm text-gray-500 max-w-xs truncate">
-                        {report.reason}
-                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -292,9 +298,6 @@ const ReportsListScreen: React.FC = () => {
                         )}`}
                       >
                         {report.target_type}
-                      </span>
-                      <span className="text-sm text-gray-500">
-                        {report.target_id.substring(0, 8)}...
                       </span>
                     </div>
                   </td>
@@ -321,6 +324,13 @@ const ReportsListScreen: React.FC = () => {
                         title="View Details"
                       >
                         <EyeIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleEdit(report.report_id)}
+                        className="text-gray-600 hover:text-gray-900"
+                        title="Edit/Moderate"
+                      >
+                        <PencilIcon className="h-4 w-4" />
                       </button>
                       {report.status === 'pending' && (
                         <>
