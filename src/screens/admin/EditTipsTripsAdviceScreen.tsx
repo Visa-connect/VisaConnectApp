@@ -18,6 +18,7 @@ import {
   formatFileSize,
   CompressionResult,
 } from '../../utils/imageCompression';
+import { ApiErrorResponse } from '../../types/api';
 
 const EditTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -195,7 +196,8 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       navigate('/admin/tipsTripsAndAdvice');
     } catch (err) {
       console.error('Error updating post:', err);
-      setError('Failed to update post. Please try again.');
+      const apiError = err as ApiErrorResponse;
+      setError(apiError.message || 'Failed to update post');
     } finally {
       setLoading(false);
     }

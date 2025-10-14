@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../../components/Button';
 import { useAdminAuth } from '../../hooks/useAdminAuth';
+import { ApiErrorResponse } from '../../types/api';
 
 const AdminLoginScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -45,17 +46,17 @@ const AdminLoginScreen: React.FC = () => {
       localStorage.clear();
       console.log('Cleared all localStorage data before admin login');
 
-      const success = await login(formData.email, formData.password);
-      console.log('Login success:', success);
-      if (success) {
+      const response = await login(formData.email, formData.password);
+      if (response.success) {
         console.log('Navigating to /admin/dashboard');
         navigate('/admin/dashboard');
       } else {
-        setError('Invalid email or password');
+        setError(response.message || 'Login failed');
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Login failed. Please try again.');
+      const apiError = err as ApiErrorResponse;
+      setError(apiError.message);
     } finally {
       setLoading(false);
     }

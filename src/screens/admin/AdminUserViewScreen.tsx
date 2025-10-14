@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
@@ -22,34 +22,39 @@ const AdminUserViewScreen: React.FC = () => {
   const [user, setUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     // First try to get the user from the admin store
-    if (state.selectedUser) {
+    if (state.selectedUser && !hasFetched.current) {
       setUser(state.selectedUser);
       setLoading(false);
+      hasFetched.current = true;
       return;
     }
 
-    // Fallback: fetch from API if not in store
-    const fetchUser = async () => {
-      if (!userId) return;
+    // Fallback: fetch from API if not in store and not already fetched
+    if (!hasFetched.current) {
+      const fetchUser = async () => {
+        if (!userId) return;
 
-      try {
-        setLoading(true);
-        setError(null);
-        const userData = await adminUserService.getUserById(userId);
-        console.log('Fetched user data from API:', userData);
-        setUser(userData);
-      } catch (err) {
-        console.error('Error fetching user:', err);
-        setError('Failed to load user. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+        try {
+          setLoading(true);
+          setError(null);
+          const userData = await adminUserService.getUserById(userId);
+          console.log('Fetched user data from API:', userData);
+          setUser(userData);
+          hasFetched.current = true;
+        } catch (err) {
+          console.error('Error fetching user:', err);
+          setError('Failed to load user. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    fetchUser();
+      fetchUser();
+    }
   }, [userId, state.selectedUser]);
 
   const handleBack = () => {

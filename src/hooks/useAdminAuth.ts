@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { adminAuthService } from '../api/adminAuthService';
+import { ApiErrorResponse, ApiResponse } from '../types/api';
 
 interface AdminAuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<ApiResponse | ApiErrorResponse>;
   logout: () => void;
 }
 
@@ -34,12 +38,16 @@ export const useAdminAuth = (): AdminAuthState => {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<ApiResponse | ApiErrorResponse> => {
     try {
       // Clear all existing tokens and user information
       localStorage.clear();
 
       const response = await adminAuthService.login(email, password);
+      console.log('useAdminAuth: Login response:', JSON.stringify(response));
       if (response.success && response.token) {
         // Store admin token and user info
         localStorage.setItem('adminToken', response.token);
@@ -47,13 +55,13 @@ export const useAdminAuth = (): AdminAuthState => {
           localStorage.setItem('adminUser', JSON.stringify(response.user));
         }
         setIsAuthenticated(true);
-        return true;
+        return response;
       }
       console.log('useAdminAuth: Login failed - no success or token');
-      return false;
+      return response;
     } catch (error) {
       console.error('useAdminAuth: Login error:', error);
-      return false;
+      return error as ApiErrorResponse;
     }
   };
 

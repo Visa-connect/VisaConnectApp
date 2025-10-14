@@ -39,6 +39,7 @@ export enum ErrorCode {
   FORBIDDEN = 'FORBIDDEN',
   CONFLICT = 'CONFLICT',
   INVALID_INPUT = 'INVALID_INPUT',
+  INVALID_ACCESS = 'INVALID_ACCESS',
 }
 
 export class AppError extends Error {
