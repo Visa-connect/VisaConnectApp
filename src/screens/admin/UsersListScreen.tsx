@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
@@ -8,6 +8,11 @@ const UsersListScreen: React.FC = () => {
   const navigate = useNavigate();
   const { dispatch } = useAdminStore();
   const { users, loading, error, deleteUser, refreshData } = useAdminUsers();
+
+  // Fetch users on component mount
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const handleView = (userId: string) => {
     const user = users.find((u) => u.id === userId);

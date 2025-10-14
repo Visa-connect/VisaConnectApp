@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useAdminStore, adminActions } from '../stores/adminStore';
 import { adminUserService } from '../api/adminUserService';
 
@@ -101,10 +101,8 @@ export const useAdminUsers = () => {
     await fetchUsers();
   }, [fetchUsers]);
 
-  // Initialize data on mount
-  useEffect(() => {
-    refreshData();
-  }, [refreshData]);
+  // Note: Components should call refreshData() explicitly when needed
+  // This avoids unnecessary fetch loops caused by useCallback dependencies
 
   return {
     users: state.users,

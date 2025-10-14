@@ -32,7 +32,7 @@ const AdminDashboardScreen: React.FC = () => {
   // Use admin business hook for employer data
   const { businessCounts } = useAdminBusinesses();
   // Use admin users hook for user data
-  const { users } = useAdminUsers();
+  const { users, refreshData: refreshUsers } = useAdminUsers();
   useEffect(() => {
     // Redirect from /admin to /admin/dashboard
     if (location.pathname === '/admin') {
@@ -43,6 +43,9 @@ const AdminDashboardScreen: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+
+        // Fetch users data
+        await refreshUsers();
 
         // Fetch recent posts
         const postsResponse = await adminTipsTripsAdviceService.searchPosts({
@@ -80,7 +83,13 @@ const AdminDashboardScreen: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, [location.pathname, navigate, businessCounts.all, users.length]);
+  }, [
+    location.pathname,
+    navigate,
+    businessCounts.all,
+    users.length,
+    refreshUsers,
+  ]);
 
   const quickActions = [
     {
