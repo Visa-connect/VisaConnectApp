@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { userService } from '../services/userService';
 import { authenticateUser } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/adminAuth';
 import admin from 'firebase-admin';
 
 export default function userApi(app: Express) {
@@ -292,26 +293,21 @@ export default function userApi(app: Express) {
     }
   );
 
-  // Get all users with pagination (requires authentication - admin only in future)
+  // Admin: Get all users with pagination (admin only)
   app.get(
-    '/api/user/all',
-    authenticateUser,
+    '/api/admin/users',
+    authenticateAdmin,
     async (req: Request, res: Response) => {
       try {
         const limit = parseInt(req.query.limit as string) || 50;
         const offset = parseInt(req.query.offset as string) || 0;
 
-        const users = await userService.getAllUsers(limit, offset);
+        const result = await userService.getAllUsers(limit, offset);
 
-        res.json({
+        res.status(200).json({
           success: true,
-          data: users,
-          count: users.length,
-          pagination: {
-            limit,
-            offset,
-            hasMore: users.length === limit,
-          },
+          data: result.users,
+          total: result.total,
         });
       } catch (error: any) {
         console.error('Get all users error:', error);
@@ -323,14 +319,51 @@ export default function userApi(app: Express) {
     }
   );
 
-  // Delete user account (requires authentication)
+  // Legacy endpoint - redirects to admin endpoint
+  app.get(
+    '/api/user/all',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const limit = parseInt(req.query.limit as string) || 50;
+        const offset = parseInt(req.query.offset as string) || 0;
+
+        const result = await userService.getAllUsers(limit, offset);
+
+        res.json({
+          success: true,
+          data: result.users,
+          total: result.total,
+        });
+      } catch (error: any) {
+        console.error('Get all users error:', error);
+        res.status(500).json({
+          error: 'Failed to get users',
+          message: error.message || 'Failed to retrieve users',
+        });
+      }
+    }
+  );
+
+  // Delete user account (user can only delete their own account)
   app.delete(
-    '/api/user/account',
+    '/api/user/:userId',
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
+        const { userId } = req.params;
+        const authenticatedUserId = req.user?.uid;
+
+        // Check that user can only delete their own account
+        if (userId !== authenticatedUserId) {
+          return res.status(403).json({
+            success: false,
+            message: 'You can only delete your own account',
+          });
+        }
+
         // 1. Delete from PostgreSQL first
-        const deleted = await userService.deleteUser(req.user!.uid);
+        const deleted = await userService.deleteUser(userId);
 
         if (!deleted) {
           return res.status(404).json({
@@ -340,7 +373,7 @@ export default function userApi(app: Express) {
         }
 
         // 2. Delete from Firebase
-        await admin.auth().deleteUser(req.user!.uid);
+        await admin.auth().deleteUser(userId);
 
         res.json({
           success: true,
@@ -350,6 +383,41 @@ export default function userApi(app: Express) {
         console.error('Delete account error:', error);
         res.status(500).json({
           error: 'Failed to delete account',
+          message: error.message || 'Failed to delete user account',
+        });
+      }
+    }
+  );
+
+  // Admin: Delete user account (admin can delete any user)
+  app.delete(
+    '/api/admin/users/:userId',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const { userId } = req.params;
+
+        // 1. Delete from PostgreSQL first
+        const deleted = await userService.deleteUser(userId);
+
+        if (!deleted) {
+          return res.status(404).json({
+            success: false,
+            message: 'User not found',
+          });
+        }
+
+        // 2. Delete from Firebase
+        await admin.auth().deleteUser(userId);
+
+        res.json({
+          success: true,
+          message: 'User account deleted successfully',
+        });
+      } catch (error: any) {
+        console.error('Admin delete user error:', error);
+        res.status(500).json({
+          success: false,
           message: error.message || 'Failed to delete user account',
         });
       }

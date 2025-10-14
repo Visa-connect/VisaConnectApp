@@ -89,7 +89,7 @@ export class AdminAuthService {
       if (!isAdmin) {
         throw new AppError(
           'Access denied. Admin privileges required.',
-          ErrorCode.MEETUP_ACCESS_DENIED,
+          ErrorCode.INVALID_ACCESS,
           403
         );
       }

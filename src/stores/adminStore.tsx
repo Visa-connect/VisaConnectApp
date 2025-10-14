@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Business } from '../api/businessApi';
 import { TipsTripsAdvicePost } from '../api/adminTipsTripsAdviceService';
+import { AdminUser } from '../api/adminUserService';
+import { AdminEmployer } from '../api/adminEmployerService';
 
 // Types
 interface AdminState {
@@ -13,6 +15,16 @@ interface AdminState {
   };
   tipsTripsAdvicePosts: TipsTripsAdvicePost[];
   selectedTipsTripsAdvicePost: TipsTripsAdvicePost | null;
+  users: AdminUser[];
+  userCounts: {
+    all: number;
+    active: number;
+    verified: number;
+    unverified: number;
+  };
+  selectedUser: AdminUser | null;
+  employers: AdminEmployer[];
+  selectedEmployer: AdminEmployer | null;
   loading: boolean;
   error: string | null;
 }
@@ -28,6 +40,11 @@ type AdminAction =
       type: 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST';
       payload: TipsTripsAdvicePost | null;
     }
+  | { type: 'SET_USERS'; payload: AdminUser[] }
+  | { type: 'SET_USER_COUNTS'; payload: AdminState['userCounts'] }
+  | { type: 'SET_SELECTED_USER'; payload: AdminUser | null }
+  | { type: 'SET_EMPLOYERS'; payload: AdminEmployer[] }
+  | { type: 'SET_SELECTED_EMPLOYER'; payload: AdminEmployer | null }
   | { type: 'CLEAR_ERROR' };
 
 // Initial state
@@ -41,6 +58,16 @@ const initialState: AdminState = {
   },
   tipsTripsAdvicePosts: [],
   selectedTipsTripsAdvicePost: null,
+  users: [],
+  userCounts: {
+    all: 0,
+    active: 0,
+    verified: 0,
+    unverified: 0,
+  },
+  selectedUser: null,
+  employers: [],
+  selectedEmployer: null,
   loading: false,
   error: null,
 };
@@ -71,6 +98,16 @@ const adminReducer = (state: AdminState, action: AdminAction): AdminState => {
       return { ...state, tipsTripsAdvicePosts: action.payload };
     case 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST':
       return { ...state, selectedTipsTripsAdvicePost: action.payload };
+    case 'SET_USERS':
+      return { ...state, users: action.payload, loading: false };
+    case 'SET_USER_COUNTS':
+      return { ...state, userCounts: action.payload };
+    case 'SET_SELECTED_USER':
+      return { ...state, selectedUser: action.payload };
+    case 'SET_EMPLOYERS':
+      return { ...state, employers: action.payload };
+    case 'SET_SELECTED_EMPLOYER':
+      return { ...state, selectedEmployer: action.payload };
     default:
       return state;
   }
@@ -134,5 +171,25 @@ export const adminActions = {
   setSelectedTipsTripsAdvicePost: (post: TipsTripsAdvicePost | null) => ({
     type: 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST' as const,
     payload: post,
+  }),
+  setUsers: (users: AdminUser[]) => ({
+    type: 'SET_USERS' as const,
+    payload: users,
+  }),
+  setUserCounts: (userCounts: AdminState['userCounts']) => ({
+    type: 'SET_USER_COUNTS' as const,
+    payload: userCounts,
+  }),
+  setSelectedUser: (user: AdminUser | null) => ({
+    type: 'SET_SELECTED_USER' as const,
+    payload: user,
+  }),
+  setEmployers: (employers: AdminEmployer[]) => ({
+    type: 'SET_EMPLOYERS' as const,
+    payload: employers,
+  }),
+  setSelectedEmployer: (employer: AdminEmployer | null) => ({
+    type: 'SET_SELECTED_EMPLOYER' as const,
+    payload: employer,
   }),
 };

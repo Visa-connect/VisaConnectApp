@@ -554,4 +554,43 @@ export default function businessApi(app: Express) {
       }
     }
   );
+
+  /**
+   * Admin: Delete business
+   * DELETE /api/business/admin/:id
+   */
+  app.delete(
+    '/api/business/admin/:id',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const businessId = parseInt(req.params.id);
+        if (isNaN(businessId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid business ID',
+          });
+        }
+
+        const deleted = await businessService.deleteBusinessAdmin(businessId);
+        if (!deleted) {
+          return res.status(404).json({
+            success: false,
+            message: 'Business not found',
+          });
+        }
+
+        res.json({
+          success: true,
+          message: 'Business deleted successfully',
+        });
+      } catch (error) {
+        console.error('Error deleting business:', error);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to delete business',
+        });
+      }
+    }
+  );
 }

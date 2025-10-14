@@ -359,7 +359,7 @@ export class TipsTripsAdviceService {
       if (postResult.rows[0].creator_id !== userId) {
         throw new AppError(
           'You can only update your own posts',
-          ErrorCode.MEETUP_ACCESS_DENIED,
+          ErrorCode.INVALID_ACCESS,
           403
         );
       }
@@ -504,7 +504,7 @@ export class TipsTripsAdviceService {
       if (postResult.rows[0].creator_id !== userId) {
         throw new AppError(
           'You can only delete your own posts',
-          ErrorCode.MEETUP_ACCESS_DENIED,
+          ErrorCode.INVALID_ACCESS,
           403
         );
       }

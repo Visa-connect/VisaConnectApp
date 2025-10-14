@@ -5,6 +5,13 @@ export interface ApiError extends Error {
   status: number;
 }
 
+// Standardized error response from API
+export interface ApiErrorResponse {
+  success: false;
+  message: string;
+  code: string;
+}
+
 // Common API response structure
 export interface ApiResponse<T = any> {
   success: boolean;

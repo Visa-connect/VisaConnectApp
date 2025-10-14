@@ -79,7 +79,9 @@ class AdminTipsTripsAdviceService {
 
   // Get post by ID with admin authentication
   async getPostById(postId: string): Promise<TipsTripsAdvicePost> {
-    return adminApiGet<TipsTripsAdvicePost>(`/api/tips-trips-advice/${postId}`);
+    return adminApiGet<TipsTripsAdvicePost>(
+      `/api/admin/tips-trips-advice/${postId}`
+    );
   }
 
   // Create new post with admin authentication
@@ -99,13 +101,13 @@ class AdminTipsTripsAdviceService {
       });
 
       return adminApiPostFormData<TipsTripsAdvicePost>(
-        '/api/tips-trips-advice',
+        '/api/admin/tips-trips-advice',
         formData
       );
     } else {
       // Use JSON for posts without photos
       return adminApiPost<TipsTripsAdvicePost>(
-        '/api/tips-trips-advice',
+        '/api/admin/tips-trips-advice',
         postData
       );
     }
@@ -140,7 +142,7 @@ class AdminTipsTripsAdviceService {
     }
 
     return adminApiPutFormData<TipsTripsAdvicePost>(
-      `/api/tips-trips-advice/${postId}`,
+      `/api/admin/tips-trips-advice/${postId}`,
       formData
     );
   }
@@ -150,7 +152,7 @@ class AdminTipsTripsAdviceService {
     postId: string
   ): Promise<{ success: boolean; message: string }> {
     return adminApiDelete<{ success: boolean; message: string }>(
-      `/api/tips-trips-advice/${postId}`
+      `/api/admin/tips-trips-advice/${postId}`
     );
   }
 
@@ -178,4 +180,3 @@ class AdminTipsTripsAdviceService {
 }
 
 export const adminTipsTripsAdviceService = new AdminTipsTripsAdviceService();
-export default adminTipsTripsAdviceService;

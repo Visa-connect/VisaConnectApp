@@ -427,11 +427,24 @@ class UserService {
   }
 
   // Get all users (with pagination)
-  async getAllUsers(limit: number = 50, offset: number = 0): Promise<User[]> {
-    const query =
+  async getAllUsers(
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<{ users: User[]; total: number }> {
+    // Get total count
+    const countQuery = 'SELECT COUNT(*) as total FROM users';
+    const countResult = await pool.query(countQuery);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Get paginated users
+    const usersQuery =
       'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2';
-    const result = await pool.query(query, [limit, offset]);
-    return result.rows;
+    const usersResult = await pool.query(usersQuery, [limit, offset]);
+
+    return {
+      users: usersResult.rows,
+      total,
+    };
   }
 
   // Search users by criteria

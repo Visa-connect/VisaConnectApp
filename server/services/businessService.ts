@@ -456,6 +456,25 @@ export class BusinessService {
       client.release();
     }
   }
+
+  /**
+   * Admin: Delete business (no ownership check)
+   */
+  async deleteBusinessAdmin(businessId: number): Promise<boolean> {
+    const client = await pool.connect();
+
+    try {
+      const query = `
+        DELETE FROM businesses 
+        WHERE id = $1
+      `;
+
+      const result = await client.query(query, [businessId]);
+      return (result.rowCount ?? 0) > 0;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 export const businessService = new BusinessService();

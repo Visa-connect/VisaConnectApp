@@ -72,4 +72,3 @@ class AdminAuthService {
 }
 
 export const adminAuthService = new AdminAuthService();
-export default adminAuthService;
