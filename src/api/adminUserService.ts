@@ -147,7 +147,7 @@ class AdminUserService {
     userId: string
   ): Promise<{ success: boolean; message: string }> {
     return adminApiDelete<{ success: boolean; message: string }>(
-      `/api/user/${userId}`
+      `/api/admin/users/${userId}`
     );
   }
 

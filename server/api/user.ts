@@ -355,13 +355,22 @@ export default function userApi(app: Express) {
     }
   );
 
-  // Delete user account (requires authentication)
+  // Delete user account (user can only delete their own account)
   app.delete(
     '/api/user/:userId',
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
         const { userId } = req.params;
+        const authenticatedUserId = req.user?.uid;
+
+        // Check that user can only delete their own account
+        if (userId !== authenticatedUserId) {
+          return res.status(403).json({
+            success: false,
+            message: 'You can only delete your own account',
+          });
+        }
 
         // 1. Delete from PostgreSQL first
         const deleted = await userService.deleteUser(userId);
@@ -384,6 +393,41 @@ export default function userApi(app: Express) {
         console.error('Delete account error:', error);
         res.status(500).json({
           error: 'Failed to delete account',
+          message: error.message || 'Failed to delete user account',
+        });
+      }
+    }
+  );
+
+  // Admin: Delete user account (admin can delete any user)
+  app.delete(
+    '/api/admin/users/:userId',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const { userId } = req.params;
+
+        // 1. Delete from PostgreSQL first
+        const deleted = await userService.deleteUser(userId);
+
+        if (!deleted) {
+          return res.status(404).json({
+            success: false,
+            message: 'User not found',
+          });
+        }
+
+        // 2. Delete from Firebase
+        await admin.auth().deleteUser(userId);
+
+        res.json({
+          success: true,
+          message: 'User account deleted successfully',
+        });
+      } catch (error: any) {
+        console.error('Admin delete user error:', error);
+        res.status(500).json({
+          success: false,
           message: error.message || 'Failed to delete user account',
         });
       }
