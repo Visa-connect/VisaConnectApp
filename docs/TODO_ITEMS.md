@@ -16,6 +16,16 @@
   - Optimize scroll performance and ensure consistent behavior across devices
   - Should be handled in a dedicated branch for chat UX improvements
 
+### Reports System Enhancements
+
+- **Report Audit Trail**: Implement comprehensive audit logging for report moderation actions
+  - Create `report_audit_trail` table with fields: `id`, `report_id`, `action`, `admin_id`, `notes`, `timestamp`
+  - Track all state transitions (created, resolved, removed) with admin accountability
+  - Add admin notes/comments for transparency in moderation decisions
+  - Enable complete audit history for compliance and debugging
+  - Update `reportService.ts` to log audit entries on all report actions
+  - Enhance admin UI to display audit trail and allow adding notes during moderation
+
 ### Logging Improvements
 
 - **Structured Logging**: Replace `console.log` usage with a centralized logger (e.g., Winston)
