@@ -103,10 +103,8 @@ export const useAdminUsers = () => {
 
   // Initialize data on mount
   useEffect(() => {
-    if (state.users.length === 0) {
-      refreshData();
-    }
-  }, [refreshData, state.users.length]);
+    refreshData();
+  }, [refreshData]);
 
   return {
     users: state.users,

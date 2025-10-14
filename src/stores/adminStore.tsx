@@ -99,7 +99,7 @@ const adminReducer = (state: AdminState, action: AdminAction): AdminState => {
     case 'SET_SELECTED_TIPS_TRIPS_ADVICE_POST':
       return { ...state, selectedTipsTripsAdvicePost: action.payload };
     case 'SET_USERS':
-      return { ...state, users: action.payload };
+      return { ...state, users: action.payload, loading: false };
     case 'SET_USER_COUNTS':
       return { ...state, userCounts: action.payload };
     case 'SET_SELECTED_USER':
