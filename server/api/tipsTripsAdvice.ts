@@ -37,7 +37,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     upload.array('photos', 10), // Allow up to 10 photos
     async (req: Request, res: Response) => {
       try {
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
         if (!userId) {
           return res.status(401).json({
             success: false,
@@ -144,7 +144,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
 
         if (isNaN(postId)) {
           return res.status(400).json({
@@ -186,7 +186,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
         const searchParams: SearchTipsTripsAdviceRequest = {
           post_type: req.query.post_type as any,
           search: req.query.search as string,
@@ -234,7 +234,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -361,7 +361,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -412,7 +412,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -478,7 +478,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -529,7 +529,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.adminUser?.uid;
+        const userId = req.user?.uid;
         const postType = req.query.post_type as any;
 
         if (!userId) {
