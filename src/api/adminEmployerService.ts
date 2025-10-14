@@ -201,4 +201,3 @@ class AdminEmployerService {
 }
 
 export const adminEmployerService = new AdminEmployerService();
-export default adminEmployerService;

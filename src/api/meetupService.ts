@@ -198,4 +198,3 @@ class MeetupService {
 }
 
 export const meetupService = new MeetupService();
-export default meetupService;

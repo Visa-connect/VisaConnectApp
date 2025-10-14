@@ -200,4 +200,3 @@ class TipsTripsAdviceService {
 }
 
 export const tipsTripsAdviceService = new TipsTripsAdviceService();
-export default tipsTripsAdviceService;

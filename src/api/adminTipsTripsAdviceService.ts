@@ -180,4 +180,3 @@ class AdminTipsTripsAdviceService {
 }
 
 export const adminTipsTripsAdviceService = new AdminTipsTripsAdviceService();
-export default adminTipsTripsAdviceService;

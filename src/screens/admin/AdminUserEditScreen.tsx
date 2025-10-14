@@ -148,7 +148,18 @@ const AdminUserEditScreen: React.FC = () => {
         date_of_birth: formData.date_of_birth || undefined,
         nationality: formData.nationality || undefined,
         visa_type: formData.visa_type || undefined,
-        current_location: formData.current_location || undefined,
+        current_location: formData.current_location
+          ? (() => {
+              const parts = formData.current_location
+                .split(',')
+                .map((p) => p.trim());
+              return {
+                city: parts[0] || undefined,
+                state: parts[1] || undefined,
+                country: parts[2] || undefined,
+              };
+            })()
+          : undefined,
         occupation: formData.occupation || undefined,
         is_active: formData.is_active,
         is_verified: formData.is_verified,

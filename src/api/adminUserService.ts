@@ -15,13 +15,11 @@ export interface AdminUser {
   date_of_birth?: string;
   nationality?: string;
   visa_type?: string;
-  current_location?:
-    | string
-    | {
-        city?: string;
-        state?: string;
-        country?: string;
-      };
+  current_location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  };
   occupation?: string;
   profile_photo_url?: string;
   is_active: boolean;
@@ -53,7 +51,11 @@ export interface UpdateUserData {
   date_of_birth?: string;
   nationality?: string;
   visa_type?: string;
-  current_location?: string;
+  current_location?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  };
   occupation?: string;
   is_active?: boolean;
   is_verified?: boolean;
@@ -176,4 +178,3 @@ class AdminUserService {
 }
 
 export const adminUserService = new AdminUserService();
-export default adminUserService;
