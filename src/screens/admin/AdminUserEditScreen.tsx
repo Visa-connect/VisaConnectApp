@@ -8,6 +8,10 @@ import {
   UpdateUserData,
 } from '../../api/adminUserService';
 import { useAdminStore } from '../../stores/adminStore';
+import {
+  formatLocationForForm,
+  parseLocationString,
+} from '../../utils/locationUtils';
 
 const AdminUserEditScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -43,16 +47,7 @@ const AdminUserEditScreen: React.FC = () => {
         date_of_birth: userData.date_of_birth || '',
         nationality: userData.nationality || '',
         visa_type: userData.visa_type || '',
-        current_location:
-          typeof userData.current_location === 'string'
-            ? userData.current_location
-            : userData.current_location
-            ? `${userData.current_location.city || ''}, ${
-                userData.current_location.state || ''
-              }, ${userData.current_location.country || ''}`
-                .replace(/^,\s*|,\s*$/g, '')
-                .replace(/,\s*,/g, ',')
-            : '',
+        current_location: formatLocationForForm(userData.current_location),
         occupation: userData.occupation || '',
         is_active: userData.is_active,
         is_verified: userData.is_verified,
@@ -77,16 +72,7 @@ const AdminUserEditScreen: React.FC = () => {
           date_of_birth: userData.date_of_birth || '',
           nationality: userData.nationality || '',
           visa_type: userData.visa_type || '',
-          current_location:
-            typeof userData.current_location === 'string'
-              ? userData.current_location
-              : userData.current_location
-              ? `${userData.current_location.city || ''}, ${
-                  userData.current_location.state || ''
-                }, ${userData.current_location.country || ''}`
-                  .replace(/^,\s*|,\s*$/g, '')
-                  .replace(/,\s*,/g, ',')
-              : '',
+          current_location: formatLocationForForm(userData.current_location),
           occupation: userData.occupation || '',
           is_active: userData.is_active,
           is_verified: userData.is_verified,
@@ -149,16 +135,7 @@ const AdminUserEditScreen: React.FC = () => {
         nationality: formData.nationality || undefined,
         visa_type: formData.visa_type || undefined,
         current_location: formData.current_location
-          ? (() => {
-              const parts = formData.current_location
-                .split(',')
-                .map((p) => p.trim());
-              return {
-                city: parts[0] || undefined,
-                state: parts[1] || undefined,
-                country: parts[2] || undefined,
-              };
-            })()
+          ? parseLocationString(formData.current_location)
           : undefined,
         occupation: formData.occupation || undefined,
         is_active: formData.is_active,
@@ -264,40 +241,6 @@ const AdminUserEditScreen: React.FC = () => {
 
               <div>
                 <label
-                  htmlFor="phone_number"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  id="phone_number"
-                  name="phone_number"
-                  value={formData.phone_number}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="date_of_birth"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Date of Birth
-                </label>
-                <input
-                  type="date"
-                  id="date_of_birth"
-                  name="date_of_birth"
-                  value={formData.date_of_birth}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label
                   htmlFor="nationality"
                   className="block text-sm font-medium text-gray-700 mb-2"
                 >
@@ -364,67 +307,6 @@ const AdminUserEditScreen: React.FC = () => {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Account Status */}
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Account Status
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  name="is_active"
-                  checked={formData.is_active}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="is_active"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Account is active
-                </label>
-              </div>
-
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="is_verified"
-                  name="is_verified"
-                  checked={formData.is_verified}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor="is_verified"
-                  className="ml-2 block text-sm text-gray-900"
-                >
-                  Account is verified
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin Notes */}
-          <div className="mb-6">
-            <label
-              htmlFor="admin_notes"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Admin Notes
-            </label>
-            <textarea
-              id="admin_notes"
-              name="admin_notes"
-              value={formData.admin_notes}
-              onChange={handleInputChange}
-              rows={4}
-              placeholder="Add any admin notes about this user..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-            />
           </div>
 
           {/* Error Message */}

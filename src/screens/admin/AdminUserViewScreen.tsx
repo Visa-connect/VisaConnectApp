@@ -135,26 +135,6 @@ const AdminUserViewScreen: React.FC = () => {
           </button>
 
           <div className="flex items-center space-x-3">
-            <span
-              className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
-                user.is_active
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}
-            >
-              {user.is_active ? 'Active' : 'Inactive'}
-            </span>
-
-            <span
-              className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
-                user.is_verified
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-yellow-100 text-yellow-800'
-              }`}
-            >
-              {user.is_verified ? 'Verified' : 'Unverified'}
-            </span>
-
             <Button
               onClick={handleEdit}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
@@ -299,67 +279,6 @@ const AdminUserViewScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Verification Status */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-              <ShieldCheckIcon className="h-5 w-5 mr-2" />
-              Verification Status
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-center p-3 rounded-lg bg-gray-50">
-                <EnvelopeIcon className="h-5 w-5 mr-3 text-gray-400" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Email</p>
-                  <p
-                    className={`text-sm ${
-                      user.email_verified ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {user.email_verified ? 'Verified' : 'Unverified'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center p-3 rounded-lg bg-gray-50">
-                <PhoneIcon className="h-5 w-5 mr-3 text-gray-400" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Phone</p>
-                  <p
-                    className={`text-sm ${
-                      user.phone_verified ? 'text-green-600' : 'text-red-600'
-                    }`}
-                  >
-                    {user.phone_verified ? 'Verified' : 'Unverified'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center p-3 rounded-lg bg-gray-50">
-                <ShieldCheckIcon className="h-5 w-5 mr-3 text-gray-400" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Account</p>
-                  <p
-                    className={`text-sm ${
-                      user.is_verified ? 'text-green-600' : 'text-yellow-600'
-                    }`}
-                  >
-                    {user.is_verified ? 'Verified' : 'Pending'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Admin Notes */}
-          {user.admin_notes && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Admin Notes
-              </h3>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-gray-700">{user.admin_notes}</p>
-              </div>
-            </div>
-          )}
-
           {/* Account Information */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -368,18 +287,10 @@ const AdminUserViewScreen: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
               <div>
                 <p>
-                  <span className="font-medium">Firebase UID:</span>{' '}
-                  {user.firebase_uid}
-                </p>
-                <p>
                   <span className="font-medium">User ID:</span> {user.id}
                 </p>
               </div>
               <div>
-                <p>
-                  <span className="font-medium">Created:</span>{' '}
-                  {formatDateTime(user.created_at)}
-                </p>
                 {user.updated_at && (
                   <p>
                     <span className="font-medium">Last Updated:</span>{' '}
