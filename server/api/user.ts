@@ -304,7 +304,7 @@ export default function userApi(app: Express) {
 
         const users = await userService.getAllUsers(limit, offset);
 
-        res.json({
+        res.status(200).json({
           success: true,
           data: users,
           count: users.length,
