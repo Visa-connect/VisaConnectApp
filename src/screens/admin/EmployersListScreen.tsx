@@ -1,34 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-
-interface Employer {
-  id: number;
-  user_id: string;
-  name: string;
-  description?: string;
-  address?: string;
-  website?: string;
-  year_formed?: number;
-  owner_name?: string;
-  mission_statement?: string;
-  logo_url?: string;
-  verified: boolean;
-  status: 'pending' | 'approved' | 'rejected';
-  admin_notes?: string;
-  created_at: string;
-  updated_at: string;
-  submitted_at: string;
-  // Additional fields from the JOIN query
-  category_name?: string;
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-}
+import { useAdminStore } from '../../stores/adminStore';
+import { AdminEmployer } from '../../api/adminEmployerService';
 
 const EmployersListScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [employers, setEmployers] = useState<Employer[]>([]);
+  const { dispatch } = useAdminStore();
+  const [employers, setEmployers] = useState<AdminEmployer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<
@@ -66,10 +45,22 @@ const EmployersListScreen: React.FC = () => {
   }, [fetchEmployers]);
 
   const handleView = (employerId: number | string) => {
+    const employer = employers.find(
+      (e) => e.id.toString() === employerId.toString()
+    );
+    if (employer) {
+      dispatch({ type: 'SET_SELECTED_EMPLOYER', payload: employer });
+    }
     navigate(`/admin/employers/${employerId}`);
   };
 
   const handleEdit = (employerId: number | string) => {
+    const employer = employers.find(
+      (e) => e.id.toString() === employerId.toString()
+    );
+    if (employer) {
+      dispatch({ type: 'SET_SELECTED_EMPLOYER', payload: employer });
+    }
     navigate(`/admin/employers/${employerId}/edit`);
   };
 

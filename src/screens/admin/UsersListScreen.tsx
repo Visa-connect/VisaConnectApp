@@ -1,32 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-
-interface User {
-  id: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  visa_type?: string;
-  current_location?: {
-    city: string;
-    state: string;
-    country: string;
-  };
-  occupation?: string;
-  employer?: string;
-  interests?: string[];
-  nationality?: string;
-  languages?: string[];
-  profile_photo_url?: string | null;
-  bio?: string;
-  created_at: string;
-  updated_at: string;
-}
+import { useAdminStore } from '../../stores/adminStore';
+import { AdminUser } from '../../api/adminUserService';
 
 const UsersListScreen: React.FC = () => {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
+  const { dispatch } = useAdminStore();
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,10 +42,18 @@ const UsersListScreen: React.FC = () => {
   }, [fetchUsers]);
 
   const handleView = (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      dispatch({ type: 'SET_SELECTED_USER', payload: user });
+    }
     navigate(`/admin/users/${userId}`);
   };
 
   const handleEdit = (userId: string) => {
+    const user = users.find((u) => u.id === userId);
+    if (user) {
+      dispatch({ type: 'SET_SELECTED_USER', payload: user });
+    }
     navigate(`/admin/users/${userId}/edit`);
   };
 
@@ -212,7 +201,11 @@ const UsersListScreen: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.current_location
-                      ? `${user.current_location.city}, ${user.current_location.state}`
+                      ? typeof user.current_location === 'string'
+                        ? user.current_location
+                        : `${user.current_location.city || ''}, ${
+                            user.current_location.state || ''
+                          }`.replace(/^,\s*|,\s*$/g, '') || 'Not specified'
                       : 'Not specified'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

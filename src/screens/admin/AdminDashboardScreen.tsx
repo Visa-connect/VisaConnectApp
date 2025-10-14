@@ -11,6 +11,11 @@ import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../../api/adminTipsTripsAdviceService';
+import { adminUserService, UserStats } from '../../api/adminUserService';
+import {
+  adminEmployerService,
+  EmployerStats,
+} from '../../api/adminEmployerService';
 import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 
 const AdminDashboardScreen: React.FC = () => {
@@ -24,6 +29,10 @@ const AdminDashboardScreen: React.FC = () => {
     totalUsers: 0,
     totalEmployers: 0,
   });
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [employerStats, setEmployerStats] = useState<EmployerStats | null>(
+    null
+  );
 
   // Use admin business hook for employer data
   const { businessCounts } = useAdminBusinesses();
@@ -38,13 +47,31 @@ const AdminDashboardScreen: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+
         // Fetch recent posts
         const postsResponse = await adminTipsTripsAdviceService.searchPosts({
           limit: 5,
         });
         setRecentPosts(postsResponse.data);
 
-        // Calculate stats
+        // Fetch user stats
+        try {
+          const userStatsResponse = await adminUserService.getUserStats();
+          setUserStats(userStatsResponse);
+        } catch (err) {
+          console.warn('Failed to fetch user stats:', err);
+        }
+
+        // Fetch employer stats
+        try {
+          const employerStatsResponse =
+            await adminEmployerService.getEmployerStats();
+          setEmployerStats(employerStatsResponse);
+        } catch (err) {
+          console.warn('Failed to fetch employer stats:', err);
+        }
+
+        // Calculate post stats
         const allPostsResponse = await adminTipsTripsAdviceService.searchPosts(
           {}
         );
@@ -54,8 +81,8 @@ const AdminDashboardScreen: React.FC = () => {
         setStats({
           totalPosts: allPosts.length,
           activePosts: activePosts.length,
-          totalUsers: 0, // TODO: Implement when user API is available
-          totalEmployers: businessCounts.all, // Use business counts from admin store
+          totalUsers: userStats?.total_users || 0,
+          totalEmployers: employerStats?.total_employers || businessCounts.all,
         });
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
@@ -65,7 +92,13 @@ const AdminDashboardScreen: React.FC = () => {
     };
 
     fetchDashboardData();
-  }, [location.pathname, navigate, businessCounts.all]);
+  }, [
+    location.pathname,
+    navigate,
+    businessCounts.all,
+    userStats,
+    employerStats,
+  ]);
 
   const quickActions = [
     {

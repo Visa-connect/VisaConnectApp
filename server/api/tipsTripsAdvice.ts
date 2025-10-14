@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import multer from 'multer';
 import { authenticateUser } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/adminAuth';
 import { tipsTripsAdviceService } from '../services/tipsTripsAdviceService';
 import { AppError, ErrorCode } from '../types/errors';
 import {
@@ -29,22 +30,6 @@ const upload = multer({
 });
 
 export default function tipsTripsAdviceApi(app: Express) {
-  // Multer error handling middleware
-  app.use((error: any, req: Request, res: Response, next: any) => {
-    if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({
-          success: false,
-          message: 'File too large. Maximum file size is 10MB.',
-        });
-      }
-      return res.status(400).json({
-        success: false,
-        message: `Upload error: ${error.message}`,
-      });
-    }
-    next(error);
-  });
   // Create a new Tips, Trips, or Advice post
   app.post(
     '/api/tips-trips-advice',
@@ -52,7 +37,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     upload.array('photos', 10), // Allow up to 10 photos
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
         if (!userId) {
           return res.status(401).json({
             success: false,
@@ -159,7 +144,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
 
         if (isNaN(postId)) {
           return res.status(400).json({
@@ -201,7 +186,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
         const searchParams: SearchTipsTripsAdviceRequest = {
           post_type: req.query.post_type as any,
           search: req.query.search as string,
@@ -249,7 +234,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -376,7 +361,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -427,7 +412,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -493,7 +478,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = parseInt(req.params.postId);
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
 
         if (!userId) {
           return res.status(401).json({
@@ -544,7 +529,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const userId = req.user?.uid;
+        const userId = req.adminUser?.uid;
         const postType = req.query.post_type as any;
 
         if (!userId) {
@@ -583,4 +568,383 @@ export default function tipsTripsAdviceApi(app: Express) {
       }
     }
   );
+
+  // Admin endpoints for tips/trips/advice posts
+  // Create a new Tips, Trips, or Advice post (Admin)
+  app.post(
+    '/api/admin/tips-trips-advice',
+    authenticateAdmin,
+    upload.array('photos', 10), // Allow up to 10 photos
+    async (req: Request, res: Response) => {
+      try {
+        const userId = req.adminUser?.uid;
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Admin not authenticated',
+            code: ErrorCode.UNAUTHORIZED,
+          });
+        }
+
+        const { title, description, post_type } = req.body;
+        const files = req.files as Express.Multer.File[];
+
+        // Validate required fields
+        if (!title || !description || !post_type) {
+          return res.status(400).json({
+            success: false,
+            message: 'Title, description, and post type are required',
+          });
+        }
+
+        // Upload photos to Firebase Storage first
+        const uploadedPhotos = [];
+        if (files && files.length > 0) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            console.log(
+              `Uploading photo ${i + 1}/${files.length}:`,
+              file.originalname
+            );
+
+            const uploadResult = await uploadTipsPhoto(
+              file.buffer,
+              file.originalname,
+              file.mimetype,
+              userId
+            );
+
+            if (!uploadResult.success) {
+              console.error(
+                `Failed to upload photo ${i + 1}:`,
+                uploadResult.error
+              );
+              return res.status(400).json({
+                success: false,
+                message: `Failed to upload photo: ${uploadResult.error}`,
+              });
+            }
+
+            uploadedPhotos.push({
+              photo_url: uploadResult.url!,
+              photo_public_id: uploadResult.fileName!,
+              display_order: i + 1,
+            });
+          }
+        }
+
+        // Create the post
+        const postData: CreateTipsTripsAdviceRequest = {
+          title,
+          description,
+          post_type,
+          photos: uploadedPhotos,
+        };
+
+        const postId = await tipsTripsAdviceService.createPost(
+          postData,
+          userId
+        );
+
+        res.status(201).json({
+          success: true,
+          message: 'Post created successfully',
+          data: { postId },
+        });
+      } catch (error) {
+        console.error('Error creating admin post:', error);
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
+            success: false,
+            message: error.message,
+            code: error.code,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: 'Failed to create post',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+        });
+      }
+    }
+  );
+
+  // Update a post (Admin)
+  app.put(
+    '/api/admin/tips-trips-advice/:postId',
+    authenticateAdmin,
+    upload.array('photos', 10), // Allow up to 10 photos
+    async (req: Request, res: Response) => {
+      try {
+        const userId = req.adminUser?.uid;
+        const postId = parseInt(req.params.postId);
+
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Admin not authenticated',
+            code: ErrorCode.UNAUTHORIZED,
+          });
+        }
+
+        if (isNaN(postId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid post ID',
+          });
+        }
+
+        const { title, description, post_type, existingPhotoIds } = req.body;
+        const files = req.files as Express.Multer.File[];
+
+        // Parse existingPhotoIds
+        let photosToKeep: number[] = [];
+        if (existingPhotoIds) {
+          // API contract: existingPhotoIds must be an array of photo IDs
+          if (!Array.isArray(existingPhotoIds)) {
+            return res.status(400).json({
+              success: false,
+              message: 'existingPhotoIds must be an array of photo IDs',
+            });
+          }
+          photosToKeep = existingPhotoIds.map((id: string) =>
+            parseInt(id.trim())
+          );
+        }
+
+        // Validate required fields
+        if (!title || !description || !post_type) {
+          return res.status(400).json({
+            success: false,
+            message: 'Title, description, and post type are required',
+          });
+        }
+
+        // Upload new photos to Firebase Storage
+        const uploadedPhotos = [];
+        if (files && files.length > 0) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            console.log(
+              `Uploading new photo ${i + 1}/${files.length}:`,
+              file.originalname
+            );
+
+            const uploadResult = await uploadTipsPhoto(
+              file.buffer,
+              file.originalname,
+              file.mimetype,
+              userId
+            );
+
+            if (!uploadResult.success) {
+              console.error(
+                `Failed to upload photo ${i + 1}:`,
+                uploadResult.error
+              );
+              return res.status(400).json({
+                success: false,
+                message: `Failed to upload photo: ${uploadResult.error}`,
+              });
+            }
+
+            uploadedPhotos.push({
+              photo_url: uploadResult.url!,
+              photo_public_id: uploadResult.fileName!,
+              display_order: i + 1,
+            });
+          }
+        }
+
+        // Update the post
+        const updateData: UpdateTipsTripsAdviceRequest = {
+          title,
+          description,
+          post_type,
+          photos: uploadedPhotos.length > 0 ? uploadedPhotos : undefined,
+          photosToKeep: photosToKeep.length > 0 ? photosToKeep : undefined,
+        };
+
+        await tipsTripsAdviceService.updatePost(postId, updateData, userId);
+
+        res.json({
+          success: true,
+          message: 'Post updated successfully',
+        });
+      } catch (error) {
+        console.error('Error updating admin post:', error);
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
+            success: false,
+            message: error.message,
+            code: error.code,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: 'Failed to update post',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+        });
+      }
+    }
+  );
+
+  // Get a single post by ID (Admin)
+  app.get(
+    '/api/admin/tips-trips-advice/:postId',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const postId = parseInt(req.params.postId);
+
+        if (isNaN(postId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid post ID',
+          });
+        }
+
+        const post = await tipsTripsAdviceService.getPostById(postId);
+
+        res.json({
+          success: true,
+          data: post,
+        });
+      } catch (error) {
+        console.error('Error fetching admin post:', error);
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
+            success: false,
+            message: error.message,
+            code: error.code,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: 'Failed to fetch post',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+        });
+      }
+    }
+  );
+
+  // Get all posts (Admin)
+  app.get(
+    '/api/admin/tips-trips-advice',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const searchParams = {
+          post_type: req.query.post_type as any,
+          search: req.query.search as string,
+          page: req.query.page ? parseInt(req.query.page as string) : undefined,
+          limit: req.query.limit
+            ? parseInt(req.query.limit as string)
+            : undefined,
+        };
+
+        const posts = await tipsTripsAdviceService.searchPosts(searchParams);
+
+        res.json({
+          success: true,
+          data: posts,
+        });
+      } catch (error) {
+        console.error('Error fetching admin posts:', error);
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
+            success: false,
+            message: error.message,
+            code: error.code,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: 'Failed to fetch posts',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+        });
+      }
+    }
+  );
+
+  // Delete a post (Admin)
+  app.delete(
+    '/api/admin/tips-trips-advice/:postId',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const userId = req.adminUser?.uid;
+        const postId = parseInt(req.params.postId);
+
+        if (!userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Admin not authenticated',
+            code: ErrorCode.UNAUTHORIZED,
+          });
+        }
+
+        if (isNaN(postId)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Invalid post ID',
+          });
+        }
+
+        await tipsTripsAdviceService.deletePost(postId, userId);
+
+        res.json({
+          success: true,
+          message: 'Post deleted successfully',
+        });
+      } catch (error) {
+        console.error('Error deleting admin post:', error);
+
+        if (error instanceof AppError) {
+          return res.status(error.statusCode).json({
+            success: false,
+            message: error.message,
+            code: error.code,
+          });
+        }
+
+        res.status(500).json({
+          success: false,
+          message: 'Failed to delete post',
+          code: ErrorCode.INTERNAL_SERVER_ERROR,
+        });
+      }
+    }
+  );
+
+  // Multer error handling middleware - must be at the end
+  app.use((error: any, req: Request, res: Response, next: any) => {
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File too large. Maximum file size is 10MB.',
+        });
+      }
+      if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+        return res.status(400).json({
+          success: false,
+          message: 'Unexpected field. Please check your form field names.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${error.message}`,
+      });
+    }
+    next(error);
+  });
 }
