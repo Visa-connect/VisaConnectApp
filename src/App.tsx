@@ -46,6 +46,8 @@ import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen
 import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
 import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
 import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
+import UsersListScreen from './screens/admin/UsersListScreen';
+import EmployersListScreen from './screens/admin/EmployersListScreen';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import AuthenticatedLayout from './components/AuthenticatedLayout';
@@ -472,6 +474,30 @@ function App() {
               <AdminRoute>
                 <AdminLayout>
                   <BusinessDetailScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <UsersListScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/employers"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <EmployersListScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>

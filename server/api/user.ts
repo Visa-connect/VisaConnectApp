@@ -1,6 +1,7 @@
 import { Express, Request, Response } from 'express';
 import { userService } from '../services/userService';
 import { authenticateUser } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/adminAuth';
 import admin from 'firebase-admin';
 
 export default function userApi(app: Express) {
@@ -292,10 +293,41 @@ export default function userApi(app: Express) {
     }
   );
 
-  // Get all users with pagination (requires authentication - admin only in future)
+  // Admin: Get all users with pagination (admin only)
+  app.get(
+    '/api/admin/users',
+    authenticateAdmin,
+    async (req: Request, res: Response) => {
+      try {
+        const limit = parseInt(req.query.limit as string) || 50;
+        const offset = parseInt(req.query.offset as string) || 0;
+
+        const users = await userService.getAllUsers(limit, offset);
+
+        res.json({
+          success: true,
+          data: users,
+          count: users.length,
+          pagination: {
+            limit,
+            offset,
+            hasMore: users.length === limit,
+          },
+        });
+      } catch (error: any) {
+        console.error('Get all users error:', error);
+        res.status(500).json({
+          error: 'Failed to get users',
+          message: error.message || 'Failed to retrieve users',
+        });
+      }
+    }
+  );
+
+  // Legacy endpoint - redirects to admin endpoint
   app.get(
     '/api/user/all',
-    authenticateUser,
+    authenticateAdmin,
     async (req: Request, res: Response) => {
       try {
         const limit = parseInt(req.query.limit as string) || 50;
