@@ -13,6 +13,7 @@ import {
 import Button from '../../components/Button';
 import { adminUserService, AdminUser } from '../../api/adminUserService';
 import { useAdminStore } from '../../stores/adminStore';
+import { formatLocationString } from '../../utils/locationUtils';
 
 const AdminUserViewScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -254,12 +255,7 @@ const AdminUserViewScreen: React.FC = () => {
                     </label>
                     <p className="text-gray-900 flex items-center">
                       <MapPinIcon className="h-4 w-4 mr-2" />
-                      {typeof user.current_location === 'string'
-                        ? user.current_location
-                        : user.current_location.city ||
-                          user.current_location.state ||
-                          user.current_location.country ||
-                          'Location not specified'}
+                      {formatLocationString(user.current_location)}
                     </p>
                   </div>
                 )}

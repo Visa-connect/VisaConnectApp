@@ -47,7 +47,6 @@ export const useAdminAuth = (): AdminAuthState => {
       localStorage.clear();
 
       const response = await adminAuthService.login(email, password);
-      console.log('useAdminAuth: Login response:', JSON.stringify(response));
       if (response.success && response.token) {
         // Store admin token and user info
         localStorage.setItem('adminToken', response.token);
@@ -57,7 +56,6 @@ export const useAdminAuth = (): AdminAuthState => {
         setIsAuthenticated(true);
         return response;
       }
-      console.log('useAdminAuth: Login failed - no success or token');
       return response;
     } catch (error) {
       console.error('useAdminAuth: Login error:', error);

@@ -937,7 +937,7 @@ export default function tipsTripsAdviceApi(app: Express) {
       if (error.code === 'LIMIT_UNEXPECTED_FILE') {
         return res.status(400).json({
           success: false,
-          message: 'Unexpected field. Please check your form field names.',
+          message: 'Unexpected file. Please check your file type.',
         });
       }
       return res.status(400).json({
