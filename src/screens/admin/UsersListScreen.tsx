@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
+import { formatLocationString } from '../../utils/locationUtils';
 
 const UsersListScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -166,13 +167,7 @@ const UsersListScreen: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.current_location
-                      ? typeof user.current_location === 'string'
-                        ? user.current_location
-                        : `${user.current_location.city || ''}, ${
-                            user.current_location.state || ''
-                          }`.replace(/^,\s*|,\s*$/g, '') || 'Not specified'
-                      : 'Not specified'}
+                    {formatLocationString(user.current_location)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {user.occupation || 'Not specified'}
