@@ -16,6 +16,12 @@ interface AdminState {
   tipsTripsAdvicePosts: TipsTripsAdvicePost[];
   selectedTipsTripsAdvicePost: TipsTripsAdvicePost | null;
   users: AdminUser[];
+  userCounts: {
+    all: number;
+    active: number;
+    verified: number;
+    unverified: number;
+  };
   selectedUser: AdminUser | null;
   employers: AdminEmployer[];
   selectedEmployer: AdminEmployer | null;
@@ -35,6 +41,7 @@ type AdminAction =
       payload: TipsTripsAdvicePost | null;
     }
   | { type: 'SET_USERS'; payload: AdminUser[] }
+  | { type: 'SET_USER_COUNTS'; payload: AdminState['userCounts'] }
   | { type: 'SET_SELECTED_USER'; payload: AdminUser | null }
   | { type: 'SET_EMPLOYERS'; payload: AdminEmployer[] }
   | { type: 'SET_SELECTED_EMPLOYER'; payload: AdminEmployer | null }
@@ -52,6 +59,12 @@ const initialState: AdminState = {
   tipsTripsAdvicePosts: [],
   selectedTipsTripsAdvicePost: null,
   users: [],
+  userCounts: {
+    all: 0,
+    active: 0,
+    verified: 0,
+    unverified: 0,
+  },
   selectedUser: null,
   employers: [],
   selectedEmployer: null,
@@ -87,6 +100,8 @@ const adminReducer = (state: AdminState, action: AdminAction): AdminState => {
       return { ...state, selectedTipsTripsAdvicePost: action.payload };
     case 'SET_USERS':
       return { ...state, users: action.payload };
+    case 'SET_USER_COUNTS':
+      return { ...state, userCounts: action.payload };
     case 'SET_SELECTED_USER':
       return { ...state, selectedUser: action.payload };
     case 'SET_EMPLOYERS':
@@ -160,6 +175,10 @@ export const adminActions = {
   setUsers: (users: AdminUser[]) => ({
     type: 'SET_USERS' as const,
     payload: users,
+  }),
+  setUserCounts: (userCounts: AdminState['userCounts']) => ({
+    type: 'SET_USER_COUNTS' as const,
+    payload: userCounts,
   }),
   setSelectedUser: (user: AdminUser | null) => ({
     type: 'SET_SELECTED_USER' as const,

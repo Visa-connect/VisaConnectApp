@@ -11,12 +11,12 @@ import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
 } from '../../api/adminTipsTripsAdviceService';
-import { adminUserService, UserStats } from '../../api/adminUserService';
 import {
   adminEmployerService,
   EmployerStats,
 } from '../../api/adminEmployerService';
 import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
+import { useAdminUsers } from '../../hooks/useAdminUsers';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -29,14 +29,14 @@ const AdminDashboardScreen: React.FC = () => {
     totalUsers: 0,
     totalEmployers: 0,
   });
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [employerStats, setEmployerStats] = useState<EmployerStats | null>(
     null
   );
 
   // Use admin business hook for employer data
   const { businessCounts } = useAdminBusinesses();
-
+  // Use admin users hook for user data
+  const { users } = useAdminUsers();
   useEffect(() => {
     // Redirect from /admin to /admin/dashboard
     if (location.pathname === '/admin') {
@@ -54,22 +54,14 @@ const AdminDashboardScreen: React.FC = () => {
         });
         setRecentPosts(postsResponse.data);
 
-        // Fetch user stats
-        try {
-          const userStatsResponse = await adminUserService.getUserStats();
-          setUserStats(userStatsResponse);
-        } catch (err) {
-          console.warn('Failed to fetch user stats:', err);
-        }
-
         // Fetch employer stats
-        try {
-          const employerStatsResponse =
-            await adminEmployerService.getEmployerStats();
-          setEmployerStats(employerStatsResponse);
-        } catch (err) {
-          console.warn('Failed to fetch employer stats:', err);
-        }
+        // try {
+        //   const employerStatsResponse =
+        //     await adminEmployerService.getEmployerStats();
+        //   setEmployerStats(employerStatsResponse);
+        // } catch (err) {
+        //   console.warn('Failed to fetch employer stats:', err);
+        // }
 
         // Calculate post stats
         const allPostsResponse = await adminTipsTripsAdviceService.searchPosts(
@@ -81,7 +73,7 @@ const AdminDashboardScreen: React.FC = () => {
         setStats({
           totalPosts: allPosts.length,
           activePosts: activePosts.length,
-          totalUsers: userStats?.total_users || 0,
+          totalUsers: users.length,
           totalEmployers: employerStats?.total_employers || businessCounts.all,
         });
       } catch (err) {
@@ -96,7 +88,7 @@ const AdminDashboardScreen: React.FC = () => {
     location.pathname,
     navigate,
     businessCounts.all,
-    userStats,
+    users.length,
     employerStats,
   ]);
 

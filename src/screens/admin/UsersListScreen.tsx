@@ -1,45 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
-import { AdminUser } from '../../api/adminUserService';
+import { useAdminUsers } from '../../hooks/useAdminUsers';
 
 const UsersListScreen: React.FC = () => {
   const navigate = useNavigate();
   const { dispatch } = useAdminStore();
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Use the admin users API endpoint
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
-      setUsers(data.data || []);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-      setError('Failed to load users. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  const { users, loading, error, deleteUser, refreshData } = useAdminUsers();
 
   const handleView = (userId: string) => {
     const user = users.find((u) => u.id === userId);
@@ -59,14 +27,7 @@ const UsersListScreen: React.FC = () => {
 
   const handleDelete = async (userId: string) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      try {
-        // TODO: Implement delete user API call
-        console.log('Delete user:', userId);
-        await fetchUsers(); // Refresh the list
-      } catch (err) {
-        console.error('Error deleting user:', err);
-        alert('Failed to delete user. Please try again.');
-      }
+      await deleteUser(userId);
     }
   };
 
@@ -100,7 +61,7 @@ const UsersListScreen: React.FC = () => {
       <div className="text-center py-12">
         <p className="text-red-600 mb-4">{error}</p>
         <button
-          onClick={fetchUsers}
+          onClick={refreshData}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           Try Again
