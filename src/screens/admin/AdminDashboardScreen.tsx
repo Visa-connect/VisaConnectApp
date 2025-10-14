@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   UserGroupIcon,
@@ -33,6 +33,49 @@ const AdminDashboardScreen: React.FC = () => {
   const { businessCounts } = useAdminBusinesses();
   // Use admin users hook for user data
   const { users, refreshData: refreshUsers } = useAdminUsers();
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Fetch users data
+      await refreshUsers();
+
+      // Fetch recent posts
+      const postsResponse = await adminTipsTripsAdviceService.searchPosts({
+        limit: 5,
+      });
+      setRecentPosts(postsResponse.data);
+
+      // Fetch employer stats
+      // try {
+      //   const employerStatsResponse =
+      //     await adminEmployerService.getEmployerStats();
+      //   setEmployerStats(employerStatsResponse);
+      // } catch (err) {
+      //   console.warn('Failed to fetch employer stats:', err);
+      // }
+
+      // Calculate post stats
+      const allPostsResponse = await adminTipsTripsAdviceService.searchPosts(
+        {}
+      );
+      const allPosts = allPostsResponse.data;
+      const activePosts = allPosts.filter((post) => post.is_active);
+
+      setStats({
+        totalPosts: allPosts.length,
+        activePosts: activePosts.length,
+        totalUsers: users.length,
+        totalEmployers: businessCounts.all,
+      });
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshUsers, users.length, businessCounts.all]);
+
   useEffect(() => {
     // Redirect from /admin to /admin/dashboard
     if (location.pathname === '/admin') {
@@ -40,56 +83,8 @@ const AdminDashboardScreen: React.FC = () => {
       return;
     }
 
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-
-        // Fetch users data
-        await refreshUsers();
-
-        // Fetch recent posts
-        const postsResponse = await adminTipsTripsAdviceService.searchPosts({
-          limit: 5,
-        });
-        setRecentPosts(postsResponse.data);
-
-        // Fetch employer stats
-        // try {
-        //   const employerStatsResponse =
-        //     await adminEmployerService.getEmployerStats();
-        //   setEmployerStats(employerStatsResponse);
-        // } catch (err) {
-        //   console.warn('Failed to fetch employer stats:', err);
-        // }
-
-        // Calculate post stats
-        const allPostsResponse = await adminTipsTripsAdviceService.searchPosts(
-          {}
-        );
-        const allPosts = allPostsResponse.data;
-        const activePosts = allPosts.filter((post) => post.is_active);
-
-        setStats({
-          totalPosts: allPosts.length,
-          activePosts: activePosts.length,
-          totalUsers: users.length,
-          totalEmployers: businessCounts.all,
-        });
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDashboardData();
-  }, [
-    location.pathname,
-    navigate,
-    businessCounts.all,
-    users.length,
-    refreshUsers,
-  ]);
+  }, [location.pathname, navigate, fetchDashboardData]);
 
   const quickActions = [
     {
