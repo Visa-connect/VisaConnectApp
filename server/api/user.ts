@@ -302,17 +302,12 @@ export default function userApi(app: Express) {
         const limit = parseInt(req.query.limit as string) || 50;
         const offset = parseInt(req.query.offset as string) || 0;
 
-        const users = await userService.getAllUsers(limit, offset);
+        const result = await userService.getAllUsers(limit, offset);
 
         res.status(200).json({
           success: true,
-          data: users,
-          count: users.length,
-          pagination: {
-            limit,
-            offset,
-            hasMore: users.length === limit,
-          },
+          data: result.users,
+          total: result.total,
         });
       } catch (error: any) {
         console.error('Get all users error:', error);
@@ -333,17 +328,12 @@ export default function userApi(app: Express) {
         const limit = parseInt(req.query.limit as string) || 50;
         const offset = parseInt(req.query.offset as string) || 0;
 
-        const users = await userService.getAllUsers(limit, offset);
+        const result = await userService.getAllUsers(limit, offset);
 
         res.json({
           success: true,
-          data: users,
-          count: users.length,
-          pagination: {
-            limit,
-            offset,
-            hasMore: users.length === limit,
-          },
+          data: result.users,
+          total: result.total,
         });
       } catch (error: any) {
         console.error('Get all users error:', error);

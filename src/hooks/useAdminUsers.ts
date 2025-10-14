@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useAdminStore, adminActions } from '../stores/adminStore';
-import { adminUserService } from '../api/adminUserService';
+import { adminUserService, AdminUser } from '../api/adminUserService';
 
 export const useAdminUsers = () => {
   const { state, dispatch } = useAdminStore();
@@ -12,7 +12,7 @@ export const useAdminUsers = () => {
   const [pageSize] = useState(50); // Configurable page size
 
   const calculateUserCounts = useCallback(
-    (users: any[]) => {
+    (users: AdminUser[]) => {
       const counts = {
         all: users.length,
         active: users.filter((user) => user.is_active).length,
