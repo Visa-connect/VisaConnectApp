@@ -4,11 +4,27 @@ import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
 import { formatLocationString } from '../../utils/locationUtils';
+import { PaginationControls } from '../../components/admin/PaginationControls';
 
 const UsersListScreen: React.FC = () => {
   const navigate = useNavigate();
   const { dispatch } = useAdminStore();
-  const { users, loading, error, deleteUser, refreshData } = useAdminUsers();
+  const {
+    users,
+    loading,
+    error,
+    deleteUser,
+    refreshData,
+    currentPage,
+    totalPages,
+    totalUsers,
+    pageSize,
+    hasNextPage,
+    hasPreviousPage,
+    goToPage,
+    nextPage,
+    previousPage,
+  } = useAdminUsers();
 
   // Fetch users on component mount
   useEffect(() => {
@@ -205,6 +221,20 @@ const UsersListScreen: React.FC = () => {
             )}
           </tbody>
         </table>
+
+        {/* Pagination Controls */}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalUsers}
+          pageSize={pageSize}
+          hasNextPage={hasNextPage}
+          hasPreviousPage={hasPreviousPage}
+          onPageChange={goToPage}
+          onNextPage={nextPage}
+          onPreviousPage={previousPage}
+          loading={loading}
+        />
       </div>
     </div>
   );

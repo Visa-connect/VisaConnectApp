@@ -1,9 +1,15 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useAdminStore, adminActions } from '../stores/adminStore';
 import { adminUserService } from '../api/adminUserService';
 
 export const useAdminUsers = () => {
   const { state, dispatch } = useAdminStore();
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [pageSize] = useState(50); // Configurable page size
 
   const calculateUserCounts = useCallback(
     (users: any[]) => {
@@ -20,30 +26,42 @@ export const useAdminUsers = () => {
     [dispatch]
   );
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      dispatch(adminActions.setLoading(true));
-      dispatch(adminActions.clearError());
+  const fetchUsers = useCallback(
+    async (page: number = currentPage, searchParams?: any) => {
+      try {
+        dispatch(adminActions.setLoading(true));
+        dispatch(adminActions.clearError());
 
-      // Fetch all users
-      const response = await adminUserService.searchUsers({
-        limit: 1000, // Get all users for now
-        sort_by: 'created_at',
-        sort_order: 'desc',
-      });
-      if (response.success && response.data) {
-        dispatch(adminActions.setUsers(response.data));
-        calculateUserCounts(response.data);
-      } else {
-        dispatch(adminActions.setError('Failed to load users'));
+        const offset = (page - 1) * pageSize;
+
+        // Fetch users with pagination
+        const response = await adminUserService.searchUsers({
+          limit: pageSize,
+          offset,
+          sort_by: 'created_at',
+          sort_order: 'desc',
+          ...searchParams,
+        });
+
+        if (response.success && response.data) {
+          dispatch(adminActions.setUsers(response.data));
+          setTotalUsers(response.total);
+          setTotalPages(Math.ceil(response.total / pageSize));
+          setCurrentPage(page);
+          // Only calculate counts for current page users to avoid confusion
+          // For accurate counts, we'd need separate API calls for each status
+        } else {
+          dispatch(adminActions.setError('Failed to load users'));
+        }
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        dispatch(
+          adminActions.setError('Failed to load users. Please try again.')
+        );
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      dispatch(
-        adminActions.setError('Failed to load users. Please try again.')
-      );
-    }
-  }, [dispatch, calculateUserCounts]);
+    },
+    [dispatch, currentPage, pageSize]
+  );
 
   const updateUser = useCallback(
     async (userId: string, userData: any) => {
@@ -98,8 +116,36 @@ export const useAdminUsers = () => {
   );
 
   const refreshData = useCallback(async () => {
-    await fetchUsers();
+    await fetchUsers(1); // Reset to first page on refresh
   }, [fetchUsers]);
+
+  const goToPage = useCallback(
+    async (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        await fetchUsers(page);
+      }
+    },
+    [fetchUsers, totalPages]
+  );
+
+  const nextPage = useCallback(async () => {
+    if (currentPage < totalPages) {
+      await fetchUsers(currentPage + 1);
+    }
+  }, [fetchUsers, currentPage, totalPages]);
+
+  const previousPage = useCallback(async () => {
+    if (currentPage > 1) {
+      await fetchUsers(currentPage - 1);
+    }
+  }, [fetchUsers, currentPage]);
+
+  const searchUsers = useCallback(
+    async (searchParams: any) => {
+      await fetchUsers(1, searchParams); // Reset to first page on search
+    },
+    [fetchUsers]
+  );
 
   // Note: Components should call refreshData() explicitly when needed
   // This avoids unnecessary fetch loops caused by useCallback dependencies
@@ -109,9 +155,21 @@ export const useAdminUsers = () => {
     userCounts: state.userCounts,
     loading: state.loading,
     error: state.error,
+    // Pagination data
+    currentPage,
+    totalPages,
+    totalUsers,
+    pageSize,
+    hasNextPage: currentPage < totalPages,
+    hasPreviousPage: currentPage > 1,
+    // Actions
     fetchUsers,
     updateUser,
     deleteUser,
     refreshData,
+    goToPage,
+    nextPage,
+    previousPage,
+    searchUsers,
   };
 };
