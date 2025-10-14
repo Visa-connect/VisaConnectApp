@@ -357,12 +357,14 @@ export default function userApi(app: Express) {
 
   // Delete user account (requires authentication)
   app.delete(
-    '/api/user/account',
+    '/api/user/:userId',
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
+        const { userId } = req.params;
+
         // 1. Delete from PostgreSQL first
-        const deleted = await userService.deleteUser(req.user!.uid);
+        const deleted = await userService.deleteUser(userId);
 
         if (!deleted) {
           return res.status(404).json({
@@ -372,7 +374,7 @@ export default function userApi(app: Express) {
         }
 
         // 2. Delete from Firebase
-        await admin.auth().deleteUser(req.user!.uid);
+        await admin.auth().deleteUser(userId);
 
         res.json({
           success: true,
