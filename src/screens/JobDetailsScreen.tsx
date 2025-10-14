@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
+import { ReportButton } from '../components/ReportButton';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 import { BusinessApiService } from '../api/businessApi';
 import { formatTimeAgoWithPosted } from '../utils/time';
@@ -354,6 +355,13 @@ const JobDetailsScreen: React.FC = () => {
           >
             Apply Now
           </Button>
+        )}
+
+        {/* Report Button */}
+        {jobId && !isJobOwner && (
+          <div className="flex justify-center">
+            <ReportButton targetType="job" targetId={jobId} className="mt-4" />
+          </div>
         )}
       </div>
     </div>

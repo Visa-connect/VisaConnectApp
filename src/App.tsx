@@ -48,6 +48,7 @@ import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen
 import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
 import UsersListScreen from './screens/admin/UsersListScreen';
 import EmployersListScreen from './screens/admin/EmployersListScreen';
+import ReportsListScreen from './screens/admin/ReportsListScreen';
 import AdminUserViewScreen from './screens/admin/AdminUserViewScreen';
 import AdminUserEditScreen from './screens/admin/AdminUserEditScreen';
 import AdminEmployerViewScreen from './screens/admin/AdminEmployerViewScreen';
@@ -550,6 +551,18 @@ function App() {
               <AdminRoute>
                 <AdminLayout>
                   <AdminEmployerEditScreen />
+                </AdminLayout>
+              </AdminRoute>
+            </AdminProvider>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <AdminProvider>
+              <AdminRoute>
+                <AdminLayout>
+                  <ReportsListScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>
