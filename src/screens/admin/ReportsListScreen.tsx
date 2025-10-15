@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   EyeIcon,
-  PencilIcon,
   CheckCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/24/outline';
@@ -53,14 +52,6 @@ const ReportsListScreen: React.FC = () => {
       dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
     }
     navigate(`/admin/reports/${reportId}`);
-  };
-
-  const handleEdit = (reportId: string) => {
-    const report = reports.find((r) => r.report_id === reportId);
-    if (report) {
-      dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
-    }
-    navigate(`/admin/reports/${reportId}/edit`);
   };
 
   const handleResolve = (report: any) => {
@@ -321,16 +312,9 @@ const ReportsListScreen: React.FC = () => {
                       <button
                         onClick={() => handleView(report.report_id)}
                         className="text-blue-600 hover:text-blue-900"
-                        title="View Details"
+                        title="View & Moderate"
                       >
                         <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(report.report_id)}
-                        className="text-gray-600 hover:text-gray-900"
-                        title="Edit/Moderate"
-                      >
-                        <PencilIcon className="h-4 w-4" />
                       </button>
                       {report.status === 'pending' && (
                         <>

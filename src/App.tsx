@@ -49,7 +49,6 @@ import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen
 import UsersListScreen from './screens/admin/UsersListScreen';
 import EmployersListScreen from './screens/admin/EmployersListScreen';
 import ReportsListScreen from './screens/admin/ReportsListScreen';
-import AdminReportViewScreen from './screens/admin/AdminReportViewScreen';
 import AdminReportEditScreen from './screens/admin/AdminReportEditScreen';
 import AdminUserViewScreen from './screens/admin/AdminUserViewScreen';
 import AdminUserEditScreen from './screens/admin/AdminUserEditScreen';
@@ -576,7 +575,7 @@ function App() {
             <AdminProvider>
               <AdminRoute>
                 <AdminLayout>
-                  <AdminReportViewScreen />
+                  <AdminReportEditScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>
