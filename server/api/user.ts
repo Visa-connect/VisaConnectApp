@@ -1,5 +1,5 @@
 import { Express, Request, Response } from 'express';
-import { userService } from '../services/userService';
+import { userService, ChatThumbsUpData } from '../services/userService';
 import { authenticateUser } from '../middleware/auth';
 import { authenticateAdmin } from '../middleware/adminAuth';
 import admin from 'firebase-admin';
@@ -462,6 +462,140 @@ export default function userApi(app: Express) {
         res.status(500).json({
           error: 'Search failed',
           message: error.message || 'Failed to search users',
+        });
+      }
+    }
+  );
+
+  // Give a thumbs-up to a user (chat functionality)
+  app.post(
+    '/api/user/thumbs-up',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const { receiver_id, chat_message_id } = req.body;
+        const giver_id = req.user!.uid;
+
+        // Validate input
+        if (!receiver_id || !chat_message_id) {
+          return res.status(400).json({
+            success: false,
+            message: 'receiver_id and chat_message_id are required',
+          });
+        }
+
+        // Prevent self-likes
+        if (giver_id === receiver_id) {
+          return res.status(400).json({
+            success: false,
+            message: 'You cannot give yourself a thumbs-up',
+          });
+        }
+
+        const thumbsUpData: ChatThumbsUpData = {
+          giver_id,
+          receiver_id,
+          chat_message_id,
+        };
+
+        const result = await userService.giveThumbsUp(thumbsUpData);
+
+        if (result.success) {
+          res.status(200).json(result);
+        } else {
+          res.status(400).json(result);
+        }
+      } catch (error: any) {
+        console.error('Give thumbs-up error:', error);
+        res.status(500).json({
+          success: false,
+          message: error.message || 'Failed to give thumbs-up',
+        });
+      }
+    }
+  );
+
+  // Remove a thumbs-up from a user (chat functionality)
+  app.delete(
+    '/api/user/thumbs-up/:receiverId',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const { receiverId } = req.params;
+        const giverId = req.user!.uid;
+
+        // Prevent self-likes
+        if (giverId === receiverId) {
+          return res.status(400).json({
+            success: false,
+            message: 'You cannot remove a thumbs-up from yourself',
+          });
+        }
+
+        const result = await userService.removeThumbsUp(giverId, receiverId);
+
+        if (result.success) {
+          res.status(200).json(result);
+        } else {
+          res.status(400).json(result);
+        }
+      } catch (error: any) {
+        console.error('Remove thumbs-up error:', error);
+        res.status(500).json({
+          success: false,
+          message: error.message || 'Failed to remove thumbs-up',
+        });
+      }
+    }
+  );
+
+  // Check if user has given a thumbs-up to another user
+  app.get(
+    '/api/user/thumbs-up/:receiverId',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const { receiverId } = req.params;
+        const giverId = req.user!.uid;
+
+        const hasGiven = await userService.hasGivenThumbsUp(
+          giverId,
+          receiverId
+        );
+
+        res.status(200).json({
+          success: true,
+          has_given_thumbs_up: hasGiven,
+        });
+      } catch (error: any) {
+        console.error('Check thumbs-up error:', error);
+        res.status(500).json({
+          success: false,
+          message: error.message || 'Failed to check thumbs-up status',
+        });
+      }
+    }
+  );
+
+  // Get thumbs-up statistics for a user
+  app.get(
+    '/api/user/:userId/thumbs-up-stats',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const { userId } = req.params;
+
+        const stats = await userService.getThumbsUpStats(userId);
+
+        res.status(200).json({
+          success: true,
+          data: stats,
+        });
+      } catch (error: any) {
+        console.error('Get thumbs-up stats error:', error);
+        res.status(500).json({
+          success: false,
+          message: error.message || 'Failed to get thumbs-up statistics',
         });
       }
     }
