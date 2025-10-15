@@ -172,7 +172,7 @@ const AdminReportEditScreen: React.FC = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
         <div className="bg-white shadow-sm rounded-lg p-6">
           {/* Report Information */}
           <div className="mb-8">
@@ -322,12 +322,13 @@ const AdminReportEditScreen: React.FC = () => {
               variant="primary"
               disabled={loading}
               className="px-6 py-2"
+              onClick={handleSubmit}
             >
               {loading ? 'Processing...' : 'Submit Action'}
             </Button>
           </div>
         </div>
-      </form>
+      </div>
 
       {/* Target Modal */}
       {isTargetModalOpen && (

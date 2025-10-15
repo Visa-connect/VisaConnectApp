@@ -39,6 +39,96 @@ export interface SearchReportsParams {
 }
 
 class ReportService {
+  // Fetch the target (job/meetup) details along with poster information
+  async getReportTargetDetails(reportId: string): Promise<{
+    target_type: 'job' | 'meetup';
+    job?: any;
+    meetup?: any;
+    poster?: {
+      id: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      profile_photo_url?: string | null;
+    } | null;
+  }> {
+    // Load the report first
+    const report = await this.getReportByReportId(reportId);
+
+    if (!report) {
+      throw new Error('Report not found');
+    }
+
+    if (report.target_type === 'job') {
+      // Get job with business owner
+      const jobQuery = `
+        SELECT 
+          j.*, 
+          b.name              AS business_name,
+          b.address           AS business_address,
+          b.website           AS business_website,
+          b.user_id           AS business_user_id,
+          u.first_name        AS poster_first_name,
+          u.last_name         AS poster_last_name,
+          u.email             AS poster_email,
+          u.profile_photo_url AS poster_profile_photo_url
+        FROM jobs j
+        JOIN businesses b ON j.business_id = b.id
+        LEFT JOIN users u ON b.user_id = u.id
+        WHERE j.id = $1
+      `;
+      const jobResult = await pool.query(jobQuery, [Number(report.target_id)]);
+      const job = jobResult.rows[0] || null;
+
+      const poster = job
+        ? {
+            id: job.business_user_id,
+            first_name: job.poster_first_name,
+            last_name: job.poster_last_name,
+            email: job.poster_email,
+            profile_photo_url: job.poster_profile_photo_url,
+          }
+        : null;
+
+      return {
+        target_type: 'job',
+        job,
+        poster,
+      };
+    } else {
+      // Meetup with creator
+      const meetupQuery = `
+        SELECT m.*, 
+               u.first_name AS poster_first_name,
+               u.last_name  AS poster_last_name,
+               u.email      AS poster_email,
+               u.profile_photo_url AS poster_profile_photo_url
+        FROM meetups m
+        LEFT JOIN users u ON m.creator_id = u.id
+        WHERE m.id = $1
+      `;
+      const meetupResult = await pool.query(meetupQuery, [
+        Number(report.target_id),
+      ]);
+      const meetup = meetupResult.rows[0] || null;
+
+      const poster = meetup
+        ? {
+            id: meetup.creator_id,
+            first_name: meetup.poster_first_name,
+            last_name: meetup.poster_last_name,
+            email: meetup.poster_email,
+            profile_photo_url: meetup.poster_profile_photo_url,
+          }
+        : null;
+
+      return {
+        target_type: 'meetup',
+        meetup,
+        poster,
+      };
+    }
+  }
   // Create a new report with de-duplication
   async createReport(data: CreateReportData): Promise<Report> {
     const client = await pool.connect();

@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  EyeIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-} from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
 import { useAdminReports } from '../../hooks/useAdminReports';
 import { PaginationControls } from '../../components/admin/PaginationControls';
@@ -52,18 +47,6 @@ const ReportsListScreen: React.FC = () => {
       dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
     }
     navigate(`/admin/reports/${reportId}`);
-  };
-
-  const handleResolve = (report: any) => {
-    setSelectedReport(report);
-    setModerationAction('resolve');
-    setShowModerationModal(true);
-  };
-
-  const handleRemove = (report: any) => {
-    setSelectedReport(report);
-    setModerationAction('remove');
-    setShowModerationModal(true);
   };
 
   const handleModerationConfirm = async (notes?: string) => {

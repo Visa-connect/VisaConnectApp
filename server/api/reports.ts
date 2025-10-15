@@ -382,4 +382,23 @@ reportsRouter.post(
   }
 );
 
+// Admin: Get report target details (job/meetup + poster)
+reportsRouter.get(
+  '/api/admin/reports/:reportId/target',
+  authenticateAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      const { reportId } = req.params;
+      const data = await reportService.getReportTargetDetails(reportId);
+      res.json({ success: true, data });
+    } catch (error: any) {
+      console.error('Get report target details error:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to load report target details',
+      });
+    }
+  }
+);
+
 export default reportsRouter;
