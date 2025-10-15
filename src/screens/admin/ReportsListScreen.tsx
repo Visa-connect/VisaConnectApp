@@ -256,9 +256,6 @@ const ReportsListScreen: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -273,7 +270,12 @@ const ReportsListScreen: React.FC = () => {
               </tr>
             ) : (
               reports.map((report) => (
-                <tr key={report.report_id} className="hover:bg-gray-50">
+                <tr
+                  key={report.report_id}
+                  className={'cursor-pointer hover:bg-green-50'}
+                  onClick={() => handleView(report.report_id)}
+                  title={'Click to view post'}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
@@ -306,35 +308,6 @@ const ReportsListScreen: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(report.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleView(report.report_id)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View & Moderate"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      {report.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleResolve(report)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Resolve (Keep Post)"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleRemove(report)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Remove Post"
-                          >
-                            <XCircleIcon className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </td>
                 </tr>
               ))
