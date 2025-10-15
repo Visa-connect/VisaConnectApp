@@ -178,6 +178,22 @@ const AdminUserViewScreen: React.FC = () => {
                     Last login {formatDateTime(user.last_login_at)}
                   </span>
                 )}
+                <span className="text-sm text-green-600 flex items-center font-medium">
+                  <svg
+                    className="h-4 w-4 mr-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14 9l-3 3m0 0l-3-3m3 3V2m-6 9l3-3m0 0l3 3m-3-3v7m6-9l-3 3m0 0l-3-3m3 3V2m6 9l-3-3m0 0l-3 3m3-3v7"
+                    />
+                  </svg>
+                  Has helped {user.helped_count || 0} people
+                </span>
               </div>
             </div>
           </div>

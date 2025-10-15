@@ -29,6 +29,7 @@ interface ProfileUser {
   travel_tips?: string;
   willing_to_guide?: boolean;
   mentorship_interest?: boolean;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
   created_at?: Date;
 }
 
@@ -468,6 +469,28 @@ const PublicProfileScreen: React.FC = () => {
                   </span>
                 </div>
               )}
+
+              {/* Has helped X people */}
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-3 h-3 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14 9l-3 3m0 0l-3-3m3 3V2m-6 9l3-3m0 0l3 3m-3-3v7m6-9l-3 3m0 0l-3-3m3 3V2m6 9l-3-3m0 0l-3 3m3-3v7"
+                    />
+                  </svg>
+                </div>
+                <span className="text-sm text-gray-700 font-medium">
+                  Has helped {profileUser.helped_count || 0} people
+                </span>
+              </div>
 
               {/* Mentorship interest */}
               {profileUser.mentorship_interest && (
