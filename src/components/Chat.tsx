@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useUserStore } from '../stores/userStore';
 import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
@@ -26,6 +26,8 @@ const Chat: React.FC<ChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  // Removed lazy loading state variables
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [resumeViewer, setResumeViewer] = useState<{
     isOpen: boolean;
     resumeUrl: string;
@@ -37,17 +39,46 @@ const Chat: React.FC<ChatProps> = ({
   });
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to bottom of messages container only (prevent scrolling parent containers)
+  const smoothScrollToBottom = useCallback(() => {
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      console.log(
+        'Scrolling to bottom, container height:',
+        container.scrollHeight,
+        'client height:',
+        container.clientHeight,
+        'offset height:',
+        container.offsetHeight
+      );
+
+      // Scroll to the very bottom to ensure input box is visible
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      container.scrollTop = maxScroll;
+
+      // Also try smooth scroll as backup
+      setTimeout(() => {
+        container.scrollTo({
+          top: maxScroll,
+          behavior: 'smooth',
+        });
+      }, 10);
+    } else {
+      console.log('No messages container ref found');
+    }
+  }, []);
+
   // Listen to messages in this conversation with real-time updates via WebSocket
   useEffect(() => {
     if (!conversationId || !user) return;
 
     setIsLoading(true);
 
-    // Initial load of messages
+    // Initial load of messages (most recent first)
     const loadInitialMessages = async () => {
       try {
-        const initialMessages = await chatService.getMessages(conversationId);
-        setMessages(initialMessages);
+        const result = await chatService.getMessages(conversationId, 50);
+        setMessages(result.messages);
         setIsLoading(false);
 
         // Mark messages as read when conversation is opened
@@ -59,7 +90,7 @@ const Chat: React.FC<ChatProps> = ({
         }
 
         // Auto-scroll to bottom after initial messages load
-        setTimeout(smoothScrollToBottom, 50);
+        setTimeout(smoothScrollToBottom, 100);
       } catch (error) {
         console.error('Error loading initial messages:', error);
         setIsLoading(false);
@@ -76,43 +107,47 @@ const Chat: React.FC<ChatProps> = ({
       } else {
         // Fallback: fetch the latest messages snapshot
         chatService
-          .getMessages(conversationId)
-          .then((list) => setMessages(list))
+          .getMessages(conversationId, 50)
+          .then((result) => {
+            setMessages(result.messages);
+          })
           .catch((err) => console.warn('Failed to refresh messages:', err));
       }
       setIsLoading(false);
 
-      // Auto-scroll to bottom when new messages arrive
-      setTimeout(smoothScrollToBottom, 50);
+      // Auto-scroll to bottom when new messages arrive (only if user is near bottom)
+      if (shouldScrollToBottom) {
+        console.log('Auto-scrolling to bottom - new message via WebSocket');
+        setTimeout(smoothScrollToBottom, 100);
+      }
     });
 
     return () => {
       websocketService.unsubscribeFromConversation(conversationId);
     };
-  }, [conversationId, user]);
+  }, [conversationId, user, shouldScrollToBottom, smoothScrollToBottom]);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(smoothScrollToBottom, 50);
-    }
-  }, [messages.length]);
+  // Removed redundant auto-scroll useEffect - scrolling is handled in the main useEffect
 
-  // Scroll to bottom on initial render
-  useEffect(() => {
-    setTimeout(smoothScrollToBottom, 50);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Removed lazy loading functionality
 
-  // Scroll to bottom of messages container only (prevent scrolling parent containers)
-  const smoothScrollToBottom = () => {
+  // Track scroll position to determine if we should auto-scroll
+  const handleScroll = () => {
     if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      // Use scrollTo with smooth behavior, confined to this container only
-      container.scrollTo({
-        top: container.scrollHeight,
-        behavior: 'smooth',
+      const { scrollTop, scrollHeight, clientHeight } =
+        messagesContainerRef.current;
+      const maxScroll = scrollHeight - clientHeight;
+      const distanceFromBottom = maxScroll - scrollTop;
+      const isNearBottom = distanceFromBottom < 20; // Only within 20px of bottom
+      console.log('Scroll event:', {
+        scrollTop,
+        scrollHeight,
+        clientHeight,
+        maxScroll,
+        distanceFromBottom,
+        isNearBottom,
       });
+      setShouldScrollToBottom(isNearBottom);
     }
   };
 
@@ -139,7 +174,7 @@ const Chat: React.FC<ChatProps> = ({
     setNewMessage('');
 
     // Auto-scroll to bottom when new message is added
-    setTimeout(smoothScrollToBottom, 50);
+    setTimeout(smoothScrollToBottom, 100);
 
     try {
       // Send message to server
@@ -288,11 +323,12 @@ const Chat: React.FC<ChatProps> = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-[92%] bg-gray-50 overflow-hidden">
       {/* Messages Area */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 px-2 py-4 space-y-4 overflow-y-auto"
+        className="flex-1 px-2 py-4 space-y-4 overflow-y-auto min-h-0"
+        // onScroll={handleScroll}
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-full text-gray-500">
@@ -324,47 +360,49 @@ const Chat: React.FC<ChatProps> = ({
             </div>
           </div>
         ) : (
-          messages.map((message) => {
-            const isOwnMessage = message.senderId === user.uid;
-            return (
-              <div
-                key={message.id}
-                data-message="true"
-                className={`flex ${
-                  isOwnMessage ? 'justify-end' : 'justify-start'
-                }`}
-              >
+          <>
+            {messages.map((message) => {
+              const isOwnMessage = message.senderId === user.uid;
+              return (
                 <div
-                  className={`max-w-[85%] md:max-w-lg px-4 py-3 rounded-2xl ${
-                    isOwnMessage
-                      ? 'bg-gray-200 text-gray-900 shadow-sm border border-gray-300'
-                      : 'bg-white text-gray-900 shadow-sm border border-gray-200'
-                  } ${message.id?.startsWith('temp-') ? 'opacity-70' : ''}`}
+                  key={message.id}
+                  data-message="true"
+                  className={`flex ${
+                    isOwnMessage ? 'justify-end' : 'justify-start'
+                  }`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <div className="text-sm whitespace-pre-wrap">
-                      {formatMessageContent(message.content)}
+                  <div
+                    className={`max-w-[85%] md:max-w-lg px-4 py-3 rounded-2xl ${
+                      isOwnMessage
+                        ? 'bg-gray-200 text-gray-900 shadow-sm border border-gray-300'
+                        : 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                    } ${message.id?.startsWith('temp-') ? 'opacity-70' : ''}`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm whitespace-pre-wrap">
+                        {formatMessageContent(message.content)}
+                      </div>
                     </div>
+                    <p className={`text-xs mt-2 text-gray-500`}>
+                      {formatTime(message.timestamp) || (
+                        <span title={`Raw timestamp: ${message.timestamp}`}>
+                          Just now
+                        </span>
+                      )}
+                      {message.id?.startsWith('temp-') && (
+                        <span className="ml-2 text-xs">Sending...</span>
+                      )}
+                    </p>
                   </div>
-                  <p className={`text-xs mt-2 text-gray-500`}>
-                    {formatTime(message.timestamp) || (
-                      <span title={`Raw timestamp: ${message.timestamp}`}>
-                        Just now
-                      </span>
-                    )}
-                    {message.id?.startsWith('temp-') && (
-                      <span className="ml-2 text-xs">Sending...</span>
-                    )}
-                  </p>
                 </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </>
         )}
       </div>
 
       {/* Message Input */}
-      <div className="px-2 py-4 bg-gray-50 border-t border-gray-200">
+      <div className="px-2 py-4 bg-gray-50 border-t border-gray-200 flex-shrink-0">
         <form
           onSubmit={handleSendMessage}
           className="flex items-center space-x-3"

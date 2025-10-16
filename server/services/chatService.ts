@@ -172,25 +172,44 @@ class ChatService {
     }
   }
 
-  // Get messages for a conversation
+  // Get messages for a conversation with pagination support
   async getConversationMessages(
     conversationId: string,
-    userId: string
-  ): Promise<Message[]> {
+    userId: string,
+    limit: number = 50,
+    startAfter?: any
+  ): Promise<{ messages: Message[]; hasMore: boolean; lastMessage?: any }> {
     try {
-      const snapshot = await getFirestore()
+      let query = getFirestore()
         .collection('conversations')
         .doc(conversationId)
         .collection('messages')
-        .orderBy('timestamp', 'asc')
-        .get();
+        .orderBy('timestamp', 'desc') // Get newest messages first
+        .limit(limit);
+
+      // Add pagination cursor if provided
+      if (startAfter) {
+        query = query.startAfter(startAfter);
+      }
+
+      const snapshot = await query.get();
 
       const messages: Message[] = [];
       snapshot.forEach((doc) => {
         messages.push({ id: doc.id, ...doc.data() } as Message);
       });
 
-      return messages;
+      // Reverse to get chronological order (oldest to newest)
+      messages.reverse();
+
+      const hasMore = snapshot.size === limit;
+      const lastMessage = snapshot.docs[snapshot.docs.length - 1];
+
+      return {
+        messages,
+        hasMore,
+        lastMessage: lastMessage ? lastMessage.data() : undefined,
+      };
     } catch (error) {
       console.error('Error fetching messages:', error);
       throw new Error('Failed to fetch messages');
@@ -418,10 +437,7 @@ class ChatService {
   ): Promise<{ messages: Message[]; unsubscribe: () => void }> {
     try {
       // Get initial messages
-      const messages = await this.getConversationMessages(
-        conversationId,
-        userId
-      );
+      const result = await this.getConversationMessages(conversationId, userId);
 
       // Create real-time listener
       const unsubscribe = this.createConversationListener(
@@ -429,7 +445,7 @@ class ChatService {
         onUpdate
       );
 
-      return { messages, unsubscribe };
+      return { messages: result.messages, unsubscribe };
     } catch (error) {
       console.error('Error setting up conversation with listener:', error);
       return { messages: [], unsubscribe: () => {} };

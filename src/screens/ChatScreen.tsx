@@ -93,9 +93,9 @@ const ChatScreen: React.FC = () => {
   // If a conversation is selected, show the chat view
   if (selectedConversationId) {
     return (
-      <div className="flex flex-col h-full bg-gray-50">
-        {/* Chat Header - Fixed at top */}
-        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200 shadow-sm z-10">
+      <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+        {/* Chat Header - Sticky at top */}
+        <div className="sticky top-0 flex-shrink-0 bg-gray-50 border-b border-gray-200 shadow-sm z-10">
           <div className="relative px-4 py-3 flex items-center">
             <button
               onClick={() => {
@@ -178,7 +178,7 @@ const ChatScreen: React.FC = () => {
 
   // Main chat list view
   return (
-    <div className="flex flex-col bg-gray-50 h-full">
+    <div className="flex flex-col bg-gray-50 h-screen">
       {/* Chat List */}
       <div className="flex-1 overflow-hidden max-w-4xl mx-auto w-full">
         <ChatList

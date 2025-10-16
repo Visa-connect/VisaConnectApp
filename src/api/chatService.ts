@@ -125,17 +125,32 @@ class ChatService {
     }
   }
 
-  // Get messages for a conversation (initial load, not real-time)
-  async getMessages(conversationId: string): Promise<Message[]> {
+  // Get messages for a conversation with pagination (initial load, not real-time)
+  async getMessages(
+    conversationId: string, 
+    limit: number = 50, 
+    startAfter?: any
+  ): Promise<{ messages: Message[]; hasMore: boolean; lastMessage?: any }> {
     try {
+      const params = new URLSearchParams();
+      params.append('limit', limit.toString());
+      if (startAfter) {
+        params.append('startAfter', JSON.stringify(startAfter));
+      }
+      
       const response = await this.makeRequest(
-        `/conversations/${conversationId}/messages`
+        `/conversations/${conversationId}/messages?${params.toString()}`
       );
-      return response.data || [];
+      
+      return {
+        messages: response.data || [],
+        hasMore: response.hasMore || false,
+        lastMessage: response.lastMessage
+      };
     } catch (error) {
       console.error('Error fetching messages:', error);
-      // Return empty array instead of throwing error for better UX
-      return [];
+      // Return empty result instead of throwing error for better UX
+      return { messages: [], hasMore: false };
     }
   }
 
