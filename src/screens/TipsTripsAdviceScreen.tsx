@@ -6,6 +6,7 @@ import {
   TipsTripsAdvicePost,
 } from '../api/tipsTripsAdviceService';
 import { formatTimeAgoNoSuffix } from '../utils/time';
+import { useUserStore } from '../stores/userStore';
 
 type FilterType = 'all' | 'tip' | 'trip' | 'advice';
 
@@ -16,6 +17,7 @@ interface FilterTab {
 
 const TipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useUserStore();
   const [posts, setPosts] = useState<TipsTripsAdvicePost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +53,68 @@ const TipsTripsAdviceScreen: React.FC = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleTripsClick = (postId: number) => {
-    // TODO: Implement chat functionality for the specific post
-    console.log('Opening chat for post:', postId);
-    // navigate(`/chat?postId=${postId}`);
+  const handleTripsClick = async (postId: number) => {
+    if (!user) {
+      // Redirect to login if user is not authenticated
+      navigate('/login');
+      return;
+    }
+
+    // Find the post to get the creator information
+    const post = posts.find((p) => p.id === postId);
+    if (!post) {
+      console.error('Post not found:', postId);
+      return;
+    }
+
+    // Don't allow chatting with yourself
+    if (post.creator_id === user.uid) {
+      return;
+    }
+
+    try {
+      // Create or get existing conversation with the post creator
+      const token = useUserStore.getState().getToken();
+      const response = await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participantIds: [user.uid, post.creator_id],
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          // Navigate directly to the specific conversation
+          navigate(`/chat/${result.data.id}`, {
+            state: {
+              otherUserId: post.creator_id,
+              otherUserName:
+                `${post.creator.first_name || ''} ${
+                  post.creator.last_name || ''
+                }`.trim() || 'User',
+              otherUserPhoto: post.creator.profile_photo_url || null,
+            },
+          });
+        } else {
+          console.error('Failed to create conversation:', result.message);
+          // Fallback: navigate to general chat
+          navigate('/chat');
+        }
+      } else {
+        console.error('Failed to create conversation');
+        // Fallback: navigate to general chat
+        navigate('/chat');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      // Fallback: navigate to general chat
+      navigate('/chat');
+    }
   };
 
   const handlePostClick = (postId: number) => {
