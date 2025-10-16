@@ -102,7 +102,6 @@ const Chat: React.FC<ChatProps> = ({
   // Auto-scroll to bottom when conversation loads
   useEffect(() => {
     if (messages.length > 0 && onScrollToBottom) {
-      console.log('Auto-scrolling to bottom - conversation loaded');
       setTimeout(() => onScrollToBottom(), 100);
     }
   }, [messages.length, onScrollToBottom]);

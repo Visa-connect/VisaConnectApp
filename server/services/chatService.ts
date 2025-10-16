@@ -105,10 +105,6 @@ class ChatService {
     userId2: string
   ): Promise<string> {
     try {
-      console.log(
-        `Looking for existing conversation between ${userId1} and ${userId2}`
-      );
-
       // Check if conversation already exists
       const existingConversation = await this.findConversation(
         userId1,
