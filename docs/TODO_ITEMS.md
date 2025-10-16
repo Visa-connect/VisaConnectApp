@@ -16,6 +16,14 @@
   - Optimize scroll performance and ensure consistent behavior across devices
   - Should be handled in a dedicated branch for chat UX improvements
 
+- **Auto-Scroll Architecture**: Fix auto-scrolling behavior in ChatScreen and Chat components
+  - Current issue: Smooth scroll doesn't trigger when individual conversation is rendered
+  - ChatScreen now controls scroll container but auto-scroll logic needs refinement
+  - Need to ensure proper timing between DOM rendering and scroll execution
+  - Consider adding scroll detection to prevent auto-scroll when user is reading older messages
+  - May need to adjust setTimeout delays or use requestAnimationFrame for better timing
+  - Should be handled in a dedicated branch for chat scroll improvements
+
 ### Reports System Enhancements
 
 - **Report Audit Trail**: Implement comprehensive audit logging for report moderation actions
