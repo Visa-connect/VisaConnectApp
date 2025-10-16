@@ -41,6 +41,7 @@ export interface User {
   profile_photo_url?: string | null;
   profile_photo_public_id?: string | null;
   bio?: string;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
 
   created_at?: Date;
   updated_at?: Date;
@@ -90,6 +91,22 @@ export interface CreateUserData extends BasicUserData {
   profile_photo_url?: string | null;
   profile_photo_public_id?: string | null;
   bio?: string;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
+}
+
+// Interface for chat thumbs-up data
+export interface ChatThumbsUpData {
+  giver_id: string;
+  receiver_id: string;
+  chat_message_id: string;
+}
+
+// Interface for thumbs-up response
+export interface ThumbsUpResponse {
+  success: boolean;
+  message: string;
+  helped_count?: number;
+  already_given?: boolean;
 }
 
 class UserService {
@@ -520,6 +537,154 @@ class UserService {
     const searchTerm = `%${searchQuery}%`;
     const result = await pool.query(query, [currentUserId, searchTerm]);
     return result.rows;
+  }
+
+  // Give a thumbs-up to a user (chat functionality)
+  async giveThumbsUp(data: ChatThumbsUpData): Promise<ThumbsUpResponse> {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Check if thumbs-up already exists (prevent duplicates)
+      const existingThumbsUp = await client.query(
+        'SELECT id FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+        [data.giver_id, data.receiver_id]
+      );
+
+      if (existingThumbsUp.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: 'You have already given this user a thumbs-up',
+          already_given: true,
+        };
+      }
+
+      // Insert new thumbs-up record
+      await client.query(
+        `INSERT INTO chat_thumbs_up (giver_id, receiver_id, chat_message_id)
+         VALUES ($1, $2, $3)`,
+        [data.giver_id, data.receiver_id, data.chat_message_id]
+      );
+
+      // Update helped_count for the receiver
+      await client.query(
+        'UPDATE users SET helped_count = helped_count + 1, updated_at = NOW() WHERE id = $1',
+        [data.receiver_id]
+      );
+
+      // Get updated helped_count
+      const updatedUser = await client.query(
+        'SELECT helped_count FROM users WHERE id = $1',
+        [data.receiver_id]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'Thumbs-up given successfully',
+        helped_count: updatedUser.rows[0]?.helped_count || 0,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Remove a thumbs-up from a user (if needed)
+  async removeThumbsUp(
+    giverId: string,
+    receiverId: string
+  ): Promise<ThumbsUpResponse> {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Check if thumbs-up exists
+      const existingThumbsUp = await client.query(
+        'SELECT id FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+        [giverId, receiverId]
+      );
+
+      if (existingThumbsUp.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: 'No thumbs-up found to remove',
+        };
+      }
+
+      // Remove thumbs-up record
+      await client.query(
+        'DELETE FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+        [giverId, receiverId]
+      );
+
+      // Update helped_count for the receiver (decrease by 1)
+      await client.query(
+        'UPDATE users SET helped_count = GREATEST(helped_count - 1, 0), updated_at = NOW() WHERE id = $1',
+        [receiverId]
+      );
+
+      // Get updated helped_count
+      const updatedUser = await client.query(
+        'SELECT helped_count FROM users WHERE id = $1',
+        [receiverId]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'Thumbs-up removed successfully',
+        helped_count: updatedUser.rows[0]?.helped_count || 0,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Check if a user has given a thumbs-up to another user
+  async hasGivenThumbsUp(
+    giverId: string,
+    receiverId: string
+  ): Promise<boolean> {
+    const result = await pool.query(
+      'SELECT id FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+      [giverId, receiverId]
+    );
+    return result.rows.length > 0;
+  }
+
+  // Get thumbs-up statistics for a user
+  async getThumbsUpStats(userId: string): Promise<{
+    helped_count: number;
+    thumbs_up_given: number;
+  }> {
+    // Get helped_count from users table
+    const userResult = await pool.query(
+      'SELECT helped_count FROM users WHERE id = $1',
+      [userId]
+    );
+
+    // Get count of thumbs-up given by this user
+    const givenResult = await pool.query(
+      'SELECT COUNT(*) as count FROM chat_thumbs_up WHERE giver_id = $1',
+      [userId]
+    );
+
+    return {
+      helped_count: userResult.rows[0]?.helped_count || 0,
+      thumbs_up_given: parseInt(givenResult.rows[0]?.count || '0'),
+    };
   }
 }
 

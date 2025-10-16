@@ -32,3 +32,19 @@
   - Add logger config with JSON output and env-based log levels (dev/prod)
   - Migrate `server/api/applications.ts` and other server files to use logger
   - Optionally add HTTP request logging middleware
+
+### Chat Thumbs-Up System Improvements
+
+- **Consistent Naming Convention**: Standardize naming for chat-related IDs across the system
+
+  - Current issue: `chat_message_id` field is being used for conversation-level thumbs-ups, not message-level
+  - Consider renaming to `conversation_id` or creating separate fields for message vs conversation thumbs-ups
+  - Update database schema, API interfaces, and frontend components to use consistent terminology
+  - This affects `ChatThumbsUpData` interface, database table, and `ThumbsUpButton` component
+
+- **Thumbs-Up Removal Policy**: Clarify business requirements for thumbs-up removal functionality
+  - Current implementation allows users to remove thumbs-ups they've given, which affects the "has helped X people" count
+  - Need to discuss with business stakeholders whether this should be allowed or if thumbs-ups should be permanent
+  - Consider implications: permanent recognition vs. ability to correct mistakes
+  - If removal is disabled, update `ThumbsUpButton` component to remove the removal functionality
+  - This affects user experience and the integrity of the "has helped" badge system

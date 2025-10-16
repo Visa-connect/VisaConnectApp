@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  EyeIcon,
-  PencilIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-} from '@heroicons/react/24/outline';
 import { useAdminStore } from '../../stores/adminStore';
 import { useAdminReports } from '../../hooks/useAdminReports';
 import { PaginationControls } from '../../components/admin/PaginationControls';
@@ -53,26 +47,6 @@ const ReportsListScreen: React.FC = () => {
       dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
     }
     navigate(`/admin/reports/${reportId}`);
-  };
-
-  const handleEdit = (reportId: string) => {
-    const report = reports.find((r) => r.report_id === reportId);
-    if (report) {
-      dispatch({ type: 'SET_SELECTED_REPORT', payload: report });
-    }
-    navigate(`/admin/reports/${reportId}/edit`);
-  };
-
-  const handleResolve = (report: any) => {
-    setSelectedReport(report);
-    setModerationAction('resolve');
-    setShowModerationModal(true);
-  };
-
-  const handleRemove = (report: any) => {
-    setSelectedReport(report);
-    setModerationAction('remove');
-    setShowModerationModal(true);
   };
 
   const handleModerationConfirm = async (notes?: string) => {
@@ -265,9 +239,6 @@ const ReportsListScreen: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -282,7 +253,12 @@ const ReportsListScreen: React.FC = () => {
               </tr>
             ) : (
               reports.map((report) => (
-                <tr key={report.report_id} className="hover:bg-gray-50">
+                <tr
+                  key={report.report_id}
+                  className={'cursor-pointer hover:bg-green-50'}
+                  onClick={() => handleView(report.report_id)}
+                  title={'Click to view post'}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-gray-900">
@@ -315,42 +291,6 @@ const ReportsListScreen: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(report.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleView(report.report_id)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View Details"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(report.report_id)}
-                        className="text-gray-600 hover:text-gray-900"
-                        title="Edit/Moderate"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      {report.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => handleResolve(report)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Resolve (Keep Post)"
-                          >
-                            <CheckCircleIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleRemove(report)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Remove Post"
-                          >
-                            <XCircleIcon className="h-4 w-4" />
-                          </button>
-                        </>
-                      )}
-                    </div>
                   </td>
                 </tr>
               ))

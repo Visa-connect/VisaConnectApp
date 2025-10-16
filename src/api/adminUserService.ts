@@ -30,6 +30,7 @@ export interface AdminUser {
   email_verified: boolean;
   phone_verified: boolean;
   admin_notes?: string;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
 }
 
 export interface SearchUsersParams {

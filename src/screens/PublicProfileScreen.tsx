@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { HandThumbUpIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import DrawerMenu from '../components/DrawerMenu';
 
@@ -29,6 +30,7 @@ interface ProfileUser {
   travel_tips?: string;
   willing_to_guide?: boolean;
   mentorship_interest?: boolean;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
   created_at?: Date;
 }
 
@@ -468,6 +470,16 @@ const PublicProfileScreen: React.FC = () => {
                   </span>
                 </div>
               )}
+
+              {/* Has helped X people */}
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 bg-green-600 rounded-full flex items-center justify-center">
+                  <HandThumbUpIcon className="w-3 h-3 text-white" />
+                </div>
+                <span className="text-sm text-gray-700 font-medium">
+                  Has helped {profileUser.helped_count || 0} people
+                </span>
+              </div>
 
               {/* Mentorship interest */}
               {profileUser.mentorship_interest && (

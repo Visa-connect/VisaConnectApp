@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, FlagIcon } from '@heroicons/react/24/outline';
 import Button from '../../components/Button';
-import { reportService, Report } from '../../api/reportService';
+import {
+  reportService,
+  Report,
+  ReportTargetDetails,
+} from '../../api/reportService';
 import { useAdminStore } from '../../stores/adminStore';
+import ReportTargetModal from '../../components/admin/ReportTargetModal';
 
 const AdminReportEditScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -17,6 +22,9 @@ const AdminReportEditScreen: React.FC = () => {
     status: 'pending' as 'pending' | 'resolved' | 'removed',
     notes: '',
   });
+  const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
+  const [targetDetails, setTargetDetails] =
+    useState<ReportTargetDetails | null>(null);
 
   useEffect(() => {
     // First try to get the report from the admin store
@@ -105,6 +113,17 @@ const AdminReportEditScreen: React.FC = () => {
     navigate('/admin/reports');
   };
 
+  const openTargetModal = async () => {
+    if (!report) return;
+    try {
+      const data = await reportService.getReportTargetDetails(report.report_id);
+      setTargetDetails(data);
+      setIsTargetModalOpen(true);
+    } catch (error) {
+      console.error('Failed to load target details', error);
+    }
+  };
+
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
@@ -153,12 +172,21 @@ const AdminReportEditScreen: React.FC = () => {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
         <div className="bg-white shadow-sm rounded-lg p-6">
           {/* Report Information */}
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Report Information
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <FlagIcon className="h-5 w-5 mr-2" />
+                Report Information
+              </div>
+              <button
+                onClick={openTargetModal}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+              >
+                {report.target_type === 'job' ? 'View job' : 'View meetup'}
+              </button>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -177,14 +205,7 @@ const AdminReportEditScreen: React.FC = () => {
                   {report.target_type}
                 </p>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Target ID
-                </label>
-                <p className="text-gray-900 font-mono text-sm mt-1">
-                  {report.target_id}
-                </p>
-              </div>
+
               <div>
                 <label className="text-sm font-medium text-gray-700">
                   Reporter ID
@@ -301,12 +322,22 @@ const AdminReportEditScreen: React.FC = () => {
               variant="primary"
               disabled={loading}
               className="px-6 py-2"
+              onClick={handleSubmit}
             >
               {loading ? 'Processing...' : 'Submit Action'}
             </Button>
           </div>
         </div>
-      </form>
+      </div>
+
+      {/* Target Modal */}
+      {isTargetModalOpen && (
+        <ReportTargetModal
+          isOpen={isTargetModalOpen}
+          onClose={() => setIsTargetModalOpen(false)}
+          data={targetDetails}
+        />
+      )}
     </div>
   );
 };

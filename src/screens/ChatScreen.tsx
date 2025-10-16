@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ChatList from '../components/ChatList';
 import Chat from '../components/Chat';
+import ThumbsUpButton from '../components/ThumbsUpButton';
 import { useUserStore } from '../stores/userStore';
 
 const ChatScreen: React.FC = () => {
@@ -149,6 +150,14 @@ const ChatScreen: React.FC = () => {
                 >
                   {otherUserDetails?.fullName || otherUserName}
                 </h2>
+              </div>
+
+              {/* Thumbs-up Button */}
+              <div className="flex justify-center">
+                <ThumbsUpButton
+                  receiverId={otherUserId}
+                  conversationId={selectedConversationId}
+                />
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ import {
   MapPinIcon,
   BriefcaseIcon,
   CalendarIcon,
+  HandThumbUpIcon,
 } from '@heroicons/react/24/outline';
 import Button from '../../components/Button';
 import { adminUserService, AdminUser } from '../../api/adminUserService';
@@ -178,6 +179,10 @@ const AdminUserViewScreen: React.FC = () => {
                     Last login {formatDateTime(user.last_login_at)}
                   </span>
                 )}
+                <span className="text-sm text-green-600 flex items-center font-medium">
+                  <HandThumbUpIcon className="h-4 w-4 mr-1" />
+                  Has helped {user.helped_count || 0} people
+                </span>
               </div>
             </div>
           </div>

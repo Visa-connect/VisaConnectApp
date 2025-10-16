@@ -28,6 +28,19 @@ export interface ReportStats {
   reports_this_month: number;
 }
 
+export interface ReportTargetDetails {
+  target_type: 'job' | 'meetup';
+  job?: any;
+  meetup?: any;
+  poster?: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    profile_photo_url?: string | null;
+  } | null;
+}
+
 export interface SearchReportsParams {
   limit?: number;
   offset?: number;
@@ -132,6 +145,15 @@ class ReportService {
       `/api/admin/reports/${reportId}/remove`,
       data
     );
+    return response.data;
+  }
+
+  // Admin: Get report target details (job/meetup + poster)
+  async getReportTargetDetails(reportId: string): Promise<ReportTargetDetails> {
+    const response = await adminApiGet<{
+      success: boolean;
+      data: ReportTargetDetails;
+    }>(`/api/admin/reports/${reportId}/target`);
     return response.data;
   }
 }
