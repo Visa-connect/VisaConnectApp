@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useUserStore } from '../stores/userStore';
 import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
@@ -14,6 +14,7 @@ interface ChatProps {
   otherUserId: string;
   otherUserName: string;
   otherUserPhoto?: string;
+  onScrollToBottom?: () => void;
 }
 
 const Chat: React.FC<ChatProps> = ({
@@ -21,13 +22,14 @@ const Chat: React.FC<ChatProps> = ({
   otherUserId,
   otherUserName,
   otherUserPhoto,
+  onScrollToBottom,
 }) => {
   const { user } = useUserStore();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   // Removed lazy loading state variables
-  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+  // Removed shouldScrollToBottom state since scroll detection is disabled
   const [resumeViewer, setResumeViewer] = useState<{
     isOpen: boolean;
     resumeUrl: string;
@@ -39,34 +41,7 @@ const Chat: React.FC<ChatProps> = ({
   });
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom of messages container only (prevent scrolling parent containers)
-  const smoothScrollToBottom = useCallback(() => {
-    if (messagesContainerRef.current) {
-      const container = messagesContainerRef.current;
-      console.log(
-        'Scrolling to bottom, container height:',
-        container.scrollHeight,
-        'client height:',
-        container.clientHeight,
-        'offset height:',
-        container.offsetHeight
-      );
-
-      // Scroll to the very bottom to ensure input box is visible
-      const maxScroll = container.scrollHeight - container.clientHeight;
-      container.scrollTop = maxScroll;
-
-      // Also try smooth scroll as backup
-      setTimeout(() => {
-        container.scrollTo({
-          top: maxScroll,
-          behavior: 'smooth',
-        });
-      }, 10);
-    } else {
-      console.log('No messages container ref found');
-    }
-  }, []);
+  // Scroll logic moved to parent ChatScreen
 
   // Listen to messages in this conversation with real-time updates via WebSocket
   useEffect(() => {
@@ -90,7 +65,7 @@ const Chat: React.FC<ChatProps> = ({
         }
 
         // Auto-scroll to bottom after initial messages load
-        setTimeout(smoothScrollToBottom, 100);
+        setTimeout(() => onScrollToBottom?.(), 100);
       } catch (error) {
         console.error('Error loading initial messages:', error);
         setIsLoading(false);
@@ -115,41 +90,22 @@ const Chat: React.FC<ChatProps> = ({
       }
       setIsLoading(false);
 
-      // Auto-scroll to bottom when new messages arrive (only if user is near bottom)
-      if (shouldScrollToBottom) {
-        console.log('Auto-scrolling to bottom - new message via WebSocket');
-        setTimeout(smoothScrollToBottom, 100);
-      }
+      // Auto-scroll to bottom when new messages arrive
+      setTimeout(() => onScrollToBottom?.(), 100);
     });
 
     return () => {
       websocketService.unsubscribeFromConversation(conversationId);
     };
-  }, [conversationId, user, shouldScrollToBottom, smoothScrollToBottom]);
+  }, [conversationId, user, onScrollToBottom]);
 
-  // Removed redundant auto-scroll useEffect - scrolling is handled in the main useEffect
-
-  // Removed lazy loading functionality
-
-  // Track scroll position to determine if we should auto-scroll
-  const handleScroll = () => {
-    if (messagesContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } =
-        messagesContainerRef.current;
-      const maxScroll = scrollHeight - clientHeight;
-      const distanceFromBottom = maxScroll - scrollTop;
-      const isNearBottom = distanceFromBottom < 20; // Only within 20px of bottom
-      console.log('Scroll event:', {
-        scrollTop,
-        scrollHeight,
-        clientHeight,
-        maxScroll,
-        distanceFromBottom,
-        isNearBottom,
-      });
-      setShouldScrollToBottom(isNearBottom);
+  // Auto-scroll to bottom when conversation loads
+  useEffect(() => {
+    if (messages.length > 0 && onScrollToBottom) {
+      console.log('Auto-scrolling to bottom - conversation loaded');
+      setTimeout(() => onScrollToBottom(), 100);
     }
-  };
+  }, [messages.length, onScrollToBottom]);
 
   // Send a new message with optimistic updates
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -174,7 +130,7 @@ const Chat: React.FC<ChatProps> = ({
     setNewMessage('');
 
     // Auto-scroll to bottom when new message is added
-    setTimeout(smoothScrollToBottom, 100);
+    setTimeout(() => onScrollToBottom?.(), 100);
 
     try {
       // Send message to server
