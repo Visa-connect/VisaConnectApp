@@ -5,12 +5,14 @@ import { userService } from '../api/userService';
 
 interface ThumbsUpButtonProps {
   receiverId: string;
+  conversationId: string;
   className?: string;
   onThumbsUpGiven?: (helpedCount: number) => void;
 }
 
 const ThumbsUpButton: React.FC<ThumbsUpButtonProps> = ({
   receiverId,
+  conversationId,
   className = '',
   onThumbsUpGiven,
 }) => {
@@ -49,10 +51,10 @@ const ThumbsUpButton: React.FC<ThumbsUpButtonProps> = ({
           onThumbsUpGiven?.(response.helped_count || 0);
         }
       } else {
-        // Give thumbs-up (using a dummy message ID since we're giving a general thumbs-up)
+        // Give thumbs-up (using conversation ID to track which conversation the thumbs-up was given in)
         const response = await userService.giveThumbsUp({
           receiver_id: receiverId,
-          chat_message_id: 'general-thumbs-up',
+          chat_message_id: conversationId,
         });
 
         if (response.success) {

@@ -151,10 +151,13 @@ const ChatScreen: React.FC = () => {
                   {otherUserDetails?.fullName || otherUserName}
                 </h2>
               </div>
-              
+
               {/* Thumbs-up Button */}
               <div className="flex justify-center">
-                <ThumbsUpButton receiverId={otherUserId} />
+                <ThumbsUpButton
+                  receiverId={otherUserId}
+                  conversationId={selectedConversationId}
+                />
               </div>
             </div>
           </div>

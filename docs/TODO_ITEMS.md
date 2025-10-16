@@ -32,3 +32,11 @@
   - Add logger config with JSON output and env-based log levels (dev/prod)
   - Migrate `server/api/applications.ts` and other server files to use logger
   - Optionally add HTTP request logging middleware
+
+### Chat Thumbs-Up System Improvements
+
+- **Consistent Naming Convention**: Standardize naming for chat-related IDs across the system
+  - Current issue: `chat_message_id` field is being used for conversation-level thumbs-ups, not message-level
+  - Consider renaming to `conversation_id` or creating separate fields for message vs conversation thumbs-ups
+  - Update database schema, API interfaces, and frontend components to use consistent terminology
+  - This affects `ChatThumbsUpData` interface, database table, and `ThumbsUpButton` component
