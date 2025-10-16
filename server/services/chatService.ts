@@ -105,17 +105,28 @@ class ChatService {
     userId2: string
   ): Promise<string> {
     try {
+      console.log(
+        `Looking for existing conversation between ${userId1} and ${userId2}`
+      );
+
       // Check if conversation already exists
       const existingConversation = await this.findConversation(
         userId1,
         userId2
       );
+
       if (existingConversation) {
+        console.log(`Found existing conversation: ${existingConversation.id}`);
         return existingConversation.id!;
       }
 
       // Create new conversation if none exists
-      return await this.createConversation(userId1, userId2);
+      console.log(
+        `No existing conversation found, creating new one between ${userId1} and ${userId2}`
+      );
+      const newConversationId = await this.createConversation(userId1, userId2);
+      console.log(`Created new conversation: ${newConversationId}`);
+      return newConversationId;
     } catch (error) {
       console.error('Error getting or creating conversation:', error);
       throw new Error('Failed to get or create conversation');
@@ -129,17 +140,31 @@ class ChatService {
   ): Promise<Conversation | null> {
     try {
       const participants = [userId1, userId2].sort();
+      console.log(
+        `Searching for conversation with participants: [${participants.join(
+          ', '
+        )}]`
+      );
+
       const query = getFirestore()
         .collection('conversations')
         .where('participants', '==', participants);
 
       const snapshot = await query.get();
+      console.log(`Query returned ${snapshot.size} conversations`);
 
       if (!snapshot.empty) {
         const doc = snapshot.docs[0];
-        return { id: doc.id, ...doc.data() } as Conversation;
+        const conversation = { id: doc.id, ...doc.data() } as Conversation;
+        console.log(
+          `Found conversation: ${conversation.id} with ${
+            conversation.participants?.length || 0
+          } participants`
+        );
+        return conversation;
       }
 
+      console.log('No existing conversation found');
       return null;
     } catch (error) {
       console.error('Error finding conversation:', error);
