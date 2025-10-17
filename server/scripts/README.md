@@ -31,9 +31,25 @@ node scripts/consolidate-duplicate-conversations.js
 
 ### Prerequisites
 
-- Firebase credentials file (`firebase-stage-credentials.json`) must be present
+- **Firebase credentials** configured via one of these methods:
+  - **Environment Variable** (Recommended for production): Set `FIREBASE_SERVICE_ACCOUNT` with the full JSON service account object
+  - **Local File** (Development): Place `firebase-stage-credentials.json` in the server directory
 - Firebase Admin SDK must be initialized
 - Appropriate database permissions
+
+### Environment Configuration
+
+#### Production/Staging
+
+Set the `FIREBASE_SERVICE_ACCOUNT` environment variable with the complete service account JSON:
+
+```bash
+export FIREBASE_SERVICE_ACCOUNT='{"type":"service_account","project_id":"your-project-id",...}'
+```
+
+#### Local Development
+
+Place the `firebase-stage-credentials.json` file in the server directory, or set the environment variable as above.
 
 ### Example Output
 
@@ -62,6 +78,7 @@ Consolidation complete!
 - **Test Environment**: Run this script in a test environment first to verify behavior
 - **One-Time Use**: This script is designed to clean up existing duplicates. The application logic should prevent new duplicates from being created
 - **Downtime**: Consider running during low-usage periods as it performs many database operations
+- **Security**: Script now supports environment variables for Firebase credentials to avoid hardcoded paths
 
 ### Related Code
 
