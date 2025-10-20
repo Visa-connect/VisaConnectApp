@@ -227,9 +227,9 @@ const Chat: React.FC<ChatProps> = ({
     return parts.length > 0 ? parts : content;
   };
 
-  // Format timestamp for display
-  const formatTime = (timestamp: any) => {
-    if (!timestamp) return '';
+  // Convert timestamp to Date object (reusable utility)
+  const parseTimestamp = (timestamp: any): Date | null => {
+    if (!timestamp) return null;
 
     try {
       let date: Date;
@@ -255,23 +255,145 @@ const Chat: React.FC<ChatProps> = ({
       // Check if date is valid
       if (isNaN(date.getTime())) {
         console.warn('Invalid timestamp:', timestamp);
-        return '';
+        return null;
       }
 
-      return date.toLocaleTimeString([], {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      return date;
     } catch (error) {
       console.warn(
-        'Error formatting timestamp:',
+        'Error parsing timestamp:',
         error,
         'Timestamp value:',
         timestamp
       );
-      return '';
+      return null;
     }
   };
+
+  // Format timestamp for display
+  const formatTime = (timestamp: any) => {
+    const date = parseTimestamp(timestamp);
+    if (!date) return '';
+
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  // Get date string for grouping (YYYY-MM-DD format) using local timezone
+  const getDateString = (timestamp: any): string => {
+    const date = parseTimestamp(timestamp);
+    if (!date) return '';
+
+    // Use local timezone instead of UTC
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+  };
+
+  // Format date for display in headers
+  const formatDateHeader = (dateString: string): string => {
+    // Parse dateString as local date to avoid timezone issues
+    const [year, month, day] = dateString.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Reset time to compare only dates
+    const dateOnly = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+    const todayOnly = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const yesterdayOnly = new Date(
+      yesterday.getFullYear(),
+      yesterday.getMonth(),
+      yesterday.getDate()
+    );
+
+    if (dateOnly.getTime() === todayOnly.getTime()) {
+      return 'Today';
+    } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString([], {
+        month: 'short',
+        day: 'numeric',
+        year:
+          date.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+      });
+    }
+  };
+
+  // Group messages by date
+  const groupMessagesByDate = (messages: Message[]) => {
+    const groups: { [dateString: string]: Message[] } = {};
+    const messagesWithoutDate: Message[] = [];
+
+    messages.forEach((message) => {
+      const dateString = getDateString(message.timestamp);
+      if (dateString) {
+        if (!groups[dateString]) {
+          groups[dateString] = [];
+        }
+        groups[dateString].push(message);
+      } else {
+        // Handle messages without valid timestamps
+        messagesWithoutDate.push(message);
+      }
+    });
+
+    // Sort dates in descending order (newest first)
+    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+    const result = sortedDates.map((dateString) => ({
+      dateString,
+      dateHeader: formatDateHeader(dateString),
+      messages: groups[dateString].sort((a, b) => {
+        // Sort messages within each date group by timestamp (newest first)
+        const dateA = parseTimestamp(a.timestamp);
+        const dateB = parseTimestamp(b.timestamp);
+        if (!dateA || !dateB) return 0;
+        return dateB.getTime() - dateA.getTime();
+      }),
+    }));
+
+    // Add messages without valid timestamps to the most recent group or create a "Recent" group
+    if (messagesWithoutDate.length > 0) {
+      if (result.length > 0) {
+        // Add to the most recent group
+        result[0].messages.push(...messagesWithoutDate);
+      } else {
+        // Create a "Recent" group for messages without timestamps
+        result.push({
+          dateString: 'recent',
+          dateHeader: 'Recent',
+          messages: messagesWithoutDate,
+        });
+      }
+    }
+
+    return result;
+  };
+
+  // DateHeader component for displaying date separators
+  const DateHeader: React.FC<{ dateHeader: string }> = ({ dateHeader }) => (
+    <div className="flex items-center justify-center my-6">
+      <div className="bg-gray-100 text-gray-600 text-xs font-medium px-4 py-2 rounded-full shadow-sm border border-gray-200">
+        {dateHeader}
+      </div>
+    </div>
+  );
 
   if (!user) {
     return <div className="text-center py-8">Please log in to chat</div>;
@@ -316,42 +438,52 @@ const Chat: React.FC<ChatProps> = ({
           </div>
         ) : (
           <>
-            {messages.map((message) => {
-              const isOwnMessage = message.senderId === user.uid;
-              return (
-                <div
-                  key={message.id}
-                  data-message="true"
-                  className={`flex ${
-                    isOwnMessage ? 'justify-end' : 'justify-start'
-                  }`}
-                >
-                  <div
-                    className={`max-w-[85%] md:max-w-lg px-4 py-3 rounded-2xl ${
-                      isOwnMessage
-                        ? 'bg-gray-200 text-gray-900 shadow-sm border border-gray-300'
-                        : 'bg-white text-gray-900 shadow-sm border border-gray-200'
-                    } ${message.id?.startsWith('temp-') ? 'opacity-70' : ''}`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <div className="text-sm whitespace-pre-wrap">
-                        {formatMessageContent(message.content)}
+            {groupMessagesByDate(messages).map((group, groupIndex) => (
+              <div key={group.dateString}>
+                {/* Date Header */}
+                <DateHeader dateHeader={group.dateHeader} />
+
+                {/* Messages for this date */}
+                {group.messages.map((message) => {
+                  const isOwnMessage = message.senderId === user.uid;
+                  return (
+                    <div
+                      key={message.id}
+                      data-message="true"
+                      className={`flex ${
+                        isOwnMessage ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      <div
+                        className={`max-w-[85%] md:max-w-lg px-4 py-3 rounded-2xl ${
+                          isOwnMessage
+                            ? 'bg-gray-200 text-gray-900 shadow-sm border border-gray-300'
+                            : 'bg-white text-gray-900 shadow-sm border border-gray-200'
+                        } ${
+                          message.id?.startsWith('temp-') ? 'opacity-70' : ''
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div className="text-sm whitespace-pre-wrap">
+                            {formatMessageContent(message.content)}
+                          </div>
+                        </div>
+                        <p className={`text-xs mt-2 text-gray-500`}>
+                          {formatTime(message.timestamp) || (
+                            <span title={`Raw timestamp: ${message.timestamp}`}>
+                              Just now
+                            </span>
+                          )}
+                          {message.id?.startsWith('temp-') && (
+                            <span className="ml-2 text-xs">Sending...</span>
+                          )}
+                        </p>
                       </div>
                     </div>
-                    <p className={`text-xs mt-2 text-gray-500`}>
-                      {formatTime(message.timestamp) || (
-                        <span title={`Raw timestamp: ${message.timestamp}`}>
-                          Just now
-                        </span>
-                      )}
-                      {message.id?.startsWith('temp-') && (
-                        <span className="ml-2 text-xs">Sending...</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            ))}
           </>
         )}
       </div>
