@@ -18,11 +18,27 @@ import {
 interface RegisterResponse {
   success: boolean;
   message: string;
-  data: {
+  user: {
     id: string;
     email: string;
     first_name?: string;
     last_name?: string;
+    visa_type?: string;
+    current_location?: {
+      city: string;
+      state: string;
+      country: string;
+    };
+    occupation?: string;
+    employer?: string;
+    nationality?: string;
+    languages?: string[];
+    other_us_jobs?: string[];
+    relationship_status?: string;
+    hobbies?: string[];
+    favorite_state?: string;
+    preferred_outings?: string[];
+    has_car?: boolean;
   };
   token: string; // Include token in both registration and response
 }
@@ -141,13 +157,14 @@ const CreateAccountPage: React.FC = () => {
         }
       );
 
-      if (response.data) {
+      if (response.user) {
+        const { id, email, first_name, last_name } = response.user;
         // Create user data object for the store
         const userData = {
-          uid: response.data.id,
-          email: response.data.email,
-          first_name: response.data.first_name,
-          last_name: response.data.last_name,
+          uid: id,
+          email: email,
+          first_name: first_name,
+          last_name: last_name,
           visa_type: form.visa_type,
           current_location: form.current_location,
           occupation: form.occupation,

@@ -144,11 +144,11 @@ const KnowledgeCommunityScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.mentorshipInterest === 'yes'
-                      ? 'bg-sky-400'
-                      : 'bg-sky-200'
-                  } focus:outline-none`}
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
+                      : 'border-gray-300 text-gray-800'
+                  } bg-white focus:outline-none`}
                   onClick={() =>
                     setForm({ ...form, mentorshipInterest: 'yes' })
                   }
@@ -159,7 +159,7 @@ const KnowledgeCommunityScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.mentorshipInterest === 'no'
-                      ? 'border-sky-400 text-sky-400'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
                       : 'border-gray-300 text-gray-800'
                   } bg-white focus:outline-none`}
                   onClick={() => setForm({ ...form, mentorshipInterest: 'no' })}

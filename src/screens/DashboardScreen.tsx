@@ -94,39 +94,39 @@ const DashboardScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* Personalized Experience Card */}
-          <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6 md:mb-8">
-            <h2 className="font-bold text-lg md:text-xl text-gray-900 mb-3">
-              Personalized experience
-            </h2>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-blue-500 text-base md:text-lg">✓</span>
-              <span className="text-gray-700 text-sm md:text-base">
-                {completion.completed} out of {completion.total} completed
-              </span>
-            </div>
-            {completion.percentage > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${completion.percentage}%` }}
-                ></div>
+          {/* Personalized Experience Card - Only show if not all steps completed */}
+          {completion.completed < completion.total && (
+            <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6 md:mb-8">
+              <h2 className="font-bold text-lg md:text-xl text-gray-900 mb-3">
+                Personalized experience
+              </h2>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-blue-500 text-base md:text-lg">✓</span>
+                <span className="text-gray-700 text-sm md:text-base">
+                  {completion.completed} out of {completion.total} completed
+                </span>
               </div>
-            )}
-            <div className="text-center">
-              <Button
-                variant="primary"
-                className="w-full md:w-auto px-6 md:px-8 py-2 md:py-3 text-base md:text-lg"
-                onClick={() => navigate('/background')}
-              >
-                {completion.completed === 0
-                  ? 'Start questionnaire'
-                  : completion.completed === completion.total
-                  ? 'View profile'
-                  : 'Continue questionnaire'}
-              </Button>
+              {completion.percentage > 0 && (
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${completion.percentage}%` }}
+                  ></div>
+                </div>
+              )}
+              <div className="text-center">
+                <Button
+                  variant="primary"
+                  className="w-full md:w-auto px-6 md:px-8 py-2 md:py-3 text-base md:text-lg"
+                  onClick={() => navigate('/background')}
+                >
+                  {completion.completed === 0
+                    ? 'Start questionnaire'
+                    : 'Continue questionnaire'}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Connect, Grow & Thrive Section */}
           <div className="text-center mb-6 md:mb-8">

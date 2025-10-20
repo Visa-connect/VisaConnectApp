@@ -368,9 +368,11 @@ const LifestyleScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.hasCar === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
-                  } focus:outline-none`}
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.hasCar === 'yes'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
+                      : 'border-gray-300 text-gray-800'
+                  } bg-white focus:outline-none`}
                   onClick={() => handleToggle('hasCar', 'yes')}
                 >
                   Yes
@@ -379,7 +381,7 @@ const LifestyleScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.hasCar === 'no'
-                      ? 'border-sky-400 text-sky-400'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
                       : 'border-gray-300 text-gray-800'
                   } bg-white focus:outline-none`}
                   onClick={() => handleToggle('hasCar', 'no')}
@@ -396,9 +398,11 @@ const LifestyleScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.willingToDrive === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
-                  } focus:outline-none`}
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.willingToDrive === 'yes'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
+                      : 'border-gray-300 text-gray-800'
+                  } bg-white focus:outline-none`}
                   onClick={() => handleToggle('willingToDrive', 'yes')}
                 >
                   Yes
@@ -407,7 +411,7 @@ const LifestyleScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.willingToDrive === 'no'
-                      ? 'border-sky-400 text-sky-400'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
                       : 'border-gray-300 text-gray-800'
                   } bg-white focus:outline-none`}
                   onClick={() => handleToggle('willingToDrive', 'no')}

@@ -9,7 +9,22 @@ import { US_CITIES } from '../../data/usCities';
 import { apiPatch } from '../../api';
 import { useUserStore } from '../../stores/userStore';
 
-const countryNames = countries.map((c) => c.name.common).sort();
+// Create a comprehensive list that includes both country names and nationalities
+const countryNames = countries
+  .map((c) => {
+    const names = [c.name.common];
+    // Add nationality/demonym if available
+    if (c.demonyms?.eng?.m) {
+      names.push(c.demonyms.eng.m);
+    }
+    if (c.demonyms?.eng?.f && c.demonyms.eng.f !== c.demonyms.eng.m) {
+      names.push(c.demonyms.eng.f);
+    }
+    return names;
+  })
+  .flat()
+  .filter((name, index, array) => array.indexOf(name) === index) // Remove duplicates
+  .sort();
 // Extract and deduplicate all languages from world-countries
 const languageSet = new Set<string>();
 countries.forEach((c) => {
@@ -71,11 +86,22 @@ const BackgroundScreen: React.FC = () => {
             !form.languages.includes(l)
         );
 
+  // Function to get nationality from country name
+  const getNationalityFromCountryName = (countryName: string): string => {
+    const country = countries.find((c) => c.name.common === countryName);
+    if (country?.demonyms?.eng?.m) {
+      return country.demonyms.eng.m;
+    }
+    return countryName; // Fallback to country name if no nationality found
+  };
+
   // Pre-populate form with existing user data
   useEffect(() => {
     if (user) {
       setForm({
-        nationality: user.nationality || '',
+        nationality: user.nationality
+          ? getNationalityFromCountryName(user.nationality)
+          : '',
         languages: user.languages || [],
         workHistory: user.other_us_jobs?.join(', ') || '',
         relationshipStatus: user.relationship_status || '',
@@ -91,6 +117,19 @@ const BackgroundScreen: React.FC = () => {
     }
   }, [user, navigate]);
 
+  // Function to map nationality back to country name
+  const getCountryNameFromNationality = (nationality: string): string => {
+    const country = countries.find((c) => {
+      // Check if it matches the country name
+      if (c.name.common === nationality) return true;
+      // Check if it matches the nationality/demonym
+      if (c.demonyms?.eng?.m === nationality) return true;
+      if (c.demonyms?.eng?.f === nationality) return true;
+      return false;
+    });
+    return country ? country.name.common : nationality;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -98,16 +137,19 @@ const BackgroundScreen: React.FC = () => {
     try {
       if (!user?.uid) throw new Error('User not authenticated');
 
+      // Map nationality back to country name for storage
+      const countryName = getCountryNameFromNationality(form.nationality);
+
       // Update user profile with background information
       const updateData = {
-        nationality: form.nationality,
+        nationality: countryName,
         languages: form.languages,
         other_us_jobs: form.workHistory ? [form.workHistory] : [],
         relationship_status: form.relationshipStatus,
         // Map stayInUS to a more appropriate field or store in profile_answers
         profile_answers: {
           background_identity: {
-            nationality: form.nationality,
+            nationality: form.nationality, // Keep original input for display
             languages: form.languages,
             workHistory: form.workHistory,
             relationshipStatus: form.relationshipStatus,
@@ -210,7 +252,7 @@ const BackgroundScreen: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setQuery(e.target.value)
                     }
-                    placeholder="Enter your nationality"
+                    placeholder="Enter your nationality (e.g., Italian, American, etc.)"
                   />
                   <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
                     <ChevronUpDownIcon
@@ -470,9 +512,11 @@ const BackgroundScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.stayInUS === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
-                  } focus:outline-none`}
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.stayInUS === 'yes'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
+                      : 'border-gray-300 text-gray-800'
+                  } bg-white focus:outline-none`}
                   onClick={() => handleStayInUSChange('yes')}
                 >
                   Yes
@@ -481,7 +525,7 @@ const BackgroundScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.stayInUS === 'no'
-                      ? 'border-sky-400 text-sky-400'
+                      ? 'border-sky-400 text-sky-400 bg-sky-50'
                       : 'border-gray-300 text-gray-800'
                   } bg-white focus:outline-none`}
                   onClick={() => handleStayInUSChange('no')}
