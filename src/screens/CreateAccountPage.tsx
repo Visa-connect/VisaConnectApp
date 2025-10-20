@@ -13,35 +13,8 @@ import {
   isNotEmpty,
   VALIDATION_MESSAGES,
 } from '../utils/validation';
-
-// Types for API responses
-interface RegisterResponse {
-  success: boolean;
-  message: string;
-  user: {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-    visa_type?: string;
-    current_location?: {
-      city: string;
-      state: string;
-      country: string;
-    };
-    occupation?: string;
-    employer?: string;
-    nationality?: string;
-    languages?: string[];
-    other_us_jobs?: string[];
-    relationship_status?: string;
-    hobbies?: string[];
-    favorite_state?: string;
-    preferred_outings?: string[];
-    has_car?: boolean;
-  };
-  token: string; // Include token in both registration and response
-}
+import { RegisterResponse } from '../types/api';
+import { userToUserData } from '../stores/userStore';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -158,18 +131,13 @@ const CreateAccountPage: React.FC = () => {
       );
 
       if (response.user) {
-        const { id, email, first_name, last_name } = response.user;
-        // Create user data object for the store
-        const userData = {
-          uid: id,
-          email: email,
-          first_name: first_name,
-          last_name: last_name,
-          visa_type: form.visa_type,
-          current_location: form.current_location,
-          occupation: form.occupation,
-          employer: form.employer,
-        };
+        // Convert API response to store format and merge with form data
+        const userData = userToUserData(response.user);
+        // Add form-specific data that might not be in the API response
+        userData.visa_type = form.visa_type;
+        userData.current_location = form.current_location;
+        userData.occupation = form.occupation;
+        userData.employer = form.employer;
 
         // Update both user store and localStorage
         setToken(response.token);

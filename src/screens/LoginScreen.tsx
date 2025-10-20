@@ -4,46 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { apiPostPublic } from '../api';
 import { useUserStore } from '../stores/userStore';
 import logo from '../assets/images/logo.png';
-
-// Types for login response
-interface LoginResponse {
-  success: boolean;
-  message: string;
-  user: {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-    visa_type?: string;
-    current_location?: {
-      city: string;
-      state: string;
-      country: string;
-    };
-    occupation?: string;
-    employer?: string;
-    nationality?: string;
-    languages?: string[];
-    other_us_jobs?: string[];
-    relationship_status?: string;
-    hobbies?: string[];
-    favorite_state?: string;
-    preferred_outings?: string[];
-    has_car?: boolean;
-    offers_rides?: boolean;
-    road_trips?: boolean;
-    favorite_place?: string;
-    travel_tips?: string;
-    willing_to_guide?: boolean;
-    mentorship_interest?: boolean;
-    job_boards?: string[];
-    visa_advice?: string;
-    profile_photo_url?: string;
-    profile_photo_public_id?: string;
-    bio?: string;
-  };
-  token: string; // Firebase ID token for authenticated API calls - always present on successful login
-}
+import { LoginResponse } from '../types/api';
+import { userToUserData } from '../stores/userStore';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -110,36 +72,8 @@ const SignInScreen: React.FC = () => {
         // Store the Firebase ID token (always present on successful login)
         setToken(loginResponse.token);
 
-        const userData = {
-          uid: loginResponse.user.id,
-          email: loginResponse.user.email,
-          first_name: loginResponse.user.first_name || '',
-          last_name: loginResponse.user.last_name || '',
-          visa_type: loginResponse.user.visa_type || '',
-          current_location: loginResponse.user.current_location || {},
-          occupation: loginResponse.user.occupation || '',
-          employer: loginResponse.user.employer || '',
-          nationality: loginResponse.user.nationality,
-          languages: loginResponse.user.languages || [],
-          other_us_jobs: loginResponse.user.other_us_jobs || [],
-          relationship_status: loginResponse.user.relationship_status,
-          hobbies: loginResponse.user.hobbies || [],
-          favorite_state: loginResponse.user.favorite_state,
-          preferred_outings: loginResponse.user.preferred_outings || [],
-          has_car: loginResponse.user.has_car,
-          offers_rides: loginResponse.user.offers_rides,
-          road_trips: loginResponse.user.road_trips,
-          favorite_place: loginResponse.user.favorite_place,
-          travel_tips: loginResponse.user.travel_tips,
-          willing_to_guide: loginResponse.user.willing_to_guide,
-          mentorship_interest: loginResponse.user.mentorship_interest,
-          job_boards: loginResponse.user.job_boards || [],
-          visa_advice: loginResponse.user.visa_advice,
-          profile_photo_url: loginResponse.user.profile_photo_url,
-          profile_photo_public_id: loginResponse.user.profile_photo_public_id,
-          bio: loginResponse.user.bio,
-        };
-
+        // Convert API response to store format
+        const userData = userToUserData(loginResponse.user);
         setUser(userData);
 
         // Store in localStorage for persistence

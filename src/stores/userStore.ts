@@ -3,41 +3,24 @@ import { persist } from 'zustand/middleware';
 // import { tokenRefreshService } from '../api/firebaseAuth'; // Temporarily disabled
 import { useNotificationStore } from './notificationStore';
 import { executeWhenHydrated } from '../utils/persistUtils';
+import { User } from '../types/api';
 
-// User data interface
-export interface UserData {
-  uid: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  visa_type?: string;
-  current_location?: {
-    city?: string;
-    state?: string;
-    country?: string;
-  };
-  occupation?: string;
-  employer?: string;
-  nationality?: string;
-  languages?: string[];
-  other_us_jobs?: string[];
-  relationship_status?: string;
-  hobbies?: string[];
-  favorite_state?: string;
-  preferred_outings?: string[];
-  has_car?: boolean;
-  offers_rides?: boolean;
-  road_trips?: boolean;
-  favorite_place?: string;
-  travel_tips?: string;
-  willing_to_guide?: boolean;
-  mentorship_interest?: boolean;
-  job_boards?: string[];
-  visa_advice?: string;
-  profile_photo_url?: string;
-  profile_photo_public_id?: string;
-  bio?: string;
+// User data interface - extends the consolidated User interface with uid field
+export interface UserData extends Omit<User, 'id'> {
+  uid: string; // Use uid instead of id for consistency with Firebase
 }
+
+// Helper function to convert User (from API) to UserData (for store)
+export const userToUserData = (user: User): UserData => {
+  const { id, ...rest } = user;
+  return { ...rest, uid: id };
+};
+
+// Helper function to convert UserData (from store) to User (for API)
+export const userDataToUser = (userData: UserData): User => {
+  const { uid, ...rest } = userData;
+  return { ...rest, id: uid };
+};
 
 // Store interface
 interface UserStore {
