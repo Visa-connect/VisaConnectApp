@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import ChatList from '../components/ChatList';
 import Chat from '../components/Chat';
@@ -16,6 +16,26 @@ const ChatScreen: React.FC = () => {
   const [otherUserName, setOtherUserName] = useState<string>('');
   const [otherUserPhoto, setOtherUserPhoto] = useState<string>('');
   const [otherUserDetails, setOtherUserDetails] = useState<any>(null);
+
+  // Scroll management for chat messages
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    if (chatScrollRef.current) {
+      const container = chatScrollRef.current;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      container.scrollTop = maxScroll;
+
+      // Also try smooth scroll as backup
+      setTimeout(() => {
+        container.scrollTo({
+          top: maxScroll,
+          behavior: 'smooth',
+        });
+      }, 10);
+    }
+  }, []);
 
   // Handle direct navigation to a specific conversation
   useEffect(() => {
@@ -94,8 +114,8 @@ const ChatScreen: React.FC = () => {
   if (selectedConversationId) {
     return (
       <div className="flex flex-col h-full bg-gray-50">
-        {/* Chat Header - Fixed at top */}
-        <div className="flex-shrink-0 bg-gray-50 border-b border-gray-200 shadow-sm z-10">
+        {/* Chat Header - Sticky at top */}
+        <div className="sticky top-0 flex-shrink-0 bg-gray-50 border-b border-gray-200 shadow-sm z-10">
           <div className="relative px-4 py-3 flex items-center">
             <button
               onClick={() => {
@@ -164,12 +184,16 @@ const ChatScreen: React.FC = () => {
         </div>
 
         {/* Chat Messages - Takes remaining space and handles its own scrolling */}
-        <div className="flex-1 overflow-hidden max-w-4xl mx-auto w-full">
+        <div
+          ref={chatScrollRef}
+          className="flex-1 overflow-y-auto max-w-4xl mx-auto w-full"
+        >
           <Chat
             conversationId={selectedConversationId}
             otherUserId={otherUserId}
             otherUserName={otherUserName}
             otherUserPhoto={otherUserPhoto}
+            onScrollToBottom={scrollToBottom}
           />
         </div>
       </div>
@@ -178,7 +202,7 @@ const ChatScreen: React.FC = () => {
 
   // Main chat list view
   return (
-    <div className="flex flex-col bg-gray-50 h-full">
+    <div className="flex flex-col bg-gray-50 h-screen">
       {/* Chat List */}
       <div className="flex-1 overflow-hidden max-w-4xl mx-auto w-full">
         <ChatList

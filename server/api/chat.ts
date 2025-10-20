@@ -133,7 +133,7 @@ export default function chatApi(app: Express) {
     }
   );
 
-  // Get messages for a conversation
+  // Get messages for a conversation with pagination
   app.get(
     '/api/chat/conversations/:conversationId/messages',
     authenticateUser,
@@ -141,6 +141,7 @@ export default function chatApi(app: Express) {
       try {
         const { conversationId } = req.params;
         const userId = req.user?.uid;
+        const { limit = 50, startAfter } = req.query;
 
         if (!userId) {
           return res
@@ -148,11 +149,19 @@ export default function chatApi(app: Express) {
             .json({ success: false, message: 'User not authenticated' });
         }
 
-        const messages = await chatService.getConversationMessages(
+        const result = await chatService.getConversationMessages(
           conversationId,
-          userId
+          userId,
+          parseInt(limit as string),
+          startAfter ? JSON.parse(startAfter as string) : undefined
         );
-        res.json({ success: true, data: messages });
+
+        res.json({
+          success: true,
+          data: result.messages,
+          hasMore: result.hasMore,
+          lastMessage: result.lastMessage,
+        });
       } catch (error) {
         console.error('Error fetching messages:', error);
         res
