@@ -226,45 +226,47 @@ const KnowledgeCommunityScreen: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={() => jobBoardsQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setJobBoardsQuery(e.target.value);
-                      setJobBoardsOpen(true);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (
-                        e.key === 'Enter' &&
-                        jobBoardsQuery.trim() &&
-                        !form.jobBoards.includes(jobBoardsQuery.trim())
-                      ) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const customValue = jobBoardsQuery.trim();
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => jobBoardsQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setJobBoardsQuery(e.target.value);
+                        setJobBoardsOpen(true);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (
+                          e.key === 'Enter' &&
+                          jobBoardsQuery.trim() &&
+                          !form.jobBoards.includes(jobBoardsQuery.trim())
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const customValue = jobBoardsQuery.trim();
 
-                        // Add the custom value to the form
-                        setForm({
-                          ...form,
-                          jobBoards: [...form.jobBoards, customValue],
-                        });
+                          // Add the custom value to the form
+                          setForm({
+                            ...form,
+                            jobBoards: [...form.jobBoards, customValue],
+                          });
 
-                        // Clear the input and close dropdown immediately
-                        setJobBoardsQuery('');
-                        setJobBoardsOpen(false);
+                          // Clear the input and close dropdown immediately
+                          setJobBoardsQuery('');
+                          setJobBoardsOpen(false);
 
-                        // Force the input to clear by updating the display value
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    placeholder="Enter job boards or agencies"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                          // Force the input to clear by updating the display value
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                      placeholder="Enter job boards or agencies"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"

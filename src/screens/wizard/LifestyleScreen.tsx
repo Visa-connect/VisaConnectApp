@@ -235,45 +235,47 @@ const LifestyleScreen: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={() => hobbiesQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setHobbiesQuery(e.target.value);
-                      setHobbiesOpen(true);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (
-                        e.key === 'Enter' &&
-                        hobbiesQuery.trim() &&
-                        !form.hobbies.includes(hobbiesQuery.trim())
-                      ) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const customValue = hobbiesQuery.trim();
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => hobbiesQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setHobbiesQuery(e.target.value);
+                        setHobbiesOpen(true);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (
+                          e.key === 'Enter' &&
+                          hobbiesQuery.trim() &&
+                          !form.hobbies.includes(hobbiesQuery.trim())
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const customValue = hobbiesQuery.trim();
 
-                        // Add the custom value to the form
-                        setForm({
-                          ...form,
-                          hobbies: [...form.hobbies, customValue],
-                        });
+                          // Add the custom value to the form
+                          setForm({
+                            ...form,
+                            hobbies: [...form.hobbies, customValue],
+                          });
 
-                        // Clear the input and close dropdown immediately
-                        setHobbiesQuery('');
-                        setHobbiesOpen(false);
+                          // Clear the input and close dropdown immediately
+                          setHobbiesQuery('');
+                          setHobbiesOpen(false);
 
-                        // Force the input to clear by updating the display value
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    placeholder="Enter hobbies and interests"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                          // Force the input to clear by updating the display value
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                      placeholder="Enter hobbies and interests"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -487,45 +489,47 @@ const LifestyleScreen: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={() => outingsQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setOutingsQuery(e.target.value);
-                      setOutingsOpen(true);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (
-                        e.key === 'Enter' &&
-                        outingsQuery.trim() &&
-                        !form.outings.includes(outingsQuery.trim())
-                      ) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const customValue = outingsQuery.trim();
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => outingsQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setOutingsQuery(e.target.value);
+                        setOutingsOpen(true);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (
+                          e.key === 'Enter' &&
+                          outingsQuery.trim() &&
+                          !form.outings.includes(outingsQuery.trim())
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const customValue = outingsQuery.trim();
 
-                        // Add the custom value to the form
-                        setForm({
-                          ...form,
-                          outings: [...form.outings, customValue],
-                        });
+                          // Add the custom value to the form
+                          setForm({
+                            ...form,
+                            outings: [...form.outings, customValue],
+                          });
 
-                        // Clear the input and close dropdown immediately
-                        setOutingsQuery('');
-                        setOutingsOpen(false);
+                          // Clear the input and close dropdown immediately
+                          setOutingsQuery('');
+                          setOutingsOpen(false);
 
-                        // Force the input to clear by updating the display value
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    placeholder="Enter your preferred outings"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                          // Force the input to clear by updating the display value
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                      placeholder="Enter your preferred outings"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
