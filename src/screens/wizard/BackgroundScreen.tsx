@@ -246,20 +246,22 @@ const BackgroundScreen: React.FC = () => {
                 }
               >
                 <div className="relative">
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={(val: string) => val}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setQuery(e.target.value)
-                    }
-                    placeholder="Enter your nationality (e.g., Italian, American, etc.)"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={(val: string) => val}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setQuery(e.target.value)
+                      }
+                      placeholder="Enter your nationality (e.g., Italian, American, etc.)"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -359,21 +361,23 @@ const BackgroundScreen: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={() => ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setLangQuery(e.target.value);
-                      setLangOpen(true);
-                    }}
-                    placeholder="Enter languages you speak"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setLangQuery(e.target.value);
+                        setLangOpen(true);
+                      }}
+                      placeholder="Enter languages you speak"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -447,17 +451,21 @@ const BackgroundScreen: React.FC = () => {
                 }
               >
                 <div className="relative">
-                  <Listbox.Button className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base text-left focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4 flex items-center justify-between">
-                    <span>
-                      {relationshipOptions.find(
-                        (o) => o.value === form.relationshipStatus
-                      )?.label || 'Select status'}
-                    </span>
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400 ml-2"
-                      aria-hidden="true"
-                    />
-                  </Listbox.Button>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base text-left focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4 flex items-center">
+                      <span>
+                        {relationshipOptions.find(
+                          (o) => o.value === form.relationshipStatus
+                        )?.label || 'Select status'}
+                      </span>
+                    </Listbox.Button>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
