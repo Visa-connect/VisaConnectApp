@@ -514,9 +514,9 @@ const BackgroundScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.stayInUS === 'yes'
-                      ? 'border-sky-400 text-sky-400 bg-sky-50'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => handleStayInUSChange('yes')}
                 >
                   Yes
@@ -525,9 +525,9 @@ const BackgroundScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.stayInUS === 'no'
-                      ? 'border-sky-400 text-sky-400 bg-sky-50'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => handleStayInUSChange('no')}
                 >
                   No
