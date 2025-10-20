@@ -353,26 +353,26 @@ const Chat: React.FC<ChatProps> = ({
       }
     });
 
-    // Sort dates in descending order (newest first)
-    const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    // Sort dates in ascending order (oldest first) so newest dates appear at bottom
+    const sortedDates = Object.keys(groups).sort((a, b) => a.localeCompare(b));
 
     const result = sortedDates.map((dateString) => ({
       dateString,
       dateHeader: formatDateHeader(dateString),
       messages: groups[dateString].sort((a, b) => {
-        // Sort messages within each date group by timestamp (newest first)
+        // Sort messages within each date group by timestamp (oldest first for chat display)
         const dateA = parseTimestamp(a.timestamp);
         const dateB = parseTimestamp(b.timestamp);
         if (!dateA || !dateB) return 0;
-        return dateB.getTime() - dateA.getTime();
+        return dateA.getTime() - dateB.getTime();
       }),
     }));
 
     // Add messages without valid timestamps to the most recent group or create a "Recent" group
     if (messagesWithoutDate.length > 0) {
       if (result.length > 0) {
-        // Add to the most recent group
-        result[0].messages.push(...messagesWithoutDate);
+        // Add to the most recent group (last in the array since we sort oldest first)
+        result[result.length - 1].messages.push(...messagesWithoutDate);
       } else {
         // Create a "Recent" group for messages without timestamps
         result.push({
