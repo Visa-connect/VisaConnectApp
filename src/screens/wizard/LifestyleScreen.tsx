@@ -376,7 +376,6 @@ const LifestyleScreen: React.FC = () => {
                     leave="transition ease-in duration-100"
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
-                    afterLeave={() => setStateQuery('')}
                   >
                     <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-10">
                       {US_STATES.filter((state) =>
