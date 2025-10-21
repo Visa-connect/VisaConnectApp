@@ -5,6 +5,7 @@ import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
 import { uploadProfilePhoto } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
+import { apiPatch } from '../api';
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -106,12 +107,18 @@ const EditProfileScreen: React.FC = () => {
         photoPublicId = uploadResult.fileName;
       }
 
-      // Update user profile with new photo URL and public_id
-      await updateUser({
+      // Prepare update data for API
+      const updateData = {
         bio,
         profile_photo_url: photoUrl,
         profile_photo_public_id: photoPublicId,
-      });
+      };
+
+      // Send to backend API
+      await apiPatch('/api/user/profile', updateData);
+
+      // Update local store with new data
+      updateUser(updateData);
 
       setIsUploading(false);
       setHasUnsavedChanges(false);
