@@ -41,6 +41,9 @@ export interface User {
   profile_photo_url?: string | null;
   profile_photo_public_id?: string | null;
   bio?: string;
+  resume_url?: string | null;
+  resume_filename?: string | null;
+  resume_public_id?: string | null;
   helped_count?: number; // Count of unique users who have given this user a thumbs-up
 
   created_at?: Date;
@@ -91,6 +94,9 @@ export interface CreateUserData extends BasicUserData {
   profile_photo_url?: string | null;
   profile_photo_public_id?: string | null;
   bio?: string;
+  resume_url?: string | null;
+  resume_filename?: string | null;
+  resume_public_id?: string | null;
   helped_count?: number; // Count of unique users who have given this user a thumbs-up
 }
 
@@ -163,138 +169,21 @@ class UserService {
     const values: any[] = [];
     let paramCount = 1;
 
-    if (updates.first_name !== undefined) {
-      setClause.push(`first_name = $${paramCount++}`);
-      values.push(updates.first_name);
-    }
-    if (updates.last_name !== undefined) {
-      setClause.push(`last_name = $${paramCount++}`);
-      values.push(updates.last_name);
-    }
-    if (updates.visa_type !== undefined) {
-      setClause.push(`visa_type = $${paramCount++}`);
-      values.push(updates.visa_type);
-    }
-    if (updates.current_location !== undefined) {
-      setClause.push(`current_location = $${paramCount++}`);
-      values.push(JSON.stringify(updates.current_location));
-    }
-    if (updates.occupation !== undefined) {
-      setClause.push(`occupation = $${paramCount++}`);
-      values.push(updates.occupation);
-    }
-    if (updates.employer !== undefined) {
-      setClause.push(`employer = $${paramCount++}`);
-      values.push(updates.employer);
-    }
-    if (updates.interests !== undefined) {
-      setClause.push(`interests = $${paramCount++}`);
-      values.push(updates.interests);
-    }
+    // Special handling for JSON fields
+    const jsonFields = new Set(['current_location']);
 
-    // Background & Identity fields
-    if (updates.nationality !== undefined) {
-      setClause.push(`nationality = $${paramCount++}`);
-      values.push(updates.nationality);
-    }
-    if (updates.languages !== undefined) {
-      setClause.push(`languages = $${paramCount++}`);
-      values.push(updates.languages);
-    }
-    if (updates.first_time_in_us_year !== undefined) {
-      setClause.push(`first_time_in_us_year = $${paramCount++}`);
-      values.push(updates.first_time_in_us_year);
-    }
-    if (updates.first_time_in_us_location !== undefined) {
-      setClause.push(`first_time_in_us_location = $${paramCount++}`);
-      values.push(updates.first_time_in_us_location);
-    }
-    if (updates.first_time_in_us_visa !== undefined) {
-      setClause.push(`first_time_in_us_visa = $${paramCount++}`);
-      values.push(updates.first_time_in_us_visa);
-    }
-    if (updates.job_discovery_method !== undefined) {
-      setClause.push(`job_discovery_method = $${paramCount++}`);
-      values.push(updates.job_discovery_method);
-    }
-    if (updates.visa_change_journey !== undefined) {
-      setClause.push(`visa_change_journey = $${paramCount++}`);
-      values.push(updates.visa_change_journey);
-    }
-    if (updates.other_us_jobs !== undefined) {
-      setClause.push(`other_us_jobs = $${paramCount++}`);
-      values.push(updates.other_us_jobs);
-    }
+    // Iterate through all update fields dynamically
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined) {
+        setClause.push(`${key} = $${paramCount++}`);
 
-    // Lifestyle & Personality fields
-    if (updates.hobbies !== undefined) {
-      setClause.push(`hobbies = $${paramCount++}`);
-      values.push(updates.hobbies);
-    }
-    if (updates.favorite_state !== undefined) {
-      setClause.push(`favorite_state = $${paramCount++}`);
-      values.push(updates.favorite_state);
-    }
-    if (updates.preferred_outings !== undefined) {
-      setClause.push(`preferred_outings = $${paramCount++}`);
-      values.push(updates.preferred_outings);
-    }
-    if (updates.has_car !== undefined) {
-      setClause.push(`has_car = $${paramCount++}`);
-      values.push(updates.has_car);
-    }
-    if (updates.offers_rides !== undefined) {
-      setClause.push(`offers_rides = $${paramCount++}`);
-      values.push(updates.offers_rides);
-    }
-    if (updates.relationship_status !== undefined) {
-      setClause.push(`relationship_status = $${paramCount++}`);
-      values.push(updates.relationship_status);
-    }
-
-    // Travel & Exploration fields
-    if (updates.road_trips !== undefined) {
-      setClause.push(`road_trips = $${paramCount++}`);
-      values.push(updates.road_trips);
-    }
-    if (updates.favorite_place !== undefined) {
-      setClause.push(`favorite_place = $${paramCount++}`);
-      values.push(updates.favorite_place);
-    }
-    if (updates.travel_tips !== undefined) {
-      setClause.push(`travel_tips = $${paramCount++}`);
-      values.push(updates.travel_tips);
-    }
-    if (updates.willing_to_guide !== undefined) {
-      setClause.push(`willing_to_guide = $${paramCount++}`);
-      values.push(updates.willing_to_guide);
-    }
-
-    // Knowledge & Community fields
-    if (updates.mentorship_interest !== undefined) {
-      setClause.push(`mentorship_interest = $${paramCount++}`);
-      values.push(updates.mentorship_interest);
-    }
-    if (updates.job_boards !== undefined) {
-      setClause.push(`job_boards = $${paramCount++}`);
-      values.push(updates.job_boards);
-    }
-    if (updates.visa_advice !== undefined) {
-      setClause.push(`visa_advice = $${paramCount++}`);
-      values.push(updates.visa_advice);
-    }
-
-    if (updates.profile_photo_url !== undefined) {
-      setClause.push(`profile_photo_url = $${paramCount++}`);
-      values.push(updates.profile_photo_url);
-    }
-    if (updates.profile_photo_public_id !== undefined) {
-      setClause.push(`profile_photo_public_id = $${paramCount++}`);
-      values.push(updates.profile_photo_public_id);
-    }
-    if (updates.bio !== undefined) {
-      setClause.push(`bio = $${paramCount++}`);
-      values.push(updates.bio);
+        // Handle JSON fields
+        if (jsonFields.has(key)) {
+          values.push(JSON.stringify(value));
+        } else {
+          values.push(value);
+        }
+      }
     }
 
     if (setClause.length === 0) {

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
-import { uploadProfilePhoto } from '../api/firebaseStorage';
+import { uploadProfilePhoto, uploadResume } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { apiPatch } from '../api';
 
@@ -145,6 +145,59 @@ const EditProfileScreen: React.FC = () => {
     navigate(`/edit-business/${businessId}`);
   };
 
+  const handleResumeUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Please upload a PDF or Word document');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadError('');
+
+      // Upload resume to Firebase Storage
+      const uploadResult = await uploadResume(file);
+
+      if (!uploadResult.success) {
+        setUploadError(uploadResult.error || 'Failed to upload resume');
+        setIsUploading(false);
+        return;
+      }
+
+      // Update local store with new data (backend already updated the database)
+      const updateData = {
+        resume_url: uploadResult.url,
+        resume_filename: file.name,
+        resume_public_id: uploadResult.fileName,
+      };
+      updateUser(updateData);
+
+      setIsUploading(false);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Failed to upload resume:', error);
+      setUploadError('Failed to upload resume');
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div>
       {/* Main Content */}
@@ -214,6 +267,74 @@ const EditProfileScreen: React.FC = () => {
             {isUploading ? 'Uploading...' : 'Update Profile'}
           </button>
         )}
+
+        {/* Resume Section */}
+        <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+          {!user?.resume_url && (
+            <h2 className="font-bold text-gray-900 mb-3">
+              Looking for a job? Upload your resume to get started
+            </h2>
+          )}
+          {user?.resume_url ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.resume_filename || 'Resume'}
+                    </p>
+                    <p className="text-xs text-gray-500">Resume uploaded</p>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => window.open(user.resume_url, '_blank')}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() =>
+                      document.getElementById('resume-upload')?.click()
+                    }
+                    className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+                  >
+                    Replace
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => document.getElementById('resume-upload')?.click()}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Upload Resume
+            </button>
+          )}
+          <input
+            id="resume-upload"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+            onChange={handleResumeUpload}
+          />
+        </div>
 
         {/* Business Call-to-Action Section */}
         {/* Business Section */}

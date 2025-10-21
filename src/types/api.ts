@@ -59,6 +59,9 @@ export interface User {
   profile_photo_url?: string;
   profile_photo_public_id?: string;
   bio?: string;
+  resume_url?: string;
+  resume_filename?: string;
+  resume_public_id?: string;
 }
 
 // Authentication response interfaces
