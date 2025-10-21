@@ -34,9 +34,9 @@ export interface User {
   last_name?: string;
   visa_type?: string;
   current_location?: {
-    city: string;
-    state: string;
-    country: string;
+    city?: string;
+    state?: string;
+    country?: string;
   };
   occupation?: string;
   employer?: string;
