@@ -171,8 +171,25 @@ export class EmailService {
     try {
       const subject = `New Job Application: ${data.jobTitle} - ${data.businessName}`;
 
-      const htmlContent = this.generateJobApplicationBusinessEmailHTML(data);
-      const textContent = this.generateJobApplicationBusinessEmailText(data);
+      // Fetch resume content if available
+      let resumeContent = '';
+      if (data.resumeUrl) {
+        try {
+          resumeContent = await this.fetchResumeContent(data.resumeUrl);
+        } catch (error) {
+          console.warn('Failed to fetch resume content:', error);
+          // Continue without resume content
+        }
+      }
+
+      const htmlContent = this.generateJobApplicationBusinessEmailHTML(
+        data,
+        resumeContent
+      );
+      const textContent = this.generateJobApplicationBusinessEmailText(
+        data,
+        resumeContent
+      );
 
       const msg = {
         to: data.businessOwnerEmail,
@@ -234,6 +251,46 @@ export class EmailService {
         error
       );
       return false;
+    }
+  }
+
+  /**
+   * Fetch and extract text content from resume URL
+   */
+  private async fetchResumeContent(resumeUrl: string): Promise<string> {
+    try {
+      // Fetch the file from the URL
+      const response = await fetch(resumeUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch resume: ${response.statusText}`);
+      }
+
+      const buffer = await response.arrayBuffer();
+      const contentType = response.headers.get('content-type') || '';
+
+      // Handle different file types
+      if (contentType.includes('text/plain')) {
+        // Plain text file
+        return Buffer.from(buffer).toString('utf-8');
+      } else if (contentType.includes('application/pdf')) {
+        // For PDF files, we'll return a message indicating the file type
+        // In a production environment, you'd want to use a PDF parsing library like pdf-parse
+        return '[PDF Resume - Content extraction not available in this environment. Please download the file to view.]';
+      } else if (
+        contentType.includes('application/msword') ||
+        contentType.includes(
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+      ) {
+        // For Word documents, we'll return a message indicating the file type
+        // In a production environment, you'd want to use a library like mammoth to extract text
+        return '[Word Document Resume - Content extraction not available in this environment. Please download the file to view.]';
+      } else {
+        return '[Resume file - Content extraction not available for this file type. Please download the file to view.]';
+      }
+    } catch (error) {
+      console.error('Error fetching resume content:', error);
+      return '[Resume content could not be retrieved. Please download the file to view.]';
     }
   }
 
@@ -470,7 +527,8 @@ This is an automated notification from VisaConnect.
    * Generate HTML content for job application business notification email
    */
   private generateJobApplicationBusinessEmailHTML(
-    data: JobApplicationEmailData
+    data: JobApplicationEmailData,
+    resumeContent: string = ''
   ): string {
     return `
       <!DOCTYPE html>
@@ -551,6 +609,18 @@ This is an automated notification from VisaConnect.
                   </a>
                 </div>
               </div>
+              ${
+                resumeContent
+                  ? `
+              <div class="field">
+                <div class="field-label">Resume Content:</div>
+                <div class="field-value" style="background-color: #f8f9fa; padding: 15px; border-radius: 6px; border-left: 4px solid #3B82F6; white-space: pre-wrap; font-family: monospace; font-size: 14px; max-height: 300px; overflow-y: auto;">
+                  ${resumeContent}
+                </div>
+              </div>
+              `
+                  : ''
+              }
               `
                   : ''
               }
@@ -577,7 +647,8 @@ This is an automated notification from VisaConnect.
    * Generate text content for job application business notification email
    */
   private generateJobApplicationBusinessEmailText(
-    data: JobApplicationEmailData
+    data: JobApplicationEmailData,
+    resumeContent: string = ''
   ): string {
     return `
 New Job Application
@@ -595,6 +666,14 @@ Visa Status: ${data.visaType || 'Not specified'}
 Available Start Date: ${data.startDate}
 Qualifications: ${data.qualifications}
 ${data.resumeUrl ? `Resume: ${data.resumeUrl}` : ''}
+${
+  resumeContent
+    ? `
+Resume Content:
+${resumeContent}
+`
+    : ''
+}
 Applied At: ${data.appliedAt.toLocaleString()}
 
 Please review this application and contact the applicant if you're interested in moving forward.
