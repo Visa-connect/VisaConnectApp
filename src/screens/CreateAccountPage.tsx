@@ -127,6 +127,7 @@ const CreateAccountPage: React.FC = () => {
           current_location: form.current_location,
           occupation: form.occupation,
           employer: form.employer,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }
       );
 

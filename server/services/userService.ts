@@ -44,6 +44,7 @@ export interface User {
   resume_url?: string | null;
   resume_filename?: string | null;
   resume_public_id?: string | null;
+  timezone?: string | null;
   helped_count?: number; // Count of unique users who have given this user a thumbs-up
 
   created_at?: Date;
@@ -64,6 +65,7 @@ export interface BasicUserData {
   };
   occupation?: string; // Job title/role
   employer?: string; // Company name
+  timezone?: string | null; // User's timezone
 }
 
 // Extended user data for profile updates (includes all fields)
@@ -97,6 +99,7 @@ export interface CreateUserData extends BasicUserData {
   resume_url?: string | null;
   resume_filename?: string | null;
   resume_public_id?: string | null;
+  timezone?: string | null;
   helped_count?: number; // Count of unique users who have given this user a thumbs-up
 }
 
@@ -121,10 +124,10 @@ class UserService {
     const id = userData.id || uuidv4();
     const query = `
               INSERT INTO users (
-                id, email, first_name, last_name, visa_type, current_location, occupation, employer, created_at, updated_at
+                id, email, first_name, last_name, visa_type, current_location, occupation, employer, timezone, created_at, updated_at
               )
               VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW()
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
               )
               RETURNING *
             `;
@@ -140,6 +143,7 @@ class UserService {
         : null,
       userData.occupation,
       userData.employer,
+      userData.timezone,
     ];
 
     const result = await pool.query(query, values);

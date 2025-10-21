@@ -31,6 +31,7 @@ export interface JobApplicationEmailData {
   resumeFilename?: string;
   appliedAt: Date;
   jobId: number;
+  userTimezone?: string;
 }
 
 export interface NewReportEmailData {
@@ -47,14 +48,14 @@ export class EmailService {
   private sendGrid: any;
 
   /**
-   * Format date for display in emails with local timezone
+   * Format date for display in emails with user's timezone
    */
-  private formatDateForEmail(date: Date): string {
-    // Ensure the date is treated as UTC and convert to local timezone
-    const localDate = new Date(
-      date.getTime() + date.getTimezoneOffset() * 60000
-    );
-    return localDate.toLocaleString('en-US', {
+  private formatDateForEmail(date: Date, userTimezone?: string): string {
+    // Use provided timezone or default to Eastern Time
+    const timezone = userTimezone || 'America/New_York';
+
+    return date.toLocaleString('en-US', {
+      timeZone: timezone,
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -617,7 +618,7 @@ Visa Status: ${data.visaType || 'Not specified'}
 Available Start Date: ${data.startDate}
 Qualifications: ${data.qualifications}
 ${data.resumeUrl ? `Resume: ${data.resumeUrl}` : ''}
-Applied At: ${this.formatDateForEmail(data.appliedAt)}
+Applied At: ${this.formatDateForEmail(data.appliedAt, data.userTimezone)}
 
 Please review this application and contact the applicant if you're interested in moving forward.
 
@@ -711,7 +712,7 @@ Thank you for applying to this position.
 Application Summary:
 Job Title: ${data.jobTitle}
 Company: ${data.businessName}
-Applied At: ${this.formatDateForEmail(data.appliedAt)}
+Applied At: ${this.formatDateForEmail(data.appliedAt, data.userTimezone)}
 
 Your application has been successfully submitted and sent to the employer. If they are interested, they will contact you directly via email.
 
