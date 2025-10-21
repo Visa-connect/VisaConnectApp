@@ -11,10 +11,7 @@ const EditProfileScreen: React.FC = () => {
   const { user, updateUser } = useUserStore();
 
   // Form state
-  const [bio, setBio] = useState(
-    user?.bio ||
-      'Looking to get some people together to enjoy the beautiful city of Miami.'
-  );
+  const [bio, setBio] = useState(user?.bio);
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | undefined>(
     user?.profile_photo_url
@@ -118,7 +115,6 @@ const EditProfileScreen: React.FC = () => {
 
       setIsUploading(false);
       setHasUnsavedChanges(false);
-      navigate('/settings');
     } catch (error) {
       console.error('Failed to update profile:', error);
       setUploadError('Failed to save profile');
@@ -149,7 +145,7 @@ const EditProfileScreen: React.FC = () => {
         {/* View Public Profile Icon - Top right aligned with content */}
         <button
           onClick={handleViewPublicProfile}
-          className="absolute top-6 right-4 z-40 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          className="absolute top-6 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
           aria-label="View Public Profile"
         >
           <EyeIcon className="w-5 h-5" />
@@ -194,11 +190,23 @@ const EditProfileScreen: React.FC = () => {
               rows={3}
               placeholder="Tell us about yourself..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-              {bio.length}/160
-            </div>
           </div>
         </div>
+
+        {/* Global Update Button - Only show when there are unsaved changes */}
+        {hasUnsavedChanges && (
+          <button
+            onClick={handleSaveProfile}
+            disabled={isUploading}
+            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm mb-4 ${
+              isUploading
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {isUploading ? 'Uploading...' : 'Update Profile'}
+          </button>
+        )}
 
         {/* Business Call-to-Action Section */}
         {/* Business Section */}
@@ -236,7 +244,8 @@ const EditProfileScreen: React.FC = () => {
             {businesses.map((business) => (
               <div
                 key={business.id}
-                className="bg-white rounded-lg p-4 shadow-sm"
+                onClick={() => handleUpdateBusiness(business.id)}
+                className="bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-bold text-gray-900">{business.name}</h2>
@@ -249,7 +258,7 @@ const EditProfileScreen: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2">
                   {business.owner_name && (
                     <div className="text-sm text-gray-700">
                       <span className="font-medium">Owner:</span>{' '}
@@ -281,15 +290,6 @@ const EditProfileScreen: React.FC = () => {
                     </div>
                   )}
                 </div>
-
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleUpdateBusiness(business.id)}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    Update Business
-                  </button>
-                </div>
               </div>
             ))}
 
@@ -300,21 +300,6 @@ const EditProfileScreen: React.FC = () => {
               + Add Another Business
             </button>
           </div>
-        )}
-
-        {/* Global Update Button - Only show when there are unsaved changes */}
-        {hasUnsavedChanges && (
-          <button
-            onClick={handleSaveProfile}
-            disabled={isUploading}
-            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm ${
-              isUploading
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isUploading ? 'Uploading...' : 'Update'}
-          </button>
         )}
 
         {/* Upload Error Display */}
