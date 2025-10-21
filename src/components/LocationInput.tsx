@@ -39,6 +39,168 @@ const LocationInput: React.FC<LocationInputProps> = ({
     setInputValue(value);
   }, [value]);
 
+  // Format display name for search results
+  const formatSearchDisplayName = useCallback(
+    (result: NominatimSearchResult): string => {
+      const address = result.address;
+      const type = result.type;
+
+      // For cities/towns, use city, state format
+      if (type === 'city' || type === 'town' || type === 'village') {
+        if (address) {
+          const city = address.city || address.town || address.village;
+          const state = address.state;
+          if (city && state) {
+            return `${city}, ${state}`;
+          }
+        }
+      }
+
+      // For addresses, use city, state format
+      if (type === 'house' || type === 'building' || type === 'street') {
+        if (address) {
+          const city =
+            address.city || address.town || address.village || address.suburb;
+          const state = address.state;
+          if (city && state) {
+            return `${city}, ${state}`;
+          }
+        }
+      }
+
+      // For all other types (places, attractions, etc.), use place name + city, state format
+      const placeName = result.display_name.split(',')[0].trim();
+
+      // Try to get city and state from address object
+      if (address) {
+        const city =
+          address.city ||
+          address.town ||
+          address.village ||
+          address.suburb ||
+          address.county;
+        const state = address.state;
+        if (city && state) {
+          return `${placeName}, ${city}, ${state}`;
+        }
+      }
+
+      // Fallback: try to extract city, state from display_name for places
+      const parts = result.display_name.split(',');
+
+      if (parts.length >= 3) {
+        const state = parts[parts.length - 2].trim(); // Second to last part is usually state
+        const city = parts[parts.length - 3].trim(); // Third to last part is usually city
+        if (city && state && state.length <= 3) {
+          // State abbreviations are usually 2-3 chars
+          return `${placeName}, ${city}, ${state}`;
+        }
+      }
+
+      // Additional fallback: try to extract city, state from display_name for any result
+      if (parts.length >= 2) {
+        const state = parts[parts.length - 2].trim(); // Second to last part is usually state
+        if (placeName && state && state.length <= 3) {
+          // State abbreviations are usually 2-3 chars
+          return `${placeName}, ${state}`;
+        }
+      }
+
+      // Final comprehensive fallback: look for any state-like pattern
+      for (let i = 1; i < parts.length; i++) {
+        const part = parts[i].trim();
+        // Check if this part looks like a state (2-3 chars, all caps or title case)
+        if (
+          part.length >= 2 &&
+          part.length <= 3 &&
+          (part === part.toUpperCase() ||
+            part === part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+        ) {
+          const city = parts[i - 1]?.trim();
+          if (city && city !== placeName) {
+            return `${placeName}, ${city}, ${part}`;
+          }
+        }
+      }
+
+      // Final fallback: return the first part of display_name
+      return placeName;
+    },
+    []
+  );
+
+  // Format display name for reverse geocoding results
+  const formatReverseDisplayName = useCallback(
+    (result: NominatimReverseResult): string => {
+      const address = result.address;
+
+      // Try to use city, state format
+      if (address) {
+        const city =
+          address.city || address.town || address.village || address.suburb;
+        const state = address.state;
+        if (city && state) {
+          return `${city}, ${state}`;
+        }
+      }
+
+      // Fallback: try to extract city, state from display_name
+      const parts = result.display_name.split(',');
+      if (parts.length >= 2) {
+        const city = parts[0].trim();
+        const state = parts[parts.length - 2].trim(); // Second to last part is usually state
+        if (city && state && state.length <= 3) {
+          // State abbreviations are usually 2-3 chars
+          return `${city}, ${state}`;
+        }
+      }
+
+      // Final fallback: return the first part of display_name
+      return result.display_name.split(',')[0].trim();
+    },
+    []
+  );
+
+  // Deduplicate search results by consolidating entries with same name/city/state
+  const deduplicateResults = useCallback(
+    (results: NominatimSearchResult[]): NominatimSearchResult[] => {
+      const seen = new Map<string, NominatimSearchResult>();
+
+      results.forEach((result) => {
+        const formattedName = formatSearchDisplayName(result);
+        const key = formattedName.toLowerCase().trim();
+
+        if (seen.has(key)) {
+          // If we already have this location, combine the types
+          const existing = seen.get(key)!;
+          const existingTypes = existing.type ? [existing.type] : [];
+          const newTypes = result.type ? [result.type] : [];
+          const combinedTypes = Array.from(
+            new Set([...existingTypes, ...newTypes])
+          );
+
+          // Create a new result with combined type information
+          const combinedResult: NominatimSearchResult = {
+            ...existing,
+            type: combinedTypes.join(', '), // Combine types with comma
+            // Keep the result with higher importance score if available
+            importance: Math.max(
+              existing.importance || 0,
+              result.importance || 0
+            ),
+          };
+
+          seen.set(key, combinedResult);
+        } else {
+          seen.set(key, result);
+        }
+      });
+
+      return Array.from(seen.values());
+    },
+    [formatSearchDisplayName]
+  );
+
   // Search locations using Nominatim
   const searchLocations = useCallback(
     async (query: string): Promise<NominatimSearchResult[]> => {
@@ -50,8 +212,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
           format: 'json',
           limit: '10',
           addressdetails: '1',
-          extratags: '1',
-          namedetails: '1',
+          extratags: '0', // Disable extra tags to reduce clutter
+          namedetails: '0', // Disable name details to reduce clutter
           countrycodes: 'us', // Limit to USA only
         });
 
@@ -106,8 +268,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
           lon: lng.toString(),
           format: 'json',
           addressdetails: '1',
-          extratags: '1',
-          namedetails: '1',
+          extratags: '0', // Disable extra tags to reduce clutter
+          namedetails: '0', // Disable name details to reduce clutter
           countrycodes: 'us', // Limit to USA only
         });
 
@@ -174,7 +336,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
         const timer = setTimeout(async () => {
           try {
             const results = await searchLocations(newValue);
-            setSuggestions(results);
+            const deduplicatedResults = deduplicateResults(results);
+            setSuggestions(deduplicatedResults);
             setShowSuggestions(true);
           } catch (error) {
             console.error('Search error:', error);
@@ -193,14 +356,16 @@ const LocationInput: React.FC<LocationInputProps> = ({
         setIsLoading(false);
       }
     },
-    [searchLocations, debounceTimer]
+    [searchLocations, deduplicateResults, debounceTimer]
   );
 
   // Handle suggestion selection
   const handleSuggestionSelect = useCallback(
     (suggestion: NominatimSearchResult) => {
+      const formattedName = formatSearchDisplayName(suggestion);
+
       const locationData: LocationData = {
-        address: suggestion.display_name,
+        address: formattedName,
         coordinates: {
           lat: parseFloat(suggestion.lat),
           lng: parseFloat(suggestion.lon),
@@ -218,11 +383,11 @@ const LocationInput: React.FC<LocationInputProps> = ({
         locationData.postalCode = addr.postcode;
       }
 
-      setInputValue(locationData.address);
+      setInputValue(formattedName);
       onChange(locationData);
       setShowSuggestions(false);
     },
-    [onChange]
+    [onChange, formatSearchDisplayName]
   );
 
   // Get current location
@@ -243,8 +408,10 @@ const LocationInput: React.FC<LocationInputProps> = ({
           const result = await reverseGeocode(latitude, longitude);
 
           if (result) {
+            const formattedName = formatReverseDisplayName(result);
+
             const locationData: LocationData = {
-              address: result.display_name,
+              address: formattedName,
               coordinates: {
                 lat: parseFloat(result.lat),
                 lng: parseFloat(result.lon),
@@ -262,7 +429,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
               locationData.postalCode = addr.postcode;
             }
 
-            setInputValue(locationData.address);
+            setInputValue(formattedName);
             onChange(locationData);
           } else {
             // Fallback: just use coordinates
@@ -286,7 +453,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
         setError('Unable to get your current location. Please enter manually.');
       }
     );
-  }, [reverseGeocode, onChange]);
+  }, [reverseGeocode, onChange, formatReverseDisplayName]);
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -386,13 +553,8 @@ const LocationInput: React.FC<LocationInputProps> = ({
               className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
             >
               <div className="text-sm text-gray-900">
-                {suggestion.display_name}
+                {formatSearchDisplayName(suggestion)}
               </div>
-              {suggestion.type && (
-                <div className="text-xs text-gray-500 mt-1 capitalize">
-                  {suggestion.type.replace(/_/g, ' ')}
-                </div>
-              )}
             </button>
           ))}
         </div>

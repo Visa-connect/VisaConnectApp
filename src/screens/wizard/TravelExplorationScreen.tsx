@@ -155,8 +155,10 @@ const TravelExplorationScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.roadTrips === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.roadTrips === 'yes'
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
                   } focus:outline-none`}
                   onClick={() => setForm({ ...form, roadTrips: 'yes' })}
                 >
@@ -166,9 +168,9 @@ const TravelExplorationScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.roadTrips === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => setForm({ ...form, roadTrips: 'no' })}
                 >
                   No
@@ -205,8 +207,10 @@ const TravelExplorationScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.willingToGuide === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.willingToGuide === 'yes'
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
                   } focus:outline-none`}
                   onClick={() => setForm({ ...form, willingToGuide: 'yes' })}
                 >
@@ -216,9 +220,9 @@ const TravelExplorationScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.willingToGuide === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => setForm({ ...form, willingToGuide: 'no' })}
                 >
                   No

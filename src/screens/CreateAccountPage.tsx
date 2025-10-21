@@ -13,19 +13,8 @@ import {
   isNotEmpty,
   VALIDATION_MESSAGES,
 } from '../utils/validation';
-
-// Types for API responses
-interface RegisterResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-  };
-  token: string; // Include token in both registration and response
-}
+import { RegisterResponse } from '../types/api';
+import { userToUserData } from '../stores/userStore';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -141,18 +130,14 @@ const CreateAccountPage: React.FC = () => {
         }
       );
 
-      if (response.data) {
-        // Create user data object for the store
-        const userData = {
-          uid: response.data.id,
-          email: response.data.email,
-          first_name: response.data.first_name,
-          last_name: response.data.last_name,
-          visa_type: form.visa_type,
-          current_location: form.current_location,
-          occupation: form.occupation,
-          employer: form.employer,
-        };
+      if (response.user) {
+        // Convert API response to store format and merge with form data
+        const userData = userToUserData(response.user);
+        // Add form-specific data that might not be in the API response
+        userData.visa_type = form.visa_type;
+        userData.current_location = form.current_location;
+        userData.occupation = form.occupation;
+        userData.employer = form.employer;
 
         // Update both user store and localStorage
         setToken(response.token);
