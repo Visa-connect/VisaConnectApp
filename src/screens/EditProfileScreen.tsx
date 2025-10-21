@@ -145,7 +145,16 @@ const EditProfileScreen: React.FC = () => {
   return (
     <div>
       {/* Main Content */}
-      <div className="px-4 py-6 max-w-2xl mx-auto w-full">
+      <div className="px-4 py-6 max-w-2xl mx-auto w-full relative">
+        {/* View Public Profile Icon - Top right aligned with content */}
+        <button
+          onClick={handleViewPublicProfile}
+          className="absolute top-6 right-4 z-40 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-white-100 transition-colors"
+          aria-label="View Public Profile"
+        >
+          <EyeIcon className="w-5 h-5" />
+        </button>
+
         {/* Profile Header */}
         <div className="text-center mb-6">
           <div className="relative inline-block mb-4">
@@ -315,15 +324,6 @@ const EditProfileScreen: React.FC = () => {
           </div>
         )}
       </div>
-
-      {/* View Public Profile Icon - Fixed in top right */}
-      <button
-        onClick={handleViewPublicProfile}
-        className="fixed top-20 right-4 z-40 bg-black text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors"
-        aria-label="View Public Profile"
-      >
-        <EyeIcon className="w-5 h-5" />
-      </button>
     </div>
   );
 };
