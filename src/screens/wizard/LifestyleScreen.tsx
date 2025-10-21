@@ -202,10 +202,6 @@ const LifestyleScreen: React.FC = () => {
                   // Ensure dropdown closes when losing focus
                   setHobbiesOpen(false);
                 }}
-                onBlur={() => {
-                  // Additional safety to close dropdown
-                  setTimeout(() => setHobbiesOpen(false), 100);
-                }}
                 multiple
                 as={React.Fragment}
                 open={hobbiesOpen}
@@ -455,10 +451,6 @@ const LifestyleScreen: React.FC = () => {
                 onClose={() => {
                   // Ensure dropdown closes when losing focus
                   setOutingsOpen(false);
-                }}
-                onBlur={() => {
-                  // Additional safety to close dropdown
-                  setTimeout(() => setOutingsOpen(false), 100);
                 }}
                 multiple
                 as={React.Fragment}
