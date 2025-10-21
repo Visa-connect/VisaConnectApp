@@ -18,6 +18,7 @@ import {
   ApplicationsApiService,
   JobApplicationWithDetails,
 } from '../api/applicationsApi';
+import { formatDate } from '../utils/time';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 
 const JobApplicationsScreen: React.FC = () => {
@@ -132,16 +133,6 @@ const JobApplicationsScreen: React.FC = () => {
       default:
         return 'Pending';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   // Loading state
@@ -346,7 +337,12 @@ const JobApplicationsScreen: React.FC = () => {
 
                     <div className="flex items-center text-sm text-gray-500">
                       <CalendarIcon className="w-4 h-4 mr-1" />
-                      <span>Applied {formatDate(application.created_at)}</span>
+                      <span>
+                        Applied{' '}
+                        {formatDate(application.created_at, {
+                          includeTime: true,
+                        })}
+                      </span>
                     </div>
                   </div>
 

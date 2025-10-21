@@ -141,3 +141,58 @@ export function formatTimeAgoNoSuffix(dateString: string): string {
 export function formatTimeAgoWithPosted(dateString: string): string {
   return formatTimeAgo(dateString, { prefix: 'Posted' });
 }
+
+/**
+ * Format a date string for display in user's local timezone
+ * Converts UTC dates from server to user's local timezone
+ *
+ * @param dateString - ISO date string (UTC from server)
+ * @param options - Formatting options
+ * @returns Formatted date string in user's local timezone
+ *
+ * @example
+ * formatDate('2024-01-01T12:00:00Z') // "Jan 1, 2024" (in user's timezone)
+ * formatDate('2024-01-01T12:00:00Z', { includeTime: true }) // "Jan 1, 2024, 7:00 AM" (in user's timezone)
+ */
+export function formatDate(
+  dateString: string,
+  options: {
+    includeTime?: boolean;
+    format?: 'short' | 'long' | 'medium';
+  } = {}
+): string {
+  const { includeTime = false, format = 'short' } = options;
+
+  const date = new Date(dateString);
+
+  if (includeTime) {
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: format === 'long' ? 'long' : 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    });
+  }
+
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: format === 'long' ? 'long' : 'short',
+    day: 'numeric',
+  });
+}
+
+/**
+ * Format a date string with time for display in user's local timezone
+ * Commonly used for timestamps and detailed date displays
+ *
+ * @param dateString - ISO date string (UTC from server)
+ * @returns Formatted date and time string in user's local timezone
+ *
+ * @example
+ * formatDateTime('2024-01-01T12:00:00Z') // "Jan 1, 2024, 7:00 AM EST"
+ */
+export function formatDateTime(dateString: string): string {
+  return formatDate(dateString, { includeTime: true, format: 'short' });
+}

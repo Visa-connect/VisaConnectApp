@@ -46,6 +46,22 @@ export interface NewReportEmailData {
 export class EmailService {
   private sendGrid: any;
 
+  /**
+   * Format date for display in emails with UTC timezone
+   */
+  private formatDateForEmail(date: Date): string {
+    return date.toLocaleString('en-US', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      timeZoneName: 'short',
+    });
+  }
+
   constructor() {
     if (!SENDGRID_API_KEY) {
       console.warn(
@@ -363,7 +379,9 @@ export class EmailService {
               </div>
               <div class="field">
                 <div class="field-label">Submitted At:</div>
-                <div class="field-value">${data.submittedAt.toLocaleString()}</div>
+                <div class="field-value">${this.formatDateForEmail(
+                  data.submittedAt
+                )}</div>
               </div>
             </div>
             <p>Please review this business submission and take appropriate action within 24-48 hours.</p>
@@ -397,7 +415,7 @@ Year Formed: ${data.yearFormed}
 ${data.businessAddress ? `Business Address: ${data.businessAddress}` : ''}
 Mission Statement: ${data.missionStatement}
 Submitted By: ${data.userName} (${data.userEmail})
-Submitted At: ${data.submittedAt.toLocaleString()}
+Submitted At: ${this.formatDateForEmail(data.submittedAt)}
 
 Please review this business submission and take appropriate action within 24-48 hours.
 
@@ -626,7 +644,9 @@ This is an automated notification from VisaConnect.
               }
               <div class="field">
                 <div class="field-label">Applied At:</div>
-                <div class="field-value">${data.appliedAt.toLocaleString()}</div>
+                <div class="field-value">${this.formatDateForEmail(
+                  data.appliedAt
+                )}</div>
               </div>
             </div>
             <p>Please review this application and contact the applicant if you're interested in moving forward.</p>
@@ -674,7 +694,7 @@ ${resumeContent}
 `
     : ''
 }
-Applied At: ${data.appliedAt.toLocaleString()}
+Applied At: ${this.formatDateForEmail(data.appliedAt)}
 
 Please review this application and contact the applicant if you're interested in moving forward.
 
@@ -731,7 +751,9 @@ This is an automated notification from VisaConnect.
               </div>
               <div class="field">
                 <div class="field-label">Applied At:</div>
-                <div class="field-value">${data.appliedAt.toLocaleString()}</div>
+                <div class="field-value">${this.formatDateForEmail(
+                  data.appliedAt
+                )}</div>
               </div>
             </div>
             <p>Your application has been successfully submitted and sent to the employer. If they are interested, they will contact you directly via email.</p>
@@ -766,7 +788,7 @@ Thank you for applying to this position.
 Application Summary:
 Job Title: ${data.jobTitle}
 Company: ${data.businessName}
-Applied At: ${data.appliedAt.toLocaleString()}
+Applied At: ${this.formatDateForEmail(data.appliedAt)}
 
 Your application has been successfully submitted and sent to the employer. If they are interested, they will contact you directly via email.
 
@@ -1307,7 +1329,9 @@ This is an automated confirmation from VisaConnect.
             
             <div style="margin-bottom: 12px;">
               <strong style="color: #374151; font-size: 14px;">Reported At:</strong>
-              <span style="color: #6b7280; font-size: 14px; margin-left: 8px;">${data.reportedAt.toLocaleString()}</span>
+              <span style="color: #6b7280; font-size: 14px; margin-left: 8px;">${this.formatDateForEmail(
+                data.reportedAt
+              )}</span>
             </div>
           </div>
 
@@ -1374,7 +1398,7 @@ Report Details:
 - Target Type: ${data.targetType}
 - Target ID: ${data.targetId}
 - Reporter ID: ${data.reporterId}
-- Reported At: ${data.reportedAt.toLocaleString()}
+- Reported At: ${this.formatDateForEmail(data.reportedAt)}
 
 Report Reason:
 ${data.reason}

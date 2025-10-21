@@ -12,6 +12,7 @@ import {
   ApplicationsApiService,
   JobApplicationWithDetails,
 } from '../api/applicationsApi';
+import { formatDate } from '../utils/time';
 
 const JobsAppliedScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -85,14 +86,6 @@ const JobsAppliedScreen: React.FC = () => {
       default:
         return 'Pending';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   // Loading state
