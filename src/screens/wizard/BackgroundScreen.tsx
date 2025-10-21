@@ -86,13 +86,24 @@ const BackgroundScreen: React.FC = () => {
             !form.languages.includes(l)
         );
 
-  // Function to get nationality from country name
-  const getNationalityFromCountryName = (countryName: string): string => {
-    const country = countries.find((c) => c.name.common === countryName);
+  // Function to get nationality from country name or return nationality if already valid
+  const getNationalityFromCountryName = (value: string): string => {
+    // First check if the value is already a nationality/demonym
+    const isAlreadyNationality = countries.some(
+      (c) => c.demonyms?.eng?.m === value || c.demonyms?.eng?.f === value
+    );
+
+    if (isAlreadyNationality) {
+      return value; // Already a nationality, return as-is
+    }
+
+    // If not a nationality, try to find the country and get its nationality
+    const country = countries.find((c) => c.name.common === value);
     if (country?.demonyms?.eng?.m) {
       return country.demonyms.eng.m;
     }
-    return countryName; // Fallback to country name if no nationality found
+
+    return value; // Fallback to original value if no conversion possible
   };
 
   // Pre-populate form with existing user data
