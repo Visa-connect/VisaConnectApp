@@ -13,6 +13,7 @@ import {
 import { uploadResume } from '../api/firebaseStorage';
 import { visaTypes, startDateOptions } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
+import { useUserStore } from '../stores/userStore';
 
 interface ApplicationFormData {
   qualifications: string;
@@ -27,6 +28,7 @@ interface ApplicationFormData {
 const ApplyToJobScreen: React.FC = () => {
   const navigate = useNavigate();
   const { jobId } = useParams<{ jobId: string }>();
+  const { user } = useUserStore();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [job, setJob] = useState<JobWithBusiness | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,8 @@ const ApplyToJobScreen: React.FC = () => {
     location: { address: '' },
     visa: '',
     startDate: '',
+    resumeUrl: user?.resume_url,
+    resumeFileName: user?.resume_filename,
   });
 
   const handleOverlayClick = () => {
@@ -391,8 +395,48 @@ const ApplyToJobScreen: React.FC = () => {
               htmlFor="resume"
               className="block text-sm font-medium text-gray-700 mb-3"
             >
-              Upload resume (optional)
+              Resume (optional)
             </label>
+
+            {/* Show current resume if available */}
+            {formData.resumeUrl && formData.resumeFileName && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {formData.resumeFileName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Using saved resume from profile
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => window.open(formData.resumeUrl, '_blank')}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    View
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <input
@@ -411,6 +455,8 @@ const ApplyToJobScreen: React.FC = () => {
                   <span className="text-gray-600">
                     {formData.resume
                       ? `${formData.resume.name} ✓`
+                      : formData.resumeUrl
+                      ? 'Upload different resume'
                       : 'Click to upload resume'}
                   </span>
                 </label>
@@ -426,7 +472,7 @@ const ApplyToJobScreen: React.FC = () => {
 
             {formData.resume && (
               <p className="mt-2 text-sm text-green-600">
-                ✓ Resume uploaded: {formData.resume.name}
+                ✓ New resume uploaded: {formData.resume.name}
               </p>
             )}
           </div>
