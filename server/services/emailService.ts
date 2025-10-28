@@ -583,9 +583,9 @@ This is an automated notification from VisaConnect.
               </div>
             </div>
             <p>Please review this application and contact the applicant if you're interested in moving forward.</p>
-            <a href="${
-              config.email.appUrl || 'https://visaconnectus.com'
-            }/job/${data.jobId}" class="button">View Job Posting</a>
+            <a href="${config.email.appUrl}/job/${
+      data.jobId
+    }" class="button">View Job Posting</a>
           </div>
           <div class="footer">
             <p>This is an automated notification from VisaConnect</p>
