@@ -149,9 +149,13 @@ export class TokenRefreshService {
     const timeUntilExpiry = this.getTimeUntilExpiry(token);
     const checkInterval = Math.min(timeUntilExpiry / 2, 30 * 60 * 1000); // Check every 30 minutes max
 
+    // Ensure minimum interval to prevent immediate loops for expired tokens
+    const minInterval = 60 * 1000; // 1 minute minimum
+    const safeInterval = Math.max(checkInterval, minInterval);
+
     this.refreshTimer = setTimeout(() => {
       this.startTokenMonitoring(token, onTokenRefresh, onRefreshError);
-    }, checkInterval);
+    }, safeInterval);
   }
 
   /**

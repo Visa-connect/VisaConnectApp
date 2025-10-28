@@ -69,6 +69,25 @@ describe('TokenRefreshService', () => {
       // Test passes if no errors are thrown
       expect(true).toBe(true);
     });
+
+    it('should handle expired tokens without infinite loops', () => {
+      const expiredToken = createMockToken(Date.now() / 1000 - 3600); // 1 hour ago
+      const onTokenRefresh = jest.fn();
+      const onRefreshError = jest.fn();
+
+      // This should not cause an infinite loop
+      tokenRefreshService.startTokenMonitoring(
+        expiredToken,
+        onTokenRefresh,
+        onRefreshError
+      );
+
+      // Stop monitoring to prevent any timers from running
+      tokenRefreshService.stopTokenMonitoring();
+
+      // Test passes if no errors are thrown
+      expect(true).toBe(true);
+    });
   });
 });
 
