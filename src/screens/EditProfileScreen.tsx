@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
+import Modal from '../components/Modal';
 import { uploadProfilePhoto, uploadResume } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { apiPatch } from '../api';
@@ -27,6 +28,9 @@ const EditProfileScreen: React.FC = () => {
 
   // Track if there are unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Load user's businesses
   const loadBusinesses = async () => {
@@ -122,6 +126,9 @@ const EditProfileScreen: React.FC = () => {
 
       setIsUploading(false);
       setHasUnsavedChanges(false);
+
+      // Show success modal
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to update profile:', error);
       setUploadError('Failed to save profile');
@@ -181,7 +188,7 @@ const EditProfileScreen: React.FC = () => {
         return;
       }
 
-      // Update local store with new data (backend already updated the database)
+      // Update local store with new data (backend updated the database during upload via /api/photo/upload-resume endpoint)
       const updateData = {
         resume_url: uploadResult.url,
         resume_filename: file.name,
@@ -437,6 +444,28 @@ const EditProfileScreen: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Profile Updated Successfully"
+        size="sm"
+        showCloseButton={false}
+      >
+        <div className="text-center py-4">
+          <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <p className="text-gray-700 mb-6">
+            Your profile has been updated successfully!
+          </p>
+          <button
+            onClick={() => setShowSuccessModal(false)}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };
