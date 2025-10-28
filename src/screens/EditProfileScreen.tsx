@@ -11,14 +11,23 @@ import { apiPatch } from '../api';
 import { visaTypes } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
 
+// Helper function to determine visa type selection
+const getUserVisaType = (userVisaType?: string) => {
+  if (!userVisaType) return '';
+  const predefinedTypes = visaTypes.map((type) => type.value);
+  return predefinedTypes.includes(userVisaType) ? userVisaType : 'other';
+};
+
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
   const { user, updateUser } = useUserStore();
 
   // Form state
   const [bio, setBio] = useState(user?.bio || '');
-  const [visaType, setVisaType] = useState(user?.visa_type || '');
-  const [customVisaType, setCustomVisaType] = useState('');
+  const [visaType, setVisaType] = useState(getUserVisaType(user?.visa_type));
+  const [customVisaType, setCustomVisaType] = useState(
+    getUserVisaType(user?.visa_type) === 'other' ? user?.visa_type || '' : ''
+  );
   const [location, setLocation] = useState<LocationData | null>(
     user?.current_location
       ? {
@@ -73,9 +82,31 @@ const EditProfileScreen: React.FC = () => {
     loadBusinesses();
   }, []);
 
-  // Reset unsaved changes when user data changes
+  // Reset unsaved changes when user data changes and update form fields
   useEffect(() => {
     setHasUnsavedChanges(false);
+
+    // Update visa type fields when user data changes
+    const newVisaType = getUserVisaType(user?.visa_type);
+    setVisaType(newVisaType);
+    setCustomVisaType(newVisaType === 'other' ? user?.visa_type || '' : '');
+
+    // Update other fields
+    setBio(user?.bio || '');
+    setEmployer(user?.employer || '');
+    setOccupation(user?.occupation || '');
+
+    // Update location
+    if (user?.current_location) {
+      setLocation({
+        address: `${user.current_location.city}, ${user.current_location.state}`,
+        city: user.current_location.city,
+        state: user.current_location.state,
+        country: user.current_location.country,
+      });
+    } else {
+      setLocation(null);
+    }
   }, [user]);
 
   const handlePhotoChange = (file: File) => {
