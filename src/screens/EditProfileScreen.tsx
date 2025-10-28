@@ -8,15 +8,8 @@ import LocationInput from '../components/LocationInput';
 import { uploadProfilePhoto, uploadResume } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { apiPatch } from '../api';
-import { visaTypes } from '../utils/visaTypes';
+import { visaTypes, getUserVisaType } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
-
-// Helper function to determine visa type selection
-const getUserVisaType = (userVisaType?: string) => {
-  if (!userVisaType) return '';
-  const predefinedTypes = visaTypes.map((type) => type.value);
-  return predefinedTypes.includes(userVisaType) ? userVisaType : 'other';
-};
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
