@@ -1,9 +1,10 @@
 import { apiPost } from '../api';
+import { User } from '../types/api';
 
 export interface TokenRefreshResponse {
   success: boolean;
   token: string;
-  user: any;
+  user: User;
   message: string;
 }
 
