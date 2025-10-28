@@ -407,7 +407,7 @@ export class ApplicationsService {
 
       // Get user details
       const userQuery = `
-        SELECT first_name, last_name, email
+        SELECT first_name, last_name, email, timezone
         FROM users
         WHERE id = $1
       `;
@@ -439,6 +439,7 @@ export class ApplicationsService {
         resumeFilename: application.resume_filename || undefined,
         appliedAt: application.created_at,
         jobId: application.job_id,
+        userTimezone: user.timezone,
       };
 
       // Send emails in parallel

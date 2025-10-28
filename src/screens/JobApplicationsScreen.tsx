@@ -11,13 +11,16 @@ import {
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
+  EyeIcon,
 } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
+import ResumeViewer from '../components/ResumeViewer';
 import {
   ApplicationsApiService,
   JobApplicationWithDetails,
 } from '../api/applicationsApi';
+import { formatDate } from '../utils/time';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
 
 const JobApplicationsScreen: React.FC = () => {
@@ -30,6 +33,15 @@ const JobApplicationsScreen: React.FC = () => {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resumeViewer, setResumeViewer] = useState<{
+    isOpen: boolean;
+    resumeUrl: string;
+    resumeFileName: string;
+  }>({
+    isOpen: false,
+    resumeUrl: '',
+    resumeFileName: '',
+  });
 
   const handleOverlayClick = () => {
     setIsDrawerOpen(false);
@@ -43,6 +55,22 @@ const JobApplicationsScreen: React.FC = () => {
     if (job) {
       navigate(`/job/${job.id}`);
     }
+  };
+
+  const handleViewResume = (resumeUrl: string, resumeFileName: string) => {
+    setResumeViewer({
+      isOpen: true,
+      resumeUrl,
+      resumeFileName,
+    });
+  };
+
+  const handleCloseResumeViewer = () => {
+    setResumeViewer({
+      isOpen: false,
+      resumeUrl: '',
+      resumeFileName: '',
+    });
   };
 
   // Fetch job details and applications
@@ -132,16 +160,6 @@ const JobApplicationsScreen: React.FC = () => {
       default:
         return 'Pending';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   // Loading state
@@ -346,7 +364,12 @@ const JobApplicationsScreen: React.FC = () => {
 
                     <div className="flex items-center text-sm text-gray-500">
                       <CalendarIcon className="w-4 h-4 mr-1" />
-                      <span>Applied {formatDate(application.created_at)}</span>
+                      <span>
+                        Applied{' '}
+                        {formatDate(application.created_at, {
+                          includeTime: true,
+                        })}
+                      </span>
                     </div>
                   </div>
 
@@ -404,14 +427,25 @@ const JobApplicationsScreen: React.FC = () => {
 
                   {application.resume_filename && (
                     <div className="mt-4 pt-4 border-t border-gray-100">
-                      <div className="flex items-center text-sm">
-                        <DocumentTextIcon className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="font-medium text-gray-700">
-                          Resume:
-                        </span>
-                        <span className="text-gray-600 ml-2">
-                          {application.resume_filename}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center text-sm">
+                          <DocumentTextIcon className="w-4 h-4 text-gray-400 mr-2" />
+                        </div>
+                        {application.resume_url && (
+                          <Button
+                            onClick={() =>
+                              handleViewResume(
+                                application.resume_url!,
+                                application.resume_filename!
+                              )
+                            }
+                            variant="secondary"
+                            className="w-fit text-xs px-2 py-1 flex items-center whitespace-nowrap"
+                          >
+                            <EyeIcon className="w-4 h-4 mr-1" />
+                            View Resume
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -421,6 +455,14 @@ const JobApplicationsScreen: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Resume Viewer Modal */}
+      <ResumeViewer
+        resumeUrl={resumeViewer.resumeUrl}
+        resumeFileName={resumeViewer.resumeFileName}
+        isOpen={resumeViewer.isOpen}
+        onClose={handleCloseResumeViewer}
+      />
     </div>
   );
 };

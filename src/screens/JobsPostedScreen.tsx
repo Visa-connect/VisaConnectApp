@@ -12,6 +12,7 @@ import {
 import Button from '../components/Button';
 import DrawerMenu from '../components/DrawerMenu';
 import { JobsApiService, JobWithBusiness } from '../api/jobsApi';
+import { formatDate } from '../utils/time';
 import { ApplicationsApiService } from '../api/applicationsApi';
 import { BusinessApiService } from '../api/businessApi';
 
@@ -127,14 +128,6 @@ const JobsPostedScreen: React.FC = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   const formatSalary = (job: JobWithBusiness) => {

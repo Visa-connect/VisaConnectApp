@@ -98,7 +98,7 @@ const ThumbsUpButton: React.FC<ThumbsUpButtonProps> = ({
         <HandThumbUpIcon className="w-4 h-4" />
       )}
       <span className="text-xs font-medium">
-        {hasGivenThumbsUp ? 'Helped!' : 'Help'}
+        {hasGivenThumbsUp ? 'Helped!' : 'Helped me'}
       </span>
     </button>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon, PencilIcon } from '@heroicons/react/24/outline';
 
 interface PhotoUploadProps {
   currentPhotoUrl?: string;
@@ -141,10 +141,10 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({
             {onPhotoRemove && (
               <button
                 onClick={handleRemove}
-                className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                className="absolute -top-1 -right-1 w-6 h-6 bg-white text-black rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors border-2 border-black"
                 aria-label="Remove photo"
               >
-                <XMarkIcon className="w-4 h-4" />
+                <PencilIcon className="w-4 h-4" />
               </button>
             )}
           </div>

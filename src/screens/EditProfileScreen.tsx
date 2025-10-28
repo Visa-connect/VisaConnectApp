@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
-import { uploadProfilePhoto } from '../api/firebaseStorage';
+import Modal from '../components/Modal';
+import { uploadProfilePhoto, uploadResume } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
+import { apiPatch } from '../api';
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
   const { user, updateUser } = useUserStore();
 
   // Form state
-  const [bio, setBio] = useState(
-    user?.bio ||
-      'Looking to get some people together to enjoy the beautiful city of Miami.'
-  );
+  const [bio, setBio] = useState(user?.bio || '');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | undefined>(
     user?.profile_photo_url
@@ -29,6 +28,9 @@ const EditProfileScreen: React.FC = () => {
 
   // Track if there are unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Load user's businesses
   const loadBusinesses = async () => {
@@ -109,16 +111,24 @@ const EditProfileScreen: React.FC = () => {
         photoPublicId = uploadResult.fileName;
       }
 
-      // Update user profile with new photo URL and public_id
-      await updateUser({
+      // Prepare update data for API
+      const updateData = {
         bio,
         profile_photo_url: photoUrl,
         profile_photo_public_id: photoPublicId,
-      });
+      };
+
+      // Send to backend API
+      await apiPatch('/api/user/profile', updateData);
+
+      // Update local store with new data
+      updateUser(updateData);
 
       setIsUploading(false);
       setHasUnsavedChanges(false);
-      navigate('/settings');
+
+      // Show success modal
+      setShowSuccessModal(true);
     } catch (error) {
       console.error('Failed to update profile:', error);
       setUploadError('Failed to save profile');
@@ -142,10 +152,72 @@ const EditProfileScreen: React.FC = () => {
     navigate(`/edit-business/${businessId}`);
   };
 
+  const handleResumeUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Please upload a PDF or Word document');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadError('');
+
+      // Upload resume to Firebase Storage
+      const uploadResult = await uploadResume(file);
+
+      if (!uploadResult.success) {
+        setUploadError(uploadResult.error || 'Failed to upload resume');
+        setIsUploading(false);
+        return;
+      }
+
+      // Update local store with new data (backend updated the database during upload via /api/photo/upload-resume endpoint)
+      const updateData = {
+        resume_url: uploadResult.url,
+        resume_filename: file.name,
+        resume_public_id: uploadResult.fileName,
+      };
+      updateUser(updateData);
+
+      setIsUploading(false);
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Failed to upload resume:', error);
+      setUploadError('Failed to upload resume');
+      setIsUploading(false);
+    }
+  };
+
   return (
     <div>
       {/* Main Content */}
-      <div className="px-4 py-6 max-w-2xl mx-auto w-full">
+      <div className="px-4 py-6 max-w-2xl mx-auto w-full relative">
+        {/* View Public Profile Icon - Top right aligned with content */}
+        <button
+          onClick={handleViewPublicProfile}
+          className="absolute top-6 right-4 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          aria-label="View Public Profile"
+        >
+          <EyeIcon className="w-5 h-5" />
+        </button>
+
         {/* Profile Header */}
         <div className="text-center mb-6">
           <div className="relative inline-block mb-4">
@@ -185,10 +257,90 @@ const EditProfileScreen: React.FC = () => {
               rows={3}
               placeholder="Tell us about yourself..."
             />
-            <div className="absolute bottom-2 right-2 text-xs text-gray-400">
-              {bio.length}/160
-            </div>
           </div>
+        </div>
+
+        {/* Global Update Button - Only show when there are unsaved changes */}
+        {hasUnsavedChanges && (
+          <button
+            onClick={handleSaveProfile}
+            disabled={isUploading}
+            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm mb-4 ${
+              isUploading
+                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
+            }`}
+          >
+            {isUploading ? 'Uploading...' : 'Update Profile'}
+          </button>
+        )}
+
+        {/* Resume Section */}
+        <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+          {!user?.resume_url && (
+            <h2 className="font-bold text-gray-900 mb-3">
+              Looking for a job? Upload your resume to get started
+            </h2>
+          )}
+          {user?.resume_url ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <svg
+                      className="w-4 h-4 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {user.resume_filename || 'Resume'}
+                    </p>
+                    <p className="text-xs text-gray-500">Resume uploaded</p>
+                  </div>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => window.open(user.resume_url, '_blank')}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() =>
+                      document.getElementById('resume-upload')?.click()
+                    }
+                    className="text-gray-600 hover:text-gray-700 text-sm font-medium"
+                  >
+                    Replace
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => document.getElementById('resume-upload')?.click()}
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            >
+              Upload Resume
+            </button>
+          )}
+          <input
+            id="resume-upload"
+            type="file"
+            accept=".pdf,.doc,.docx"
+            className="hidden"
+            onChange={handleResumeUpload}
+          />
         </div>
 
         {/* Business Call-to-Action Section */}
@@ -227,7 +379,8 @@ const EditProfileScreen: React.FC = () => {
             {businesses.map((business) => (
               <div
                 key={business.id}
-                className="bg-white rounded-lg p-4 shadow-sm"
+                onClick={() => handleUpdateBusiness(business.id)}
+                className="bg-white rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow"
               >
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="font-bold text-gray-900">{business.name}</h2>
@@ -240,7 +393,7 @@ const EditProfileScreen: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2">
                   {business.owner_name && (
                     <div className="text-sm text-gray-700">
                       <span className="font-medium">Owner:</span>{' '}
@@ -272,15 +425,6 @@ const EditProfileScreen: React.FC = () => {
                     </div>
                   )}
                 </div>
-
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleUpdateBusiness(business.id)}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    Update Business
-                  </button>
-                </div>
               </div>
             ))}
 
@@ -293,21 +437,6 @@ const EditProfileScreen: React.FC = () => {
           </div>
         )}
 
-        {/* Global Update Button - Only show when there are unsaved changes */}
-        {hasUnsavedChanges && (
-          <button
-            onClick={handleSaveProfile}
-            disabled={isUploading}
-            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm ${
-              isUploading
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isUploading ? 'Uploading...' : 'Update'}
-          </button>
-        )}
-
         {/* Upload Error Display */}
         {uploadError && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
@@ -316,14 +445,27 @@ const EditProfileScreen: React.FC = () => {
         )}
       </div>
 
-      {/* View Public Profile Icon - Fixed in top right */}
-      <button
-        onClick={handleViewPublicProfile}
-        className="fixed top-20 right-4 z-40 bg-black text-white p-3 rounded-full shadow-lg hover:bg-gray-800 transition-colors"
-        aria-label="View Public Profile"
+      {/* Success Modal */}
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="Profile Updated Successfully"
+        size="sm"
+        showCloseButton={false}
       >
-        <EyeIcon className="w-5 h-5" />
-      </button>
+        <div className="text-center py-4">
+          <CheckCircleIcon className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <p className="text-gray-700 mb-6">
+            Your profile has been updated successfully!
+          </p>
+          <button
+            onClick={() => setShowSuccessModal(false)}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 };

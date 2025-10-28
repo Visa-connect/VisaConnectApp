@@ -21,7 +21,13 @@ const MeetupsScreen: React.FC = () => {
           keyword: searchQuery,
           limit: 20,
         });
-        setMeetups(fetchedMeetups);
+        // Sort meetups by date, newest first
+        const sortedMeetups = fetchedMeetups.sort(
+          (a, b) =>
+            new Date(b.meetup_date).getTime() -
+            new Date(a.meetup_date).getTime()
+        );
+        setMeetups(sortedMeetups);
       } catch (err) {
         console.error('Error fetching meetups:', err);
         setError('Failed to load meetups. Please try again.');
@@ -141,7 +147,7 @@ const MeetupsScreen: React.FC = () => {
                   )}
 
                   <div className="text-sm text-gray-500 mb-3">
-                    Posted {new Date(meetup.created_at).toLocaleDateString()} by{' '}
+                    Posted by{' '}
                     {meetup.creator?.first_name && meetup.creator?.last_name ? (
                       <button
                         onClick={(e) => {

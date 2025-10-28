@@ -257,6 +257,13 @@ export default function photoApi(app: Express) {
           });
         }
 
+        // Update user profile in database
+        await userService.updateUser(userId, {
+          resume_url: uploadResult.url,
+          resume_filename: req.file.originalname,
+          resume_public_id: uploadResult.fileName, // Store Firebase file name
+        });
+
         res.json({
           success: true,
           url: uploadResult.url,

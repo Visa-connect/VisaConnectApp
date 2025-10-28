@@ -12,6 +12,7 @@ import {
   ApplicationsApiService,
   JobApplicationWithDetails,
 } from '../api/applicationsApi';
+import { formatDate } from '../utils/time';
 
 const JobsAppliedScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -85,14 +86,6 @@ const JobsAppliedScreen: React.FC = () => {
       default:
         return 'Pending';
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
   };
 
   // Loading state
@@ -293,16 +286,17 @@ const JobsAppliedScreen: React.FC = () => {
                         </p>
                       </div>
                     )}
-                    {application.resume_filename && (
-                      <div>
-                        <span className="font-medium text-gray-700">
-                          Resume:
-                        </span>
-                        <p className="text-gray-600 mt-1">
-                          {application.resume_filename}
-                        </p>
-                      </div>
-                    )}
+                  </div>
+
+                  {/* Footer with View Job button */}
+                  <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+                    <Button
+                      onClick={() => navigate(`/job/${application.job_id}`)}
+                      variant="secondary"
+                      className="text-xs px-3 py-1"
+                    >
+                      View Job
+                    </Button>
                   </div>
                 </div>
               </div>

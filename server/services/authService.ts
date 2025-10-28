@@ -37,6 +37,7 @@ export interface RegisterData {
   };
   occupation?: string; // Job title/role
   employer?: string; // Company name
+  timezone?: string; // User's timezone
 }
 
 export class AuthService {
@@ -65,6 +66,7 @@ export class AuthService {
         current_location: registerData.current_location,
         occupation: registerData.occupation,
         employer: registerData.employer,
+        timezone: registerData.timezone,
       });
 
       // 3. Automatically authenticate the user after registration
