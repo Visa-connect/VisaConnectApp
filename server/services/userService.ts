@@ -173,11 +173,56 @@ class UserService {
     const values: any[] = [];
     let paramCount = 1;
 
+    // Whitelist of allowed column names to prevent SQL injection
+    const allowedColumns = new Set([
+      'first_name',
+      'last_name',
+      'visa_type',
+      'current_location',
+      'occupation',
+      'employer',
+      'interests',
+      'nationality',
+      'languages',
+      'first_time_in_us_year',
+      'first_time_in_us_location',
+      'first_time_in_us_visa',
+      'job_discovery_method',
+      'visa_change_journey',
+      'other_us_jobs',
+      'hobbies',
+      'favorite_state',
+      'preferred_outings',
+      'has_car',
+      'offers_rides',
+      'relationship_status',
+      'road_trips',
+      'favorite_place',
+      'travel_tips',
+      'willing_to_guide',
+      'mentorship_interest',
+      'job_boards',
+      'visa_advice',
+      'profile_photo_url',
+      'profile_photo_public_id',
+      'bio',
+      'resume_url',
+      'resume_filename',
+      'resume_public_id',
+      'timezone',
+      'helped_count',
+    ]);
+
     // Special handling for JSON fields
     const jsonFields = new Set(['current_location']);
 
     // Iterate through all update fields dynamically
     for (const [key, value] of Object.entries(updates)) {
+      // Validate that the column name is in our whitelist
+      if (!allowedColumns.has(key)) {
+        throw new Error(`Invalid column name: ${key}`);
+      }
+
       if (value !== undefined) {
         setClause.push(`${key} = $${paramCount++}`);
 
