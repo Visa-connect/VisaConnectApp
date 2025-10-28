@@ -10,7 +10,6 @@ import { useUserStore } from '../stores/userStore';
 import {
   UserIcon,
   LockClosedIcon,
-  TrashIcon,
   InformationCircleIcon,
   BriefcaseIcon,
   CameraIcon,
