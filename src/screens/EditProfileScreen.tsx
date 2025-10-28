@@ -12,7 +12,7 @@ const EditProfileScreen: React.FC = () => {
   const { user, updateUser } = useUserStore();
 
   // Form state
-  const [bio, setBio] = useState(user?.bio);
+  const [bio, setBio] = useState(user?.bio || '');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | undefined>(
     user?.profile_photo_url
