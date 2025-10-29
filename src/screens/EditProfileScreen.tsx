@@ -135,7 +135,7 @@ const EditProfileScreen: React.FC = () => {
     setVisaType(value);
     setHasUnsavedChanges(true);
 
-    // If "Other" is selected, clear custom visa type
+    // If "Other" is NOT selected, clear custom visa type
     if (value !== 'other') {
       setCustomVisaType('');
     }
