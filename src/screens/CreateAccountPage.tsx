@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import AutoComplete from '../components/AutoComplete';
@@ -48,6 +49,8 @@ const CreateAccountPage: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
   const { setUser, setToken } = useUserStore();
 
@@ -217,27 +220,61 @@ const CreateAccountPage: React.FC = () => {
                   {errors.email}
                 </span>
               )}
-              <Input
-                name="password"
-                placeholder="Password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <Input
+                  name="password"
+                  placeholder="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  className="pr-12"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               {errors.password && (
                 <span className="text-red-500 text-sm mb-2">
                   {errors.password}
                 </span>
               )}
-              <Input
-                name="confirmPassword"
-                placeholder="Confirm password"
-                type="password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <Input
+                  name="confirmPassword"
+                  placeholder="Confirm password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="pr-12"
+                />
+                <button
+                  type="button"
+                  aria-label={
+                    showConfirmPassword
+                      ? 'Hide confirm password'
+                      : 'Show confirm password'
+                  }
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute inset-y-0 right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <span className="text-red-500 text-sm mb-2">
                   {errors.confirmPassword}
