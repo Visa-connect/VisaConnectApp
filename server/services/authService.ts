@@ -297,7 +297,9 @@ export class AuthService {
   }
 
   // Refresh user token
-  async refreshToken(uid: string): Promise<{ success: boolean; token: string; user: User }> {
+  async refreshToken(
+    uid: string
+  ): Promise<{ success: boolean; token: string; user: User; message: string }> {
     try {
       // 1. Verify user exists in PostgreSQL
       const userProfile = await userService.getUserById(uid);
@@ -336,6 +338,7 @@ export class AuthService {
         success: true,
         token: idToken,
         user: userProfile,
+        message: 'Token refreshed successfully',
       };
     } catch (error: any) {
       console.error('Token refresh error:', error);
