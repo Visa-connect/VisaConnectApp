@@ -89,8 +89,9 @@ const EditProfileScreen: React.FC = () => {
 
     // Update location
     if (user?.current_location) {
+      const addressParts = [user.current_location.city, user.current_location.state].filter(Boolean);
       setLocation({
-        address: `${user.current_location.city}, ${user.current_location.state}`,
+        address: addressParts.join(', '),
         city: user.current_location.city,
         state: user.current_location.state,
         country: user.current_location.country,
