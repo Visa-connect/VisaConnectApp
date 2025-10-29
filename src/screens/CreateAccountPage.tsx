@@ -51,6 +51,7 @@ const CreateAccountPage: React.FC = () => {
   const [apiError, setApiError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [customVisaType, setCustomVisaType] = useState('');
   const navigate = useNavigate();
   const { setUser, setToken } = useUserStore();
 
@@ -78,6 +79,9 @@ const CreateAccountPage: React.FC = () => {
   const validateStep2 = () => {
     const newErrors: { [key: string]: string } = {};
     if (!form.visa_type) newErrors.visa_type = 'Visa type is required.';
+    if (form.visa_type === 'other' && !customVisaType.trim()) {
+      newErrors.visa_type = 'Please specify your visa type.';
+    }
     if (
       !form.current_location.city.trim() ||
       !form.current_location.state.trim()
@@ -90,7 +94,11 @@ const CreateAccountPage: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    if (name === 'visa_type' && value !== 'other') {
+      setCustomVisaType('');
+    }
     setErrors({ ...errors, [e.target.name]: '' });
     setApiError('');
   };
@@ -126,7 +134,8 @@ const CreateAccountPage: React.FC = () => {
           password: form.password,
           first_name: form.first_name,
           last_name: form.last_name,
-          visa_type: form.visa_type,
+          visa_type:
+            form.visa_type === 'other' ? customVisaType : form.visa_type,
           current_location: form.current_location,
           occupation: form.occupation,
           employer: form.employer,
@@ -138,7 +147,8 @@ const CreateAccountPage: React.FC = () => {
         // Convert API response to store format and merge with form data
         const userData = userToUserData(response.user);
         // Add form-specific data that might not be in the API response
-        userData.visa_type = form.visa_type;
+        userData.visa_type =
+          form.visa_type === 'other' ? customVisaType : form.visa_type;
         userData.current_location = form.current_location;
         userData.occupation = form.occupation;
         userData.employer = form.employer;
@@ -308,6 +318,7 @@ const CreateAccountPage: React.FC = () => {
                       {type.label}
                     </option>
                   ))}
+                  <option value="other">Other (specify below)</option>
                 </select>
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   ▲
@@ -318,6 +329,15 @@ const CreateAccountPage: React.FC = () => {
                   </span>
                 )}
               </div>
+              {form.visa_type === 'other' && (
+                <Input
+                  name="customVisaType"
+                  placeholder="Enter your visa type"
+                  value={customVisaType}
+                  onChange={(e) => setCustomVisaType(e.target.value)}
+                  required
+                />
+              )}
               <AutoComplete
                 label="Current Location"
                 value={
