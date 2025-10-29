@@ -13,6 +13,11 @@ export class TokenRefreshService {
   private isRefreshing = false;
   private refreshPromise: Promise<string> | null = null;
 
+  // Configuration constants (avoid magic numbers)
+  private static readonly DEFAULT_BUFFER_MINUTES = 5; // minutes
+  private static readonly MAX_CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+  private static readonly MIN_CHECK_INTERVAL_MS = 60 * 1000; // 1 minute
+
   /**
    * Decode JWT token to get expiration time
    */
@@ -50,7 +55,7 @@ export class TokenRefreshService {
    */
   private isTokenExpiringSoon(
     token: string,
-    bufferMinutes: number = 5
+    bufferMinutes: number = TokenRefreshService.DEFAULT_BUFFER_MINUTES
   ): boolean {
     const timeUntilExpiry = this.getTimeUntilExpiry(token);
     const bufferMs = bufferMinutes * 60 * 1000;
@@ -170,11 +175,16 @@ export class TokenRefreshService {
     }
 
     const timeUntilExpiry = this.getTimeUntilExpiry(currentToken);
-    const checkInterval = Math.min(timeUntilExpiry / 2, 30 * 60 * 1000); // Check every 30 minutes max
+    const checkInterval = Math.min(
+      timeUntilExpiry / 2,
+      TokenRefreshService.MAX_CHECK_INTERVAL_MS
+    ); // Cap the check interval
 
     // Ensure minimum interval to prevent immediate loops for expired tokens
-    const minInterval = 60 * 1000; // 1 minute minimum
-    const safeInterval = Math.max(checkInterval, minInterval);
+    const safeInterval = Math.max(
+      checkInterval,
+      TokenRefreshService.MIN_CHECK_INTERVAL_MS
+    );
 
     this.refreshTimer = setTimeout(() => {
       // Get fresh token using provided getter function
