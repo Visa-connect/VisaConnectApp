@@ -110,22 +110,22 @@ export class TokenRefreshService {
 
     const checkAndRefresh = async () => {
       try {
-        const token = localStorage.getItem('userToken');
-        if (!token) {
+        // Use the provided token instead of reading from localStorage
+        if (!currentToken) {
           this.stopTokenMonitoring();
           return;
         }
 
-        if (this.isTokenExpiringSoon(token)) {
+        if (this.isTokenExpiringSoon(currentToken)) {
           console.log('Token expiring soon, refreshing...');
           const newToken = await this.refreshToken();
           onTokenRefresh(newToken);
 
-          // Schedule next check
+          // Schedule next check with the new token
           this.scheduleNextCheck(newToken, onTokenRefresh, onRefreshError);
         } else {
-          // Schedule next check
-          this.scheduleNextCheck(token, onTokenRefresh, onRefreshError);
+          // Schedule next check with the current token
+          this.scheduleNextCheck(currentToken, onTokenRefresh, onRefreshError);
         }
       } catch (error) {
         console.error('Token monitoring error:', error);
@@ -154,6 +154,7 @@ export class TokenRefreshService {
     const safeInterval = Math.max(checkInterval, minInterval);
 
     this.refreshTimer = setTimeout(() => {
+      // Use the provided token for the next check
       this.startTokenMonitoring(token, onTokenRefresh, onRefreshError);
     }, safeInterval);
   }
