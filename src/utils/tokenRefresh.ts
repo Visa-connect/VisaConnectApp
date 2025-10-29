@@ -190,7 +190,9 @@ export class TokenRefreshService {
       // Get fresh token using provided getter function
       const freshToken = getToken();
       if (freshToken) {
-        this.startTokenMonitoring(
+        // Continue with a single-cycle check to avoid recursive
+        // start/stop calls and keep the control flow flat.
+        this.checkAndRefresh(
           freshToken,
           onTokenRefresh,
           onRefreshError,
