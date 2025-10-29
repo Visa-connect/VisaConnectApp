@@ -41,7 +41,7 @@ interface UserStore {
   getToken: () => string | null;
   setToken: (token: string) => void;
   removeToken: () => void;
-  refreshToken: () => Promise<boolean>;
+  ensureValidToken: () => Promise<boolean>;
 
   // Computed values
   getFullName: () => string;
@@ -204,11 +204,11 @@ export const useUserStore = create<UserStore>()(
       },
       removeToken: () => localStorage.removeItem('userToken'),
 
-      refreshToken: async () => {
+      ensureValidToken: async () => {
         try {
           const currentToken = get().getToken();
           if (!currentToken) {
-            console.log('No token to refresh');
+            console.log('No token to validate');
             return false;
           }
 
