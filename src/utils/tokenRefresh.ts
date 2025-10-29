@@ -107,34 +107,39 @@ export class TokenRefreshService {
     onRefreshError: (error: Error) => void
   ): void {
     this.stopTokenMonitoring();
-
-    const checkAndRefresh = async (tokenToCheck: string) => {
-      try {
-        if (!tokenToCheck) {
-          this.stopTokenMonitoring();
-          return;
-        }
-
-        if (this.isTokenExpiringSoon(tokenToCheck)) {
-          console.log('Token expiring soon, refreshing...');
-          const newToken = await this.refreshToken();
-          onTokenRefresh(newToken);
-
-          // Schedule next check (will read fresh token from localStorage)
-          this.scheduleNextCheck(onTokenRefresh, onRefreshError);
-        } else {
-          // Schedule next check (will read fresh token from localStorage)
-          this.scheduleNextCheck(onTokenRefresh, onRefreshError);
-        }
-      } catch (error) {
-        console.error('Token monitoring error:', error);
-        onRefreshError(error as Error);
-        this.stopTokenMonitoring();
-      }
-    };
-
     // Initial check with provided token
-    checkAndRefresh(currentToken);
+    this.checkAndRefresh(currentToken, onTokenRefresh, onRefreshError);
+  }
+
+  /**
+   * Run one check/refresh cycle and schedule the next
+   */
+  private async checkAndRefresh(
+    tokenToCheck: string,
+    onTokenRefresh: (newToken: string) => void,
+    onRefreshError: (error: Error) => void
+  ): Promise<void> {
+    try {
+      if (!tokenToCheck) {
+        this.stopTokenMonitoring();
+        return;
+      }
+
+      if (this.isTokenExpiringSoon(tokenToCheck)) {
+        console.log('Token expiring soon, refreshing...');
+        const newToken = await this.refreshToken();
+        onTokenRefresh(newToken);
+        // Schedule next check (will read fresh token from localStorage)
+        this.scheduleNextCheck(onTokenRefresh, onRefreshError);
+      } else {
+        // Schedule next check (will read fresh token from localStorage)
+        this.scheduleNextCheck(onTokenRefresh, onRefreshError);
+      }
+    } catch (error) {
+      console.error('Token monitoring error:', error);
+      onRefreshError(error as Error);
+      this.stopTokenMonitoring();
+    }
   }
 
   /**
