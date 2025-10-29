@@ -419,7 +419,7 @@ const EditProfileScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Update Båutton - Only show when there are unsaved changes */}
+        {/* Global Update Button - Only show when there are unsaved changes */}
         {hasUnsavedChanges && (
           <button
             onClick={handleSaveProfile}
