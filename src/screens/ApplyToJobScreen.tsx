@@ -39,6 +39,7 @@ const ApplyToJobScreen: React.FC = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [customVisaType, setCustomVisaType] = useState('');
   const [formData, setFormData] = useState<ApplicationFormData>({
     qualifications: '',
     location: { address: '' },
@@ -192,7 +193,10 @@ const ApplyToJobScreen: React.FC = () => {
         job_id: job.id,
         qualifications: formData.qualifications,
         location: formData.location.address,
-        visa_type: formData.visa || undefined,
+        visa_type:
+          formData.visa === 'other'
+            ? customVisaType || undefined
+            : formData.visa || undefined,
         start_date: formData.startDate,
         resume_url: formData.resumeUrl || undefined,
         resume_filename: formData.resumeFileName || undefined,
@@ -355,7 +359,13 @@ const ApplyToJobScreen: React.FC = () => {
             <select
               id="visa"
               value={formData.visa}
-              onChange={(e) => handleInputChange('visa', e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                handleInputChange('visa', value);
+                if (value !== 'other') {
+                  setCustomVisaType('');
+                }
+              }}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {visaTypes.map((visa) => (
@@ -363,7 +373,17 @@ const ApplyToJobScreen: React.FC = () => {
                   {visa.label}
                 </option>
               ))}
+              <option value="other">Other (specify below)</option>
             </select>
+            {formData.visa === 'other' && (
+              <input
+                type="text"
+                value={customVisaType}
+                onChange={(e) => setCustomVisaType(e.target.value)}
+                placeholder="Enter your visa type"
+                className="mt-3 w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            )}
           </div>
 
           {/* Start Date */}
