@@ -65,23 +65,31 @@ export const useUserStore = create<UserStore>()(
 
             // Start token monitoring for existing user
             if (tokenRefreshService.isTokenValid(userToken)) {
-              tokenRefreshService.startTokenMonitoring(
-                userToken,
-                (newToken) => {
-                  // Token refreshed successfully
-                  get().setToken(newToken);
-                  console.log('Token automatically refreshed on init');
-                },
-                (error) => {
-                  // Token refresh failed, clear user data
-                  console.error(
-                    'Automatic token refresh failed on init:',
-                    error
-                  );
-                  get().clearUser();
-                },
-                () => get().getToken() // Token getter function (storage-agnostic)
-              );
+              try {
+                tokenRefreshService.startTokenMonitoring(
+                  userToken,
+                  (newToken) => {
+                    // Token refreshed successfully
+                    get().setToken(newToken);
+                    console.log('Token automatically refreshed on init');
+                  },
+                  (error) => {
+                    // Token refresh failed, clear user data
+                    console.error(
+                      'Automatic token refresh failed on init:',
+                      error
+                    );
+                    get().clearUser();
+                  },
+                  () => get().getToken() // Token getter function (storage-agnostic)
+                );
+              } catch (error) {
+                console.error(
+                  'Error starting token monitoring on init:',
+                  error
+                );
+                get().clearUser();
+              }
             } else {
               // Token is expired, clear user data
               console.log('Token expired on init, clearing user data');
