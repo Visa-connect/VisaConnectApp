@@ -24,10 +24,10 @@ const EditProfileScreen: React.FC = () => {
   const currentLocation = user?.current_location;
   const { city, state, country } = currentLocation || {};
   const [location, setLocation] = useState<LocationData>({
-    address: `${city}, ${state}`,
-    city: city,
-    state: state,
-    country: country,
+    address: [city, state].filter(Boolean).join(', '),
+    city: city || '',
+    state: state || '',
+    country: country || '',
   });
   const [employer, setEmployer] = useState(user?.employer || '');
   const [occupation, setOccupation] = useState(user?.occupation || '');
