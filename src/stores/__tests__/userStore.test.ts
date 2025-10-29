@@ -32,7 +32,8 @@ describe('UserStore Token Refresh Integration', () => {
     expect(mockTokenRefreshService.startTokenMonitoring).toHaveBeenCalledWith(
       mockToken,
       expect.any(Function),
-      expect.any(Function)
+      expect.any(Function),
+      expect.any(Function) // getToken parameter
     );
   });
 

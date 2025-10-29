@@ -60,7 +60,8 @@ describe('TokenRefreshService', () => {
       tokenRefreshService.startTokenMonitoring(
         mockToken,
         onTokenRefresh,
-        onRefreshError
+        onRefreshError,
+        () => mockToken // Token getter function
       );
 
       // Stop monitoring
@@ -79,7 +80,8 @@ describe('TokenRefreshService', () => {
       tokenRefreshService.startTokenMonitoring(
         expiredToken,
         onTokenRefresh,
-        onRefreshError
+        onRefreshError,
+        () => expiredToken // Token getter function
       );
 
       // Stop monitoring to prevent any timers from running
