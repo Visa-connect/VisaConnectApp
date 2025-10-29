@@ -21,16 +21,14 @@ const EditProfileScreen: React.FC = () => {
   const [customVisaType, setCustomVisaType] = useState(
     getUserVisaType(user?.visa_type) === 'other' ? user?.visa_type || '' : ''
   );
-  const [location, setLocation] = useState<LocationData | null>(
-    user?.current_location
-      ? {
-          address: `${user.current_location.city}, ${user.current_location.state}`,
-          city: user.current_location.city,
-          state: user.current_location.state,
-          country: user.current_location.country,
-        }
-      : null
-  );
+  const currentLocation = user?.current_location;
+  const { city, state, country } = currentLocation || {};
+  const [location, setLocation] = useState<LocationData>({
+    address: `${city}, ${state}`,
+    city: city,
+    state: state,
+    country: country,
+  });
   const [employer, setEmployer] = useState(user?.employer || '');
   const [occupation, setOccupation] = useState(user?.occupation || '');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
@@ -97,8 +95,6 @@ const EditProfileScreen: React.FC = () => {
         state: user.current_location.state,
         country: user.current_location.country,
       });
-    } else {
-      setLocation(null);
     }
   }, [user]);
 
@@ -168,6 +164,16 @@ const EditProfileScreen: React.FC = () => {
       setIsUploading(true);
       setUploadError('');
 
+      // Validate custom visa type when "Other" is selected
+      if (
+        visaType === 'other' &&
+        (!customVisaType || customVisaType.trim() === '')
+      ) {
+        setUploadError('Please specify your visa type.');
+        setIsUploading(false);
+        return;
+      }
+
       let photoUrl = user?.profile_photo_url;
       let photoPublicId = user?.profile_photo_public_id;
 
@@ -189,13 +195,11 @@ const EditProfileScreen: React.FC = () => {
       const updateData = {
         bio,
         visa_type: visaType === 'other' ? customVisaType : visaType,
-        current_location: location
-          ? {
-              city: location.city || '',
-              state: location.state || '',
-              country: location.country || 'United States',
-            }
-          : undefined,
+        current_location: {
+          city: location?.city || '',
+          state: location?.state || '',
+          country: location?.country || 'United States',
+        },
         employer,
         occupation,
         profile_photo_url: photoUrl,
@@ -419,20 +423,25 @@ const EditProfileScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Update Button - Only show when there are unsaved changes */}
-        {hasUnsavedChanges && (
-          <button
-            onClick={handleSaveProfile}
-            disabled={isUploading}
-            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm mb-4 ${
-              isUploading
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isUploading ? 'Uploading...' : 'Update Profile'}
-          </button>
-        )}
+        {/* Global Update Button - Always visible; disabled style when no changes */}
+        <button
+          onClick={handleSaveProfile}
+          disabled={isUploading || !hasUnsavedChanges}
+          className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm mb-4 ${
+            isUploading || !hasUnsavedChanges
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isUploading
+            ? 'Uploading...'
+            : hasUnsavedChanges
+            ? 'Update Profile'
+            : 'No Changes to Save'}
+        </button>
+
+        {/* Divider between global update and resume sections */}
+        <div className="w-full h-px bg-gray-200 mb-4" />
 
         {/* Resume Section */}
         <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
