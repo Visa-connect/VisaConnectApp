@@ -79,7 +79,8 @@ export const useUserStore = create<UserStore>()(
                     error
                   );
                   get().clearUser();
-                }
+                },
+                () => get().getToken() // Token getter function (storage-agnostic)
               );
             } else {
               // Token is expired, clear user data
@@ -144,7 +145,8 @@ export const useUserStore = create<UserStore>()(
                 // Token refresh failed, clear user data
                 console.error('Automatic token refresh failed:', error);
                 get().clearUser();
-              }
+              },
+              () => get().getToken() // Token getter function (storage-agnostic)
             );
           }
         }

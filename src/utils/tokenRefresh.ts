@@ -100,15 +100,25 @@ export class TokenRefreshService {
 
   /**
    * Start monitoring token expiration and refresh automatically
+   * @param currentToken - The current token to start monitoring with
+   * @param onTokenRefresh - Callback when token is refreshed
+   * @param onRefreshError - Callback when refresh fails
+   * @param getToken - Function to retrieve the current token (storage-agnostic)
    */
   startTokenMonitoring(
     currentToken: string,
     onTokenRefresh: (newToken: string) => void,
-    onRefreshError: (error: Error) => void
+    onRefreshError: (error: Error) => void,
+    getToken: () => string | null
   ): void {
     this.stopTokenMonitoring();
     // Initial check with provided token
-    this.checkAndRefresh(currentToken, onTokenRefresh, onRefreshError);
+    this.checkAndRefresh(
+      currentToken,
+      onTokenRefresh,
+      onRefreshError,
+      getToken
+    );
   }
 
   /**
@@ -117,7 +127,8 @@ export class TokenRefreshService {
   private async checkAndRefresh(
     tokenToCheck: string,
     onTokenRefresh: (newToken: string) => void,
-    onRefreshError: (error: Error) => void
+    onRefreshError: (error: Error) => void,
+    getToken: () => string | null
   ): Promise<void> {
     try {
       if (!tokenToCheck) {
@@ -129,11 +140,11 @@ export class TokenRefreshService {
         console.log('Token expiring soon, refreshing...');
         const newToken = await this.refreshToken();
         onTokenRefresh(newToken);
-        // Schedule next check (will read fresh token from localStorage)
-        this.scheduleNextCheck(onTokenRefresh, onRefreshError);
+        // Schedule next check (will use token getter for fresh token)
+        this.scheduleNextCheck(onTokenRefresh, onRefreshError, getToken);
       } else {
-        // Schedule next check (will read fresh token from localStorage)
-        this.scheduleNextCheck(onTokenRefresh, onRefreshError);
+        // Schedule next check (will use token getter for fresh token)
+        this.scheduleNextCheck(onTokenRefresh, onRefreshError, getToken);
       }
     } catch (error) {
       console.error('Token monitoring error:', error);
@@ -147,10 +158,11 @@ export class TokenRefreshService {
    */
   private scheduleNextCheck(
     onTokenRefresh: (newToken: string) => void,
-    onRefreshError: (error: Error) => void
+    onRefreshError: (error: Error) => void,
+    getToken: () => string | null
   ): void {
-    // Read current token from localStorage to calculate timing
-    const currentToken = localStorage.getItem('userToken');
+    // Get current token using provided getter function
+    const currentToken = getToken();
     if (!currentToken) {
       this.stopTokenMonitoring();
       onRefreshError(new Error('No token available for scheduling'));
@@ -165,10 +177,15 @@ export class TokenRefreshService {
     const safeInterval = Math.max(checkInterval, minInterval);
 
     this.refreshTimer = setTimeout(() => {
-      // Read fresh token from localStorage for the next check
-      const freshToken = localStorage.getItem('userToken');
+      // Get fresh token using provided getter function
+      const freshToken = getToken();
       if (freshToken) {
-        this.startTokenMonitoring(freshToken, onTokenRefresh, onRefreshError);
+        this.startTokenMonitoring(
+          freshToken,
+          onTokenRefresh,
+          onRefreshError,
+          getToken
+        );
       } else {
         // No token available, stop monitoring
         this.stopTokenMonitoring();
