@@ -108,24 +108,23 @@ export class TokenRefreshService {
   ): void {
     this.stopTokenMonitoring();
 
-    const checkAndRefresh = async () => {
+    const checkAndRefresh = async (tokenToCheck: string) => {
       try {
-        // Use the provided token instead of reading from localStorage
-        if (!currentToken) {
+        if (!tokenToCheck) {
           this.stopTokenMonitoring();
           return;
         }
 
-        if (this.isTokenExpiringSoon(currentToken)) {
+        if (this.isTokenExpiringSoon(tokenToCheck)) {
           console.log('Token expiring soon, refreshing...');
           const newToken = await this.refreshToken();
           onTokenRefresh(newToken);
 
-          // Schedule next check with the new token
-          this.scheduleNextCheck(newToken, onTokenRefresh, onRefreshError);
+          // Schedule next check (will read fresh token from localStorage)
+          this.scheduleNextCheck(onTokenRefresh, onRefreshError);
         } else {
-          // Schedule next check with the current token
-          this.scheduleNextCheck(currentToken, onTokenRefresh, onRefreshError);
+          // Schedule next check (will read fresh token from localStorage)
+          this.scheduleNextCheck(onTokenRefresh, onRefreshError);
         }
       } catch (error) {
         console.error('Token monitoring error:', error);
@@ -134,19 +133,26 @@ export class TokenRefreshService {
       }
     };
 
-    // Initial check
-    checkAndRefresh();
+    // Initial check with provided token
+    checkAndRefresh(currentToken);
   }
 
   /**
    * Schedule the next token check
    */
   private scheduleNextCheck(
-    token: string,
     onTokenRefresh: (newToken: string) => void,
     onRefreshError: (error: Error) => void
   ): void {
-    const timeUntilExpiry = this.getTimeUntilExpiry(token);
+    // Read current token from localStorage to calculate timing
+    const currentToken = localStorage.getItem('userToken');
+    if (!currentToken) {
+      this.stopTokenMonitoring();
+      onRefreshError(new Error('No token available for scheduling'));
+      return;
+    }
+
+    const timeUntilExpiry = this.getTimeUntilExpiry(currentToken);
     const checkInterval = Math.min(timeUntilExpiry / 2, 30 * 60 * 1000); // Check every 30 minutes max
 
     // Ensure minimum interval to prevent immediate loops for expired tokens
@@ -154,8 +160,15 @@ export class TokenRefreshService {
     const safeInterval = Math.max(checkInterval, minInterval);
 
     this.refreshTimer = setTimeout(() => {
-      // Use the provided token for the next check
-      this.startTokenMonitoring(token, onTokenRefresh, onRefreshError);
+      // Read fresh token from localStorage for the next check
+      const freshToken = localStorage.getItem('userToken');
+      if (freshToken) {
+        this.startTokenMonitoring(freshToken, onTokenRefresh, onRefreshError);
+      } else {
+        // No token available, stop monitoring
+        this.stopTokenMonitoring();
+        onRefreshError(new Error('No token available for refresh'));
+      }
     }, safeInterval);
   }
 
