@@ -75,7 +75,7 @@ const EditProfileScreen: React.FC = () => {
     loadBusinesses();
   }, []);
 
-  // Reset unsaved changes when user data changes and update form fields
+  // Resets unsaved changes and updates form fields when user data changes
   useEffect(() => {
     setHasUnsavedChanges(false);
 
