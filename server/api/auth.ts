@@ -52,56 +52,14 @@ router.post(
         });
       }
 
-      // Generate a new custom token for the user
-      const customToken = await authService.generateCustomToken(userId);
-
-      // Exchange custom token for ID token with timeout
-      console.log('Starting token exchange for user:', userId);
-
-      const exchangePromise = fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${process.env.FIREBASE_WEB_API_KEY}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            token: customToken,
-            returnSecureToken: true,
-          }),
-        }
-      );
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          console.log('Token exchange timeout triggered after 8 seconds');
-          reject(new Error('Token exchange timeout'));
-        }, 8000); // 8 second timeout
-      });
-
-      const exchangeResponse = await Promise.race([
-        exchangePromise,
-        timeoutPromise,
-      ]);
-
-      if (!exchangeResponse.ok) {
-        const errorData = await exchangeResponse.json();
-        console.error('Token exchange failed:', errorData);
-        return res.status(500).json({
-          success: false,
-          message: 'Token refresh failed',
-        });
-      }
-
-      const exchangeData = (await exchangeResponse.json()) as {
-        idToken: string;
-      };
-      const idToken = exchangeData.idToken;
+      // Use the new refreshToken method from authService
+      const result = await authService.refreshToken(userId);
 
       res.json({
-        success: true,
-        token: idToken,
-        message: 'Token refreshed successfully',
+        success: result.success,
+        token: result.token,
+        user: result.user,
+        message: result.message,
       });
     } catch (error: any) {
       console.error('Token refresh error:', error);
@@ -129,9 +87,7 @@ router.post(
 
       res.status(500).json({
         success: false,
-        message: 'Token refresh failed',
-        error:
-          process.env.NODE_ENV === 'development' ? error.message : undefined,
+        message: error.message || 'Token refresh failed',
       });
     }
   }

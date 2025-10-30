@@ -14,3 +14,14 @@ export const startDateOptions = [
   { value: 'soon', label: 'Soon - within 2 weeks' },
   { value: 'later', label: 'Later - longer than a month' },
 ];
+
+/**
+ * Helper function to determine visa type selection
+ * Checks if user's visa type exists in predefined options
+ * Returns the visa type if it matches, or 'other' if it's custom
+ */
+export const getUserVisaType = (userVisaType?: string): string => {
+  if (!userVisaType) return '';
+  const predefinedTypes = visaTypes.map((type) => type.value);
+  return predefinedTypes.includes(userVisaType) ? userVisaType : 'other';
+};

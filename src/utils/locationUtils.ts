@@ -1,7 +1,6 @@
 /**
  * Location formatting utilities
  */
-
 export interface LocationObject {
   city?: string;
   state?: string;
@@ -80,3 +79,5 @@ export const parseLocationString = (locationString: string): LocationObject => {
     country: parts[2] || undefined,
   };
 };
+
+// Keep utils focused on plain location objects only

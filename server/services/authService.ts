@@ -296,6 +296,56 @@ export class AuthService {
     }
   }
 
+  // Refresh user token
+  async refreshToken(
+    uid: string
+  ): Promise<{ success: boolean; token: string; user: User; message: string }> {
+    try {
+      // 1. Verify user exists in PostgreSQL
+      const userProfile = await userService.getUserById(uid);
+      if (!userProfile) {
+        throw new Error('User not found');
+      }
+
+      // 2. Generate new custom token
+      const customToken = await admin.auth().createCustomToken(uid);
+
+      // 3. Exchange custom token for ID token
+      const exchangeResponse = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${config.firebase.webApiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: customToken,
+            returnSecureToken: true,
+          }),
+        }
+      );
+
+      if (!exchangeResponse.ok) {
+        const errorData = (await exchangeResponse.json()) as any;
+        console.error('Token refresh exchange failed:', errorData);
+        throw new Error('Token refresh failed');
+      }
+
+      const exchangeData = (await exchangeResponse.json()) as any;
+      const idToken = exchangeData.idToken;
+
+      return {
+        success: true,
+        token: idToken,
+        user: userProfile,
+        message: 'Token refreshed successfully',
+      };
+    } catch (error: any) {
+      console.error('Token refresh error:', error);
+      throw new Error('Failed to refresh token');
+    }
+  }
+
   // Initiate email change
   async initiateEmailChange(
     uid: string,

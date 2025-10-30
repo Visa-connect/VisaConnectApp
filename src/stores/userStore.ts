@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-// import { tokenRefreshService } from '../api/firebaseAuth'; // Temporarily disabled
+import { tokenRefreshService } from '../utils/tokenRefresh';
 import { useNotificationStore } from './notificationStore';
 import { executeWhenHydrated } from '../utils/persistUtils';
 import { User } from '../types/api';
@@ -41,7 +41,7 @@ interface UserStore {
   getToken: () => string | null;
   setToken: (token: string) => void;
   removeToken: () => void;
-  refreshToken: () => Promise<boolean>;
+  ensureValidToken: () => Promise<boolean>;
 
   // Computed values
   getFullName: () => string;
@@ -62,6 +62,40 @@ export const useUserStore = create<UserStore>()(
           try {
             const user = JSON.parse(userData);
             set({ user, isAuthenticated: true, hasToken: true });
+
+            // Start token monitoring for existing user
+            if (tokenRefreshService.isTokenValid(userToken)) {
+              try {
+                tokenRefreshService.startTokenMonitoring(
+                  userToken,
+                  (newToken) => {
+                    // Token refreshed successfully
+                    get().setToken(newToken);
+                    console.log('Token automatically refreshed on init');
+                  },
+                  (error) => {
+                    // Token refresh failed, clear user data
+                    console.error(
+                      'Automatic token refresh failed on init:',
+                      error
+                    );
+                    get().clearUser();
+                  },
+                  () => get().getToken() // Token getter function (storage-agnostic)
+                );
+              } catch (error) {
+                console.error(
+                  'Error starting token monitoring on init:',
+                  error
+                );
+                get().clearUser();
+              }
+            } else {
+              // Token is expired, clear user data
+              console.log('Token expired on init, clearing user data');
+              get().clearUser();
+              return;
+            }
 
             // Fetch notifications if user is already authenticated
             const hydrateAndFetch = () => {
@@ -86,6 +120,8 @@ export const useUserStore = create<UserStore>()(
               'Failed to parse user data from localStorage:',
               error
             );
+            // Clear invalid data
+            get().clearUser();
           }
         }
       },
@@ -101,6 +137,27 @@ export const useUserStore = create<UserStore>()(
         set({ user, isAuthenticated: true, hasToken });
         // Also update localStorage for backward compatibility
         localStorage.setItem('userData', JSON.stringify(user));
+
+        // Start token monitoring if we have a token
+        if (hasToken) {
+          const currentToken = get().getToken();
+          if (currentToken) {
+            tokenRefreshService.startTokenMonitoring(
+              currentToken,
+              (newToken) => {
+                // Token refreshed successfully
+                get().setToken(newToken);
+                console.log('Token automatically refreshed');
+              },
+              (error) => {
+                // Token refresh failed, clear user data
+                console.error('Automatic token refresh failed:', error);
+                get().clearUser();
+              },
+              () => get().getToken() // Token getter function (storage-agnostic)
+            );
+          }
+        }
 
         // Fetch notifications after successful login
         if (hasToken) {
@@ -133,12 +190,13 @@ export const useUserStore = create<UserStore>()(
       },
 
       clearUser: () => {
+        // Stop token monitoring
+        tokenRefreshService.stopTokenMonitoring();
+
         set({ user: null, isAuthenticated: false, hasToken: false });
         // Clear localStorage
         localStorage.removeItem('userData');
         get().removeToken();
-        // Clear token cache (temporarily disabled)
-        // tokenRefreshService.clearCache();
 
         // Clear notifications when user logs out
         const notificationStore = useNotificationStore.getState();
@@ -156,10 +214,34 @@ export const useUserStore = create<UserStore>()(
       },
       removeToken: () => localStorage.removeItem('userToken'),
 
-      refreshToken: async () => {
-        // Token refresh temporarily disabled
-        console.log('Token refresh is temporarily disabled');
-        return false;
+      ensureValidToken: async () => {
+        try {
+          const currentToken = get().getToken();
+          if (!currentToken) {
+            console.log('No token to validate');
+            return false;
+          }
+
+          // Check if token is still valid before attempting refresh
+          if (tokenRefreshService.isTokenValid(currentToken)) {
+            console.log('Token is still valid, no refresh needed');
+            return true;
+          }
+
+          console.log('Refreshing token...');
+          const newToken = await tokenRefreshService.manualRefresh();
+
+          // Update token in localStorage and store
+          get().setToken(newToken);
+
+          console.log('Token refreshed successfully');
+          return true;
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          // If refresh fails, clear user data to force re-login
+          get().clearUser();
+          return false;
+        }
       },
 
       // Computed values

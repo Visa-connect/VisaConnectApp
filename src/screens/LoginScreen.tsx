@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { apiPostPublic } from '../api';
@@ -29,6 +30,7 @@ const SignInScreen: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // Zustand store
@@ -131,14 +133,29 @@ const SignInScreen: React.FC = () => {
               <p className="text-red-500 text-sm -mt-2 mb-2">{errors.email}</p>
             )}
 
-            <Input
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              disabled={submitting}
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange}
+                disabled={submitting}
+                className="pr-12"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-red-500 text-sm -mt-2 mb-2">
                 {errors.password}
@@ -153,7 +170,7 @@ const SignInScreen: React.FC = () => {
 
         {/* Back to Welcome */}
         <button
-          className="text-gray-500 underline text-base"
+          className="text-gray-500 underline text-base mt-5"
           onClick={() => navigate('/')}
         >
           ← Back to Welcome

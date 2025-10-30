@@ -4,9 +4,13 @@ import { EyeIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
 import PhotoUpload from '../components/PhotoUpload';
 import Modal from '../components/Modal';
+import LocationInput from '../components/LocationInput';
 import { uploadProfilePhoto, uploadResume } from '../api/firebaseStorage';
 import { BusinessApiService, Business } from '../api/businessApi';
 import { apiPatch } from '../api';
+import { visaTypes, getUserVisaType } from '../utils/visaTypes';
+import { LocationData } from '../types/location';
+import { formatLocationString } from '../utils/locationUtils';
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -14,6 +18,20 @@ const EditProfileScreen: React.FC = () => {
 
   // Form state
   const [bio, setBio] = useState(user?.bio || '');
+  const initialVisaType = getUserVisaType(user?.visa_type);
+  const [visaType, setVisaType] = useState(initialVisaType);
+  const [customVisaType, setCustomVisaType] = useState(
+    initialVisaType === 'other' ? user?.visa_type || '' : ''
+  );
+  const currentLocation = user?.current_location;
+  const [location, setLocation] = useState<LocationData>({
+    address: formatLocationString(currentLocation),
+    city: currentLocation?.city || '',
+    state: currentLocation?.state || '',
+    country: currentLocation?.country || '',
+  });
+  const [employer, setEmployer] = useState(user?.employer || '');
+  const [occupation, setOccupation] = useState(user?.occupation || '');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [photoPreviewUrl, setPhotoPreviewUrl] = useState<string | undefined>(
     user?.profile_photo_url
@@ -56,9 +74,29 @@ const EditProfileScreen: React.FC = () => {
     loadBusinesses();
   }, []);
 
-  // Reset unsaved changes when user data changes
+  // Resets unsaved changes and updates form fields when user data changes
   useEffect(() => {
     setHasUnsavedChanges(false);
+
+    // Update visa type fields when user data changes
+    const newVisaType = getUserVisaType(user?.visa_type);
+    setVisaType(newVisaType);
+    setCustomVisaType(newVisaType === 'other' ? user?.visa_type || '' : '');
+
+    // Update other fields
+    setBio(user?.bio || '');
+    setEmployer(user?.employer || '');
+    setOccupation(user?.occupation || '');
+
+    // Update location
+    if (user?.current_location) {
+      setLocation({
+        address: formatLocationString(user.current_location),
+        city: user.current_location.city || '',
+        state: user.current_location.state || '',
+        country: user.current_location.country || '',
+      });
+    }
   }, [user]);
 
   const handlePhotoChange = (file: File) => {
@@ -89,10 +127,53 @@ const EditProfileScreen: React.FC = () => {
     setHasUnsavedChanges(true);
   };
 
+  const handleVisaTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setVisaType(value);
+    setHasUnsavedChanges(true);
+
+    // If "Other" is NOT selected, clear custom visa type
+    if (value !== 'other') {
+      setCustomVisaType('');
+    }
+  };
+
+  const handleCustomVisaTypeChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setCustomVisaType(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleLocationChange = (locationData: LocationData) => {
+    setLocation(locationData);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleEmployerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmployer(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
+  const handleOccupationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOccupation(e.target.value);
+    setHasUnsavedChanges(true);
+  };
+
   const handleSaveProfile = async () => {
     try {
       setIsUploading(true);
       setUploadError('');
+
+      // Validate custom visa type when "Other" is selected
+      if (
+        visaType === 'other' &&
+        (!customVisaType || customVisaType.trim() === '')
+      ) {
+        setUploadError('Please specify your visa type.');
+        setIsUploading(false);
+        return;
+      }
 
       let photoUrl = user?.profile_photo_url;
       let photoPublicId = user?.profile_photo_public_id;
@@ -114,6 +195,14 @@ const EditProfileScreen: React.FC = () => {
       // Prepare update data for API
       const updateData = {
         bio,
+        visa_type: visaType === 'other' ? customVisaType : visaType,
+        current_location: {
+          city: location?.city || '',
+          state: location?.state || '',
+          country: location?.country || 'United States',
+        },
+        employer,
+        occupation,
         profile_photo_url: photoUrl,
         profile_photo_public_id: photoPublicId,
       };
@@ -260,20 +349,100 @@ const EditProfileScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Global Update Button - Only show when there are unsaved changes */}
-        {hasUnsavedChanges && (
-          <button
-            onClick={handleSaveProfile}
-            disabled={isUploading}
-            className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm mb-4 ${
-              isUploading
-                ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
-            }`}
-          >
-            {isUploading ? 'Uploading...' : 'Update Profile'}
-          </button>
-        )}
+        {/* Profile Information Section */}
+        <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+          <h2 className="font-bold text-gray-900 mb-4">Profile Information</h2>
+
+          <div className="space-y-4">
+            {/* Visa Type */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Visa Type
+              </label>
+              <select
+                value={visaType}
+                onChange={handleVisaTypeChange}
+                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {visaTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+                <option value="other">Other (specify below)</option>
+              </select>
+
+              {visaType === 'other' && (
+                <input
+                  type="text"
+                  value={customVisaType}
+                  onChange={handleCustomVisaTypeChange}
+                  placeholder="Enter your visa type"
+                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mt-2"
+                />
+              )}
+            </div>
+
+            {/* Location */}
+            <div>
+              <LocationInput
+                value={location?.address || ''}
+                onChange={handleLocationChange}
+                placeholder="Enter your current location"
+                label="Current Location"
+                allowCurrentLocation={true}
+              />
+            </div>
+
+            {/* Job Title */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Job Title
+              </label>
+              <input
+                type="text"
+                value={occupation}
+                onChange={handleOccupationChange}
+                placeholder="e.g., Software Engineer, Marketing Manager"
+                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Employer */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Employer
+              </label>
+              <input
+                type="text"
+                value={employer}
+                onChange={handleEmployerChange}
+                placeholder="e.g., Google, Microsoft, Startup Inc."
+                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Global Update Button - Always visible; disabled style when no changes */}
+        <button
+          onClick={handleSaveProfile}
+          disabled={isUploading || !hasUnsavedChanges}
+          className={`w-full py-4 px-6 rounded-lg font-medium text-lg transition-colors shadow-sm mb-4 ${
+            isUploading || !hasUnsavedChanges
+              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isUploading
+            ? 'Uploading...'
+            : hasUnsavedChanges
+            ? 'Update Profile'
+            : 'No Changes to Save'}
+        </button>
+
+        {/* Divider between global update and resume sections */}
+        <div className="w-full h-px bg-gray-200 mb-4" />
 
         {/* Resume Section */}
         <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
