@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import {
   adminTipsTripsAdviceService,
   TipsTripsAdvicePost,
@@ -34,28 +33,6 @@ const TipsTripsAdviceListScreen: React.FC = () => {
 
   const handleCreateNew = () => {
     navigate('/admin/tipsTripsAndAdvice/create');
-  };
-
-  const handleEdit = (postId: string) => {
-    // Find the post data from the current posts array
-    const post = posts.find((p) => p.id === postId);
-    if (post) {
-      // Store the selected post in the admin store
-      dispatch(adminActions.setSelectedTipsTripsAdvicePost(post));
-    }
-    navigate(`/admin/tipsTripsAndAdvice/edit/${postId}`);
-  };
-
-  const handleDelete = async (postId: string) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
-      try {
-        await adminTipsTripsAdviceService.deletePost(postId);
-        await fetchPosts(); // Refresh the list
-      } catch (err) {
-        console.error('Error deleting post:', err);
-        alert('Failed to delete post. Please try again.');
-      }
-    }
   };
 
   const handleView = (postId: string) => {
@@ -143,16 +120,14 @@ const TipsTripsAdviceListScreen: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Created
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {/* Actions column removed; entire row is now clickable */}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {posts.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   No posts found. Use the "Create new" button above to add your
@@ -161,7 +136,11 @@ const TipsTripsAdviceListScreen: React.FC = () => {
               </tr>
             ) : (
               posts.map((post) => (
-                <tr key={post.id} className="hover:bg-gray-50">
+                <tr
+                  key={post.id}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleView(post.id)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -183,12 +162,9 @@ const TipsTripsAdviceListScreen: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <button
-                      onClick={() => handleView(post.id)}
-                      className="text-sm text-blue-600 hover:text-blue-800 font-medium text-left"
-                    >
+                    <span className="text-sm text-blue-600 hover:text-blue-800 font-medium">
                       {post.title}
-                    </button>
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -216,31 +192,6 @@ const TipsTripsAdviceListScreen: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(post.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleView(post.id)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(post.id)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(post.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))

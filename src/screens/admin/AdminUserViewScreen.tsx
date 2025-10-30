@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
-  PencilIcon,
   UserIcon,
   EnvelopeIcon,
   PhoneIcon,
@@ -11,7 +10,6 @@ import {
   CalendarIcon,
   HandThumbUpIcon,
 } from '@heroicons/react/24/outline';
-import Button from '../../components/Button';
 import { adminUserService, AdminUser } from '../../api/adminUserService';
 import { useAdminStore } from '../../stores/adminStore';
 import { formatLocationString } from '../../utils/locationUtils';
@@ -62,11 +60,7 @@ const AdminUserViewScreen: React.FC = () => {
     navigate('/admin/users');
   };
 
-  const handleEdit = () => {
-    if (user?.id) {
-      navigate(`/admin/users/edit/${user.id}`);
-    }
-  };
+  // Edit action removed
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -135,7 +129,7 @@ const AdminUserViewScreen: React.FC = () => {
             Back to Users
           </button>
 
-          <div className="flex items-center space-x-3">
+          {/* <div className="flex items-center space-x-3">
             <Button
               onClick={handleEdit}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
@@ -143,7 +137,7 @@ const AdminUserViewScreen: React.FC = () => {
               <PencilIcon className="h-4 w-4 mr-2" />
               Edit
             </Button>
-          </div>
+          </div> */}
         </div>
       </div>
 

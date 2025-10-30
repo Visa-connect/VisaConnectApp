@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+// Actions removed; rows are clickable
 import { useAdminStore } from '../../stores/adminStore';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
 import { formatLocationString } from '../../utils/locationUtils';
@@ -13,7 +13,6 @@ const UsersListScreen: React.FC = () => {
     users,
     loading,
     error,
-    deleteUser,
     refreshData,
     currentPage,
     totalPages,
@@ -39,19 +38,7 @@ const UsersListScreen: React.FC = () => {
     navigate(`/admin/users/${userId}`);
   };
 
-  const handleEdit = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      dispatch({ type: 'SET_SELECTED_USER', payload: user });
-    }
-    navigate(`/admin/users/${userId}/edit`);
-  };
-
-  const handleDelete = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      await deleteUser(userId);
-    }
-  };
+  // Edit/Delete actions removed
 
   const getVisaTypeColor = (visaType?: string) => {
     if (!visaType) return 'bg-gray-100 text-gray-800';
@@ -130,16 +117,14 @@ const UsersListScreen: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Joined
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {/* Actions column removed; entire row is clickable */}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {users.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   No users found.
@@ -147,7 +132,11 @@ const UsersListScreen: React.FC = () => {
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleView(user.id)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -190,31 +179,6 @@ const UsersListScreen: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleView(user.id)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(user.id)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))
