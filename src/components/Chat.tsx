@@ -3,6 +3,10 @@ import { useUserStore } from '../stores/userStore';
 import { chatService, Message } from '../api/chatService';
 import { websocketService } from '../api/websocketService';
 import ResumeViewer from './ResumeViewer';
+import Modal from './Modal';
+import Button from './Button';
+import { reportService } from '../api/reportService';
+import { FlagIcon } from '@heroicons/react/24/outline';
 import {
   getResumeFileName,
   RESUME_LINK_REGEX,
@@ -28,6 +32,10 @@ const Chat: React.FC<ChatProps> = ({
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isReporting, setIsReporting] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportError, setReportError] = useState<string | null>(null);
   // Removed lazy loading state variables
   // Removed shouldScrollToBottom state since scroll detection is disabled
   const [resumeViewer, setResumeViewer] = useState<{
@@ -225,6 +233,38 @@ const Chat: React.FC<ChatProps> = ({
     }
 
     return parts.length > 0 ? parts : content;
+  };
+
+  // Report conversation
+  const handleReportConversation = () => {
+    setReportReason('');
+    setReportError(null);
+    setReportModalOpen(true);
+  };
+
+  const submitReport = async () => {
+    if (!user) return;
+    const reason = reportReason.trim();
+    if (reason.length < 10) {
+      setReportError('Reason must be at least 10 characters.');
+      return;
+    }
+    try {
+      setIsReporting(true);
+      setReportError(null);
+      await reportService.createReport({
+        target_type: 'chat',
+        target_id: conversationId,
+        reason,
+      });
+      setReportModalOpen(false);
+      setReportReason('');
+    } catch (err) {
+      console.error('Failed to submit report:', err);
+      setReportError('Failed to submit report. Please try again later.');
+    } finally {
+      setIsReporting(false);
+    }
   };
 
   // Convert timestamp to Date object (reusable utility)
@@ -524,6 +564,18 @@ const Chat: React.FC<ChatProps> = ({
             disabled={false}
           />
         </form>
+        {/* Report conversation */}
+        <div className="mt-3 text-right">
+          <button
+            type="button"
+            onClick={handleReportConversation}
+            disabled={isReporting}
+            className="inline-flex items-center gap-1 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1 rounded-full text-xs font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <FlagIcon className="h-4 w-4" />
+            {isReporting ? 'Submitting…' : 'Report'}
+          </button>
+        </div>
       </div>
 
       {/* Resume Viewer Modal */}
@@ -533,6 +585,48 @@ const Chat: React.FC<ChatProps> = ({
         isOpen={resumeViewer.isOpen}
         onClose={closeResumeViewer}
       />
+
+      {/* Report Conversation Modal */}
+      <Modal
+        isOpen={reportModalOpen}
+        onClose={() => setReportModalOpen(false)}
+        title="Report Conversation"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Please describe the issue. Reports are reviewed by our admins.
+          </p>
+          <textarea
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            rows={4}
+            placeholder="Enter at least 10 characters"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          {reportError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+              {reportError}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => setReportModalOpen(false)}
+              variant="secondary"
+              disabled={isReporting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={submitReport}
+              disabled={isReporting}
+              variant="primary"
+            >
+              {isReporting ? 'Submitting…' : 'Submit Report'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
