@@ -23,7 +23,12 @@ export class TokenRefreshService {
    */
   private decodeToken(token: string): { exp: number; iat: number } | null {
     try {
-      const base64Url = token.split('.')[1];
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.error('Invalid JWT token structure');
+        return null;
+      }
+      const base64Url = parts[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(
         atob(base64)
