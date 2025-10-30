@@ -10,7 +10,7 @@ import { BusinessApiService, Business } from '../api/businessApi';
 import { apiPatch } from '../api';
 import { visaTypes, getUserVisaType } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
-import { buildLocationData } from '../utils/locationUtils';
+import { formatLocationString } from '../utils/locationUtils';
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -18,14 +18,18 @@ const EditProfileScreen: React.FC = () => {
 
   // Form state
   const [bio, setBio] = useState(user?.bio || '');
-  const [visaType, setVisaType] = useState(getUserVisaType(user?.visa_type));
+  const initialVisaType = getUserVisaType(user?.visa_type);
+  const [visaType, setVisaType] = useState(initialVisaType);
   const [customVisaType, setCustomVisaType] = useState(
-    getUserVisaType(user?.visa_type) === 'other' ? user?.visa_type || '' : ''
+    initialVisaType === 'other' ? user?.visa_type || '' : ''
   );
   const currentLocation = user?.current_location;
-  const [location, setLocation] = useState<LocationData>(
-    buildLocationData(currentLocation)
-  );
+  const [location, setLocation] = useState<LocationData>({
+    address: formatLocationString(currentLocation),
+    city: currentLocation?.city || '',
+    state: currentLocation?.state || '',
+    country: currentLocation?.country || '',
+  });
   const [employer, setEmployer] = useState(user?.employer || '');
   const [occupation, setOccupation] = useState(user?.occupation || '');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
@@ -86,7 +90,12 @@ const EditProfileScreen: React.FC = () => {
 
     // Update location
     if (user?.current_location) {
-      setLocation(buildLocationData(user.current_location));
+      setLocation({
+        address: formatLocationString(user.current_location),
+        city: user.current_location.city || '',
+        state: user.current_location.state || '',
+        country: user.current_location.country || '',
+      });
     }
   }, [user]);
 
