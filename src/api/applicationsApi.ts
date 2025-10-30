@@ -27,10 +27,10 @@ export interface ApplicationSubmission {
   job_id: number;
   qualifications: string;
   location: string;
-  visa_type?: string;
+  visa_type: string;
   start_date: string;
-  resume_url?: string | null;
-  resume_filename?: string | null;
+  resume_url?: string;
+  resume_filename?: string;
 }
 
 export interface ApplicationsResponse {

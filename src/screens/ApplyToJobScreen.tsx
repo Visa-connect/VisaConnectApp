@@ -210,8 +210,8 @@ const ApplyToJobScreen: React.FC = () => {
         location: formData.location.address,
         visa_type: visaTypeValue,
         start_date: formData.startDate,
-        resume_url: formData.resumeUrl || null,
-        resume_filename: formData.resumeFileName || null,
+        resume_url: formData.resumeUrl,
+        resume_filename: formData.resumeFileName,
       };
 
       const response = await ApplicationsApiService.submitApplication(
