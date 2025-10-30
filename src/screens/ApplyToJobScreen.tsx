@@ -186,20 +186,34 @@ const ApplyToJobScreen: React.FC = () => {
       setTimeout(() => setFormValidationError(null), 5000);
       return;
     }
+    if (!formData.visa.trim()) {
+      setFormValidationError('Please select your visa status.');
+      setTimeout(() => setFormValidationError(null), 5000);
+      return;
+    }
+    if (formData.visa === 'other' && !customVisaType.trim()) {
+      setFormValidationError('Please specify your visa type.');
+      setTimeout(() => setFormValidationError(null), 5000);
+      return;
+    }
 
     setIsSubmitting(true);
     try {
+      const visaTypeValue =
+        formData.visa === 'other'
+          ? customVisaType.trim()
+          : formData.visa.trim();
+
       const applicationData: ApplicationSubmission = {
         job_id: job.id,
         qualifications: formData.qualifications,
         location: formData.location.address,
-        visa_type:
-          formData.visa === 'other'
-            ? customVisaType || undefined
-            : formData.visa || undefined,
+        visa_type: visaTypeValue,
         start_date: formData.startDate,
-        resume_url: formData.resumeUrl || undefined,
-        resume_filename: formData.resumeFileName || undefined,
+        ...(formData.resumeUrl ? { resume_url: formData.resumeUrl } : {}),
+        ...(formData.resumeFileName
+          ? { resume_filename: formData.resumeFileName }
+          : {}),
       };
 
       const response = await ApplicationsApiService.submitApplication(
