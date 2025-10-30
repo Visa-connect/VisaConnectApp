@@ -29,8 +29,8 @@ export interface ApplicationSubmission {
   location: string;
   visa_type?: string;
   start_date: string;
-  resume_url?: string;
-  resume_filename?: string;
+  resume_url?: string | null;
+  resume_filename?: string | null;
 }
 
 export interface ApplicationsResponse {
