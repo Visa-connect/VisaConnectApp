@@ -175,6 +175,18 @@ export class TokenRefreshService {
     }
 
     const timeUntilExpiry = this.getTimeUntilExpiry(currentToken);
+
+    // If token is already expired (or clock skew makes it negative),
+    // perform an immediate refresh cycle instead of scheduling a short loop.
+    if (timeUntilExpiry <= 0) {
+      this.checkAndRefresh(
+        currentToken,
+        onTokenRefresh,
+        onRefreshError,
+        getToken
+      );
+      return;
+    }
     const checkInterval = Math.min(
       timeUntilExpiry / 2,
       TokenRefreshService.MAX_CHECK_INTERVAL_MS
