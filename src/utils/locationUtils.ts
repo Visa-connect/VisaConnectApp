@@ -1,7 +1,7 @@
 /**
  * Location formatting utilities
  */
-
+import type { LocationData } from '../types/location';
 export interface LocationObject {
   city?: string;
   state?: string;
@@ -78,5 +78,17 @@ export const parseLocationString = (locationString: string): LocationObject => {
     city: parts[0] || undefined,
     state: parts[1] || undefined,
     country: parts[2] || undefined,
+  };
+};
+
+export const buildLocationData = (current?: LocationObject): LocationData => {
+  const city = current?.city || '';
+  const state = current?.state || '';
+  const country = current?.country || '';
+  return {
+    address: [city, state].filter(Boolean).join(', '),
+    city,
+    state,
+    country,
   };
 };

@@ -10,6 +10,7 @@ import { BusinessApiService, Business } from '../api/businessApi';
 import { apiPatch } from '../api';
 import { visaTypes, getUserVisaType } from '../utils/visaTypes';
 import { LocationData } from '../types/location';
+import { buildLocationData } from '../utils/locationUtils';
 
 const EditProfileScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -21,25 +22,9 @@ const EditProfileScreen: React.FC = () => {
   const [customVisaType, setCustomVisaType] = useState(
     getUserVisaType(user?.visa_type) === 'other' ? user?.visa_type || '' : ''
   );
-  const buildLocationFromCurrent = (current?: {
-    city?: string;
-    state?: string;
-    country?: string;
-  }): LocationData => {
-    const city = current?.city || '';
-    const state = current?.state || '';
-    const country = current?.country || '';
-    return {
-      address: [city, state].filter(Boolean).join(', '),
-      city,
-      state,
-      country,
-    };
-  };
-
   const currentLocation = user?.current_location;
   const [location, setLocation] = useState<LocationData>(
-    buildLocationFromCurrent(currentLocation)
+    buildLocationData(currentLocation)
   );
   const [employer, setEmployer] = useState(user?.employer || '');
   const [occupation, setOccupation] = useState(user?.occupation || '');
@@ -101,7 +86,7 @@ const EditProfileScreen: React.FC = () => {
 
     // Update location
     if (user?.current_location) {
-      setLocation(buildLocationFromCurrent(user.current_location));
+      setLocation(buildLocationData(user.current_location));
     }
   }, [user]);
 
