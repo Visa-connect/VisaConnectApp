@@ -13,6 +13,7 @@ import {
 } from '../../api/adminTipsTripsAdviceService';
 import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
+import { reportService } from '../../api/reportService';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -21,9 +22,9 @@ const AdminDashboardScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalPosts: 0,
-    activePosts: 0,
     totalUsers: 0,
     totalEmployers: 0,
+    totalReports: 0,
   });
   // const [employerStats, setEmployerStats] = useState<EmployerStats | null>(
   //   null
@@ -61,13 +62,14 @@ const AdminDashboardScreen: React.FC = () => {
         {}
       );
       const allPosts = allPostsResponse.data;
-      const activePosts = allPosts.filter((post) => post.is_active);
+      // Reports stats
+      const reportStats = await reportService.getReportStats();
 
       setStats({
         totalPosts: allPosts.length,
-        activePosts: activePosts.length,
         totalUsers: users.length,
         totalEmployers: businessCounts.all,
+        totalReports: reportStats.total_reports,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -126,13 +128,6 @@ const AdminDashboardScreen: React.FC = () => {
       bgColor: 'bg-blue-100',
     },
     {
-      name: 'Active Posts',
-      value: stats.activePosts,
-      icon: EyeIcon,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-    {
       name: 'Total Users',
       value: stats.totalUsers,
       icon: UserGroupIcon,
@@ -145,6 +140,13 @@ const AdminDashboardScreen: React.FC = () => {
       icon: BuildingOfficeIcon,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
+    },
+    {
+      name: 'Total Reports',
+      value: stats.totalReports,
+      icon: FlagIcon,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
     },
   ];
 
