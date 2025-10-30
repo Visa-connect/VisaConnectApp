@@ -21,14 +21,26 @@ const EditProfileScreen: React.FC = () => {
   const [customVisaType, setCustomVisaType] = useState(
     getUserVisaType(user?.visa_type) === 'other' ? user?.visa_type || '' : ''
   );
+  const buildLocationFromCurrent = (current?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  }): LocationData => {
+    const city = current?.city || '';
+    const state = current?.state || '';
+    const country = current?.country || '';
+    return {
+      address: [city, state].filter(Boolean).join(', '),
+      city,
+      state,
+      country,
+    };
+  };
+
   const currentLocation = user?.current_location;
-  const { city, state, country } = currentLocation || {};
-  const [location, setLocation] = useState<LocationData>({
-    address: [city, state].filter(Boolean).join(', '),
-    city: city || '',
-    state: state || '',
-    country: country || '',
-  });
+  const [location, setLocation] = useState<LocationData>(
+    buildLocationFromCurrent(currentLocation)
+  );
   const [employer, setEmployer] = useState(user?.employer || '');
   const [occupation, setOccupation] = useState(user?.occupation || '');
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
@@ -89,13 +101,7 @@ const EditProfileScreen: React.FC = () => {
 
     // Update location
     if (user?.current_location) {
-      const addressParts = [user.current_location.city, user.current_location.state].filter(Boolean);
-      setLocation({
-        address: addressParts.join(', '),
-        city: user.current_location.city,
-        state: user.current_location.state,
-        country: user.current_location.country,
-      });
+      setLocation(buildLocationFromCurrent(user.current_location));
     }
   }, [user]);
 
