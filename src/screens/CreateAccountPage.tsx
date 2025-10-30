@@ -78,8 +78,9 @@ const CreateAccountPage: React.FC = () => {
 
   const validateStep2 = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!form.visa_type) newErrors.visa_type = 'Visa type is required.';
-    if (form.visa_type === 'other' && !customVisaType.trim()) {
+    if (!form.visa_type) {
+      newErrors.visa_type = 'Visa type is required.';
+    } else if (form.visa_type === 'other' && !customVisaType.trim()) {
       newErrors.visa_type = 'Please specify your visa type.';
     }
     if (
