@@ -6,7 +6,7 @@ export interface Report {
   id: number;
   report_id: string;
   reporter_id: string;
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   target_id: string;
   reason: string;
   status: 'pending' | 'resolved' | 'removed';
@@ -16,7 +16,7 @@ export interface Report {
 
 export interface CreateReportData {
   reporter_id: string;
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   target_id: string;
   reason: string;
 }
@@ -29,7 +29,7 @@ export interface SearchReportsParams {
   limit?: number;
   offset?: number;
   status?: 'pending' | 'resolved' | 'removed';
-  target_type?: 'job' | 'meetup';
+  target_type?: 'job' | 'meetup' | 'chat';
   reporter_id?: string;
   search?: string; // Search by report_id or reason text
   date_from?: string;
@@ -340,9 +340,14 @@ class ReportService {
     try {
       await client.query('BEGIN');
 
-      // Update report status
+      // Update report status and is_active when removed
       const result = await client.query(
-        'UPDATE reports SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE report_id = $2 RETURNING *',
+        `UPDATE reports 
+         SET status = $1, 
+             is_active = CASE WHEN $1 = 'removed' THEN FALSE ELSE is_active END,
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE report_id = $2 
+         RETURNING *`,
         [status, reportId]
       );
 
@@ -352,8 +357,33 @@ class ReportService {
 
       // TODO: Add audit trail entry when audit trail table is implemented
 
+      const report = result.rows[0];
+
+      // On removal, deactivate the underlying target from discovery
+      if (status === 'removed') {
+        try {
+          if (report.target_type === 'meetup') {
+            await client.query(
+              'UPDATE meetups SET is_active = FALSE, updated_at = NOW() WHERE id = $1',
+              [report.target_id]
+            );
+          } else if (report.target_type === 'job') {
+            await client.query(
+              "UPDATE jobs SET status = 'closed', updated_at = NOW() WHERE id = $1",
+              [report.target_id]
+            );
+          }
+        } catch (deactivateErr) {
+          // If deactivation fails, we still keep the report status updated but log the issue
+          console.error(
+            'Failed to deactivate target for removed report',
+            deactivateErr
+          );
+        }
+      }
+
       await client.query('COMMIT');
-      return result.rows[0];
+      return report;
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

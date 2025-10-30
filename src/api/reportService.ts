@@ -5,7 +5,7 @@ export interface Report {
   id: number;
   report_id: string;
   reporter_id: string;
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   target_id: string;
   reason: string;
   status: 'pending' | 'resolved' | 'removed';
@@ -14,7 +14,7 @@ export interface Report {
 }
 
 export interface CreateReportData {
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   target_id: string;
   reason: string;
 }
@@ -29,9 +29,10 @@ export interface ReportStats {
 }
 
 export interface ReportTargetDetails {
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   job?: any;
   meetup?: any;
+  chat?: any;
   poster?: {
     id: string;
     first_name?: string;
@@ -45,7 +46,7 @@ export interface SearchReportsParams {
   limit?: number;
   offset?: number;
   status?: 'pending' | 'resolved' | 'removed';
-  target_type?: 'job' | 'meetup';
+  target_type?: 'job' | 'meetup' | 'chat';
   reporter_id?: string;
   search?: string;
   date_from?: string;

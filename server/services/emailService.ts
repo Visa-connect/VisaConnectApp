@@ -37,7 +37,7 @@ export interface JobApplicationEmailData {
 export interface NewReportEmailData {
   reportId: string;
   reporterId: string;
-  targetType: 'job' | 'meetup';
+  targetType: 'job' | 'meetup' | 'chat';
   targetId: string;
   reason: string;
   reportedAt: Date;
