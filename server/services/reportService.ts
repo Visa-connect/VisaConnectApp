@@ -341,15 +341,16 @@ class ReportService {
     try {
       await client.query('BEGIN');
 
-      // Update report status and is_active when removed
+      // Update report status and toggle is_active when removed
+      const isRemoved = status === 'removed';
       const result = await client.query(
         `UPDATE reports 
-         SET status = $1, 
-             is_active = CASE WHEN $1 = 'removed' THEN FALSE ELSE is_active END,
+         SET status = $1,
+             is_active = CASE WHEN $3 THEN FALSE ELSE is_active END,
              updated_at = CURRENT_TIMESTAMP 
          WHERE report_id = $2 
          RETURNING *`,
-        [status, reportId]
+        [status, reportId, isRemoved]
       );
 
       if (result.rows.length === 0) {
@@ -388,7 +389,10 @@ class ReportService {
                   { merge: true }
                 );
             } catch (fbErr) {
-              console.error('Failed to disable conversation for removed report', fbErr);
+              console.error(
+                'Failed to disable conversation for removed report',
+                fbErr
+              );
             }
           }
         } catch (deactivateErr) {
