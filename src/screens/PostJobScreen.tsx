@@ -119,9 +119,8 @@ const PostJobScreen: React.FC = () => {
     // Check if we're in edit mode
     const editJobId = searchParams.get('edit');
     if (editJobId) {
-      const jobId = editJobId;
       setIsEditMode(true);
-      setJobId(jobId);
+      setJobId(editJobId);
     }
   }, [searchParams]);
 
