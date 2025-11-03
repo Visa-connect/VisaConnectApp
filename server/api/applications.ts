@@ -11,6 +11,19 @@ import { notificationService } from '../services/notificationService';
 import { AppError, ErrorCode } from '../types/errors';
 import pool from '../db/config';
 
+// Helper functions to validate UUID route parameters
+function validateJobId(jobId: string): void {
+  if (!validateUUID(jobId)) {
+    throw new AppError('Invalid job ID format', ErrorCode.BAD_REQUEST);
+  }
+}
+
+function validateApplicationId(applicationId: string): void {
+  if (!validateUUID(applicationId)) {
+    throw new AppError('Invalid application ID format', ErrorCode.BAD_REQUEST);
+  }
+}
+
 // Validate if URL is from trusted Firebase Storage domain
 const isValidResumeUrl = (url: string): boolean => {
   try {
@@ -231,6 +244,7 @@ export default function applicationsApi(app: Express) {
         }
 
         const jobId = req.params.jobId;
+        validateJobId(jobId);
 
         const {
           status,
@@ -428,6 +442,7 @@ export default function applicationsApi(app: Express) {
         }
 
         const applicationId = req.params.applicationId;
+        validateApplicationId(applicationId);
 
         const application = await applicationsService.getApplicationById(
           applicationId
@@ -481,6 +496,7 @@ export default function applicationsApi(app: Express) {
         }
 
         const applicationId = req.params.applicationId;
+        validateApplicationId(applicationId);
 
         const { status } = req.body;
         if (
@@ -562,6 +578,7 @@ export default function applicationsApi(app: Express) {
         }
 
         const applicationId = req.params.applicationId;
+        validateApplicationId(applicationId);
 
         // Check if application exists and belongs to user
         const application = await applicationsService.getApplicationById(
