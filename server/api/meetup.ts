@@ -1,9 +1,17 @@
 import { Express, Request, Response } from 'express';
+import { validate as validateUUID } from 'uuid';
 import { authenticateUser } from '../middleware/auth';
 import { meetupService } from '../services/meetupService';
 import { notificationService } from '../services/notificationService';
 import { AppError, ErrorCode } from '../types/errors';
 import pool from '../db/config';
+
+// Helper function to validate meetup ID UUID
+function validateMeetupId(meetupId: string): void {
+  if (!validateUUID(meetupId)) {
+    throw new AppError('Invalid meetup ID format', ErrorCode.BAD_REQUEST);
+  }
+}
 
 export default function meetupApi(app: Express) {
   // Get all meetup categories
@@ -147,6 +155,7 @@ export default function meetupApi(app: Express) {
     try {
       const userId = req.user?.uid; // Optional authentication
       const meetupId = req.params.meetupId;
+      validateMeetupId(meetupId);
 
       const meetup = await meetupService.getMeetup(meetupId, userId);
 
@@ -185,6 +194,7 @@ export default function meetupApi(app: Express) {
         }
 
         const meetupId = req.params.meetupId;
+        validateMeetupId(meetupId);
 
         await meetupService.expressInterest(meetupId, userId);
 
@@ -256,6 +266,7 @@ export default function meetupApi(app: Express) {
         }
 
         const meetupId = req.params.meetupId;
+        validateMeetupId(meetupId);
 
         await meetupService.removeInterest(meetupId, userId);
 
@@ -298,6 +309,7 @@ export default function meetupApi(app: Express) {
         }
 
         const meetupId = req.params.meetupId;
+        validateMeetupId(meetupId);
 
         const { reason } = req.body;
         if (!reason || reason.trim().length === 0) {
@@ -403,6 +415,7 @@ export default function meetupApi(app: Express) {
         }
 
         const meetupId = req.params.meetupId;
+        validateMeetupId(meetupId);
 
         const updateData = req.body;
 
@@ -514,6 +527,7 @@ export default function meetupApi(app: Express) {
         }
 
         const meetupId = req.params.meetupId;
+        validateMeetupId(meetupId);
 
         await meetupService.deleteMeetup(meetupId, userId);
 
