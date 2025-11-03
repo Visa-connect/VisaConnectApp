@@ -20,9 +20,9 @@ const UsersListScreen: React.FC = () => {
     pageSize,
     hasNextPage,
     hasPreviousPage,
-    // For server-side search/pagination
-    fetchUsers,
-    searchUsers,
+    goToPage,
+    nextPage,
+    previousPage,
   } = useAdminUsers();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -31,24 +31,28 @@ const UsersListScreen: React.FC = () => {
     refreshData();
   }, [refreshData]);
 
-  // Server-side search with debounce
-  useEffect(() => {
-    const term = searchTerm.trim();
-    const handle = setTimeout(() => {
-      if (term) {
-        searchUsers({ search: term });
-      } else {
-        // Reset to default listing
-        refreshData();
-      }
-    }, 300);
-    return () => clearTimeout(handle);
-  }, [searchTerm, searchUsers, refreshData]);
+  // Filter users client-side based on search term
+  const filteredUsers = users.filter((user) => {
+    if (!searchTerm.trim()) {
+      return true;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    const fullName = `${user.first_name || ''} ${
+      user.last_name || ''
+    }`.toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    const id = (user.id || '').toLowerCase();
+
+    return (
+      fullName.includes(searchLower) ||
+      email.includes(searchLower) ||
+      id.includes(searchLower)
+    );
+  });
 
   const clearSearch = () => {
     setSearchTerm('');
-    // Trigger refresh to default listing
-    refreshData();
   };
 
   const handleView = (userId: string) => {
@@ -171,7 +175,7 @@ const UsersListScreen: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -181,19 +185,11 @@ const UsersListScreen: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleView(user.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      handleView(user.id);
-                    }
-                  }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -252,21 +248,9 @@ const UsersListScreen: React.FC = () => {
           pageSize={pageSize}
           hasNextPage={hasNextPage}
           hasPreviousPage={hasPreviousPage}
-          onPageChange={(page) =>
-            fetchUsers(page, searchTerm.trim() ? { search: searchTerm.trim() } : undefined)
-          }
-          onNextPage={() =>
-            fetchUsers(
-              currentPage + 1,
-              searchTerm.trim() ? { search: searchTerm.trim() } : undefined
-            )
-          }
-          onPreviousPage={() =>
-            fetchUsers(
-              currentPage - 1,
-              searchTerm.trim() ? { search: searchTerm.trim() } : undefined
-            )
-          }
+          onPageChange={goToPage}
+          onNextPage={nextPage}
+          onPreviousPage={previousPage}
           loading={loading}
         />
       </div>

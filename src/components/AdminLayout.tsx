@@ -64,7 +64,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+          <div className="flex items-center justify-between h-16 px-6 py-10 border-b border-gray-200">
             <div>
               <h1 className="text-xl font-bold text-gray-900">VisaConnect</h1>
               <p className="text-xs text-gray-600">
@@ -80,7 +80,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-6 space-y-2">
+          <nav className="flex-1 px-6 space-y-2 py-6">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               return (
