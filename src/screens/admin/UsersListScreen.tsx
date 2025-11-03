@@ -20,9 +20,9 @@ const UsersListScreen: React.FC = () => {
     pageSize,
     hasNextPage,
     hasPreviousPage,
-    goToPage,
-    nextPage,
-    previousPage,
+    // For server-side search/pagination
+    fetchUsers,
+    searchUsers,
   } = useAdminUsers();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -31,28 +31,24 @@ const UsersListScreen: React.FC = () => {
     refreshData();
   }, [refreshData]);
 
-  // Filter users client-side based on search term
-  const filteredUsers = users.filter((user) => {
-    if (!searchTerm.trim()) {
-      return true;
-    }
-
-    const searchLower = searchTerm.toLowerCase().trim();
-    const fullName = `${user.first_name || ''} ${
-      user.last_name || ''
-    }`.toLowerCase();
-    const email = (user.email || '').toLowerCase();
-    const id = (user.id || '').toLowerCase();
-
-    return (
-      fullName.includes(searchLower) ||
-      email.includes(searchLower) ||
-      id.includes(searchLower)
-    );
-  });
+  // Server-side search with debounce
+  useEffect(() => {
+    const term = searchTerm.trim();
+    const handle = setTimeout(() => {
+      if (term) {
+        searchUsers({ search: term });
+      } else {
+        // Reset to default listing
+        refreshData();
+      }
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [searchTerm, searchUsers, refreshData]);
 
   const clearSearch = () => {
     setSearchTerm('');
+    // Trigger refresh to default listing
+    refreshData();
   };
 
   const handleView = (userId: string) => {
@@ -175,7 +171,7 @@ const UsersListScreen: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.length === 0 ? (
+            {users.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -185,7 +181,7 @@ const UsersListScreen: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              filteredUsers.map((user) => (
+              users.map((user) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50 cursor-pointer"
@@ -256,9 +252,21 @@ const UsersListScreen: React.FC = () => {
           pageSize={pageSize}
           hasNextPage={hasNextPage}
           hasPreviousPage={hasPreviousPage}
-          onPageChange={goToPage}
-          onNextPage={nextPage}
-          onPreviousPage={previousPage}
+          onPageChange={(page) =>
+            fetchUsers(page, searchTerm.trim() ? { search: searchTerm.trim() } : undefined)
+          }
+          onNextPage={() =>
+            fetchUsers(
+              currentPage + 1,
+              searchTerm.trim() ? { search: searchTerm.trim() } : undefined
+            )
+          }
+          onPreviousPage={() =>
+            fetchUsers(
+              currentPage - 1,
+              searchTerm.trim() ? { search: searchTerm.trim() } : undefined
+            )
+          }
           loading={loading}
         />
       </div>
