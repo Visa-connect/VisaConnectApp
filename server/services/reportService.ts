@@ -376,31 +376,27 @@ class ReportService {
             );
           } else if (report.target_type === 'chat') {
             // Soft-disable the conversation in Firestore so it no longer appears in lists
-            try {
-              const db = admin.firestore();
-              await db
-                .collection('conversations')
-                .doc(String(report.target_id))
-                .set(
-                  {
-                    disabled: true,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                  },
-                  { merge: true }
-                );
-            } catch (fbErr) {
-              console.error(
-                'Failed to disable conversation for removed report',
-                fbErr
+            // Note: Firestore operations are handled separately since they're outside the DB transaction
+            const db = admin.firestore();
+            await db
+              .collection('conversations')
+              .doc(String(report.target_id))
+              .set(
+                {
+                  disabled: true,
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                },
+                { merge: true }
               );
-            }
           }
         } catch (deactivateErr) {
           // If deactivation fails, we still keep the report status updated but log the issue
-          console.error(
-            'Failed to deactivate target for removed report',
-            deactivateErr
-          );
+          // This applies to both database (meetup/job) and Firestore (chat) deactivation failures
+          console.error('Failed to deactivate target for removed report', {
+            target_type: report.target_type,
+            target_id: report.target_id,
+            error: deactivateErr,
+          });
         }
       }
 
