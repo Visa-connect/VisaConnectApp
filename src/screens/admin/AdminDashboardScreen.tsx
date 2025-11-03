@@ -5,7 +5,6 @@ import {
   BuildingOfficeIcon,
   LightBulbIcon,
   FlagIcon,
-  EyeIcon,
 } from '@heroicons/react/24/outline';
 import {
   adminTipsTripsAdviceService,
@@ -255,7 +254,10 @@ const AdminDashboardScreen: React.FC = () => {
               {recentPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50"
+                  onClick={() =>
+                    navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`)
+                  }
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
                 >
                   <img
                     className="h-10 w-10 rounded-full object-cover"
@@ -286,14 +288,6 @@ const AdminDashboardScreen: React.FC = () => {
                       {post.post_type.charAt(0).toUpperCase() +
                         post.post_type.slice(1)}
                     </span>
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`)
-                      }
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
               ))}

@@ -166,9 +166,6 @@ const AdminReportEditScreen: React.FC = () => {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Moderate Report</h1>
         </div>
-        <p className="text-gray-600">
-          Report #{report.report_id.slice(-8)} - {report.target_type} report
-        </p>
       </div>
 
       {/* Form */}
