@@ -30,7 +30,7 @@ export interface JobApplicationEmailData {
   resumeUrl?: string;
   resumeFilename?: string;
   appliedAt: Date;
-  jobId: number;
+  jobId: string;
   userTimezone?: string;
 }
 

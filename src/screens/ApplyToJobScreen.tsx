@@ -75,7 +75,7 @@ const ApplyToJobScreen: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        const response = await JobsApiService.getJobById(parseInt(jobId));
+        const response = await JobsApiService.getJobById(jobId);
 
         if (response.success) {
           setJob(response.data);

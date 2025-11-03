@@ -2,8 +2,8 @@ import pool from '../db/config';
 import { emailService, JobApplicationEmailData } from './emailService';
 
 export interface JobApplication {
-  id: number;
-  job_id: number;
+  id: string;
+  job_id: string;
   user_id: string;
   qualifications: string;
   location: string;
@@ -25,7 +25,7 @@ export interface JobApplicationWithDetails extends JobApplication {
 }
 
 export interface ApplicationSubmission {
-  job_id: number;
+  job_id: string;
   user_id: string;
   qualifications: string;
   location: string;
@@ -36,7 +36,7 @@ export interface ApplicationSubmission {
 }
 
 export interface ApplicationFilters {
-  job_id?: number;
+  job_id?: string;
   user_id?: string;
   status?: 'pending' | 'reviewed' | 'accepted' | 'rejected';
   business_id?: number;
@@ -88,7 +88,7 @@ export class ApplicationsService {
    * Get application by ID
    */
   async getApplicationById(
-    applicationId: number
+    applicationId: string
   ): Promise<JobApplicationWithDetails | null> {
     const query = `
       SELECT 
@@ -203,7 +203,7 @@ export class ApplicationsService {
    * Get applications for a specific job
    */
   async getApplicationsByJob(
-    jobId: number,
+    jobId: string,
     filters: Omit<ApplicationFilters, 'job_id'> = {}
   ): Promise<{ applications: JobApplicationWithDetails[]; total: number }> {
     return this.getApplications({ ...filters, job_id: jobId });
@@ -233,7 +233,7 @@ export class ApplicationsService {
    * Update application status
    */
   async updateApplicationStatus(
-    applicationId: number,
+    applicationId: string,
     status: 'pending' | 'reviewed' | 'accepted' | 'rejected'
   ): Promise<JobApplication | null> {
     const query = `
@@ -251,7 +251,7 @@ export class ApplicationsService {
    * Update application details
    */
   async updateApplication(
-    applicationId: number,
+    applicationId: string,
     applicationData: Partial<ApplicationSubmission>
   ): Promise<JobApplication | null> {
     const allowedFields = [
@@ -294,7 +294,7 @@ export class ApplicationsService {
   /**
    * Delete application
    */
-  async deleteApplication(applicationId: number): Promise<boolean> {
+  async deleteApplication(applicationId: string): Promise<boolean> {
     const query = 'DELETE FROM job_applications WHERE id = $1';
     const result = await pool.query(query, [applicationId]);
     return (result.rowCount ?? 0) > 0;
@@ -303,7 +303,7 @@ export class ApplicationsService {
   /**
    * Check if user has already applied to a job
    */
-  async hasUserAppliedToJob(jobId: number, userId: string): Promise<boolean> {
+  async hasUserAppliedToJob(jobId: string, userId: string): Promise<boolean> {
     const query = `
       SELECT 1 FROM job_applications 
       WHERE job_id = $1 AND user_id = $2
@@ -318,8 +318,8 @@ export class ApplicationsService {
    */
   async getAppliedJobIds(
     userId: string,
-    jobIds: number[]
-  ): Promise<Set<number>> {
+    jobIds: string[]
+  ): Promise<Set<string>> {
     if (jobIds.length === 0) {
       return new Set();
     }
@@ -334,7 +334,7 @@ export class ApplicationsService {
     const values = [userId, ...jobIds];
     const result = await pool.query(query, values);
 
-    return new Set(result.rows.map((row) => row.job_id));
+    return new Set(result.rows.map((row) => row.job_id as string));
   }
 
   /**

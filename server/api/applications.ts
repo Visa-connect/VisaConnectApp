@@ -121,7 +121,7 @@ export default function applicationsApi(app: Express) {
         }
 
         const applicationData: ApplicationSubmission = {
-          job_id: parseInt(job_id),
+          job_id: job_id,
           user_id: userId,
           qualifications,
           location,
@@ -229,10 +229,7 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const jobId = parseInt(req.params.jobId);
-        if (isNaN(jobId)) {
-          throw new AppError('Invalid job ID', ErrorCode.VALIDATION_ERROR);
-        }
+        const jobId = req.params.jobId;
 
         const {
           status,
@@ -314,13 +311,15 @@ export default function applicationsApi(app: Express) {
           });
         }
 
-        // Validate job IDs
+        // Validate job IDs (UUIDs)
+        const uuidRegex =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         const validJobIds = jobIds.filter(
-          (id) => typeof id === 'number' && id > 0
+          (id) => typeof id === 'string' && uuidRegex.test(id)
         );
         if (validJobIds.length !== jobIds.length) {
           throw new AppError(
-            'Invalid job IDs provided',
+            'Invalid job IDs provided. Job IDs must be valid UUIDs',
             ErrorCode.VALIDATION_ERROR
           );
         }
@@ -429,13 +428,7 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const applicationId = parseInt(req.params.applicationId);
-        if (isNaN(applicationId)) {
-          throw new AppError(
-            'Invalid application ID',
-            ErrorCode.VALIDATION_ERROR
-          );
-        }
+        const applicationId = req.params.applicationId;
 
         const application = await applicationsService.getApplicationById(
           applicationId
@@ -488,13 +481,7 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const applicationId = parseInt(req.params.applicationId);
-        if (isNaN(applicationId)) {
-          throw new AppError(
-            'Invalid application ID',
-            ErrorCode.VALIDATION_ERROR
-          );
-        }
+        const applicationId = req.params.applicationId;
 
         const { status } = req.body;
         if (
@@ -575,13 +562,7 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const applicationId = parseInt(req.params.applicationId);
-        if (isNaN(applicationId)) {
-          throw new AppError(
-            'Invalid application ID',
-            ErrorCode.VALIDATION_ERROR
-          );
-        }
+        const applicationId = req.params.applicationId;
 
         // Check if application exists and belongs to user
         const application = await applicationsService.getApplicationById(

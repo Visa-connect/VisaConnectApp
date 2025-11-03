@@ -143,16 +143,8 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
         const userId = req.user?.uid;
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
-            code: ErrorCode.BAD_REQUEST,
-          });
-        }
 
         const post = await tipsTripsAdviceService.getPostById(postId, userId);
 
@@ -233,7 +225,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     upload.array('photos', 10), // Allow up to 10 photos
     async (req: Request, res: Response) => {
       try {
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -241,14 +233,6 @@ export default function tipsTripsAdviceApi(app: Express) {
             success: false,
             message: 'User not authenticated',
             code: ErrorCode.UNAUTHORIZED,
-          });
-        }
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
-            code: ErrorCode.BAD_REQUEST,
           });
         }
 
@@ -360,7 +344,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -368,14 +352,6 @@ export default function tipsTripsAdviceApi(app: Express) {
             success: false,
             message: 'User not authenticated',
             code: ErrorCode.UNAUTHORIZED,
-          });
-        }
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
-            code: ErrorCode.BAD_REQUEST,
           });
         }
 
@@ -411,7 +387,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -419,14 +395,6 @@ export default function tipsTripsAdviceApi(app: Express) {
             success: false,
             message: 'User not authenticated',
             code: ErrorCode.UNAUTHORIZED,
-          });
-        }
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
-            code: ErrorCode.BAD_REQUEST,
           });
         }
 
@@ -477,7 +445,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -485,14 +453,6 @@ export default function tipsTripsAdviceApi(app: Express) {
             success: false,
             message: 'User not authenticated',
             code: ErrorCode.UNAUTHORIZED,
-          });
-        }
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
-            code: ErrorCode.BAD_REQUEST,
           });
         }
 
@@ -679,20 +639,13 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const userId = req.adminUser?.uid;
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
 
         if (!userId) {
           return res.status(401).json({
             success: false,
             message: 'Admin not authenticated',
             code: ErrorCode.UNAUTHORIZED,
-          });
-        }
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
           });
         }
 
@@ -799,14 +752,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     authenticateAdmin,
     async (req: Request, res: Response) => {
       try {
-        const postId = parseInt(req.params.postId);
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
-          });
-        }
+        const postId = req.params.postId;
 
         const post = await tipsTripsAdviceService.getPostById(postId);
 
@@ -882,20 +828,13 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const userId = req.adminUser?.uid;
-        const postId = parseInt(req.params.postId);
+        const postId = req.params.postId;
 
         if (!userId) {
           return res.status(401).json({
             success: false,
             message: 'Admin not authenticated',
             code: ErrorCode.UNAUTHORIZED,
-          });
-        }
-
-        if (isNaN(postId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid post ID',
           });
         }
 

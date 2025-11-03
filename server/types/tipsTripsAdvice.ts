@@ -6,7 +6,7 @@ export type PostType = 'tip' | 'trip' | 'advice';
 
 export interface TipsTripsAdvicePhoto {
   id: number;
-  post_id: number;
+  post_id: string;
   photo_url: string;
   photo_public_id: string;
   display_order: number;
@@ -15,7 +15,7 @@ export interface TipsTripsAdvicePhoto {
 
 export interface TipsTripsAdviceComment {
   id: number;
-  post_id: number;
+  post_id: string;
   user_id: string;
   comment: string;
   is_active: boolean;
@@ -32,13 +32,13 @@ export interface TipsTripsAdviceComment {
 
 export interface TipsTripsAdviceLike {
   id: number;
-  post_id: number;
+  post_id: string;
   user_id: string;
   created_at: string;
 }
 
 export interface TipsTripsAdvice {
-  id: number;
+  id: string;
   title: string;
   description: string;
   creator_id: string;
@@ -128,7 +128,7 @@ export interface TipsTripsAdviceListResponse {
 export interface CreateTipsTripsAdviceResponse {
   success: boolean;
   data: {
-    postId: number;
+    postId: string;
   };
   message?: string;
 }

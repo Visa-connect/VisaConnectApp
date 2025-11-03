@@ -146,14 +146,7 @@ export default function meetupApi(app: Express) {
   app.get('/api/meetups/:meetupId', async (req: Request, res: Response) => {
     try {
       const userId = req.user?.uid; // Optional authentication
-      const meetupId = parseInt(req.params.meetupId);
-
-      if (isNaN(meetupId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid meetup ID',
-        });
-      }
+      const meetupId = req.params.meetupId;
 
       const meetup = await meetupService.getMeetup(meetupId, userId);
 
@@ -191,13 +184,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetupId = parseInt(req.params.meetupId);
-        if (isNaN(meetupId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid meetup ID',
-          });
-        }
+        const meetupId = req.params.meetupId;
 
         await meetupService.expressInterest(meetupId, userId);
 
@@ -268,13 +255,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetupId = parseInt(req.params.meetupId);
-        if (isNaN(meetupId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid meetup ID',
-          });
-        }
+        const meetupId = req.params.meetupId;
 
         await meetupService.removeInterest(meetupId, userId);
 
@@ -316,13 +297,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetupId = parseInt(req.params.meetupId);
-        if (isNaN(meetupId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid meetup ID',
-          });
-        }
+        const meetupId = req.params.meetupId;
 
         const { reason } = req.body;
         if (!reason || reason.trim().length === 0) {
@@ -427,13 +402,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetupId = parseInt(req.params.meetupId);
-        if (isNaN(meetupId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid meetup ID',
-          });
-        }
+        const meetupId = req.params.meetupId;
 
         const updateData = req.body;
 
@@ -544,13 +513,7 @@ export default function meetupApi(app: Express) {
           });
         }
 
-        const meetupId = parseInt(req.params.meetupId);
-        if (isNaN(meetupId)) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid meetup ID',
-          });
-        }
+        const meetupId = req.params.meetupId;
 
         await meetupService.deleteMeetup(meetupId, userId);
 

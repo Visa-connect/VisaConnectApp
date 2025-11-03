@@ -67,7 +67,7 @@ const JobDetailsScreen: React.FC = () => {
 
         // Fetch job details and user businesses in parallel
         const [jobResponse] = await Promise.all([
-          JobsApiService.getJobById(parseInt(jobId)),
+          JobsApiService.getJobById(jobId),
           fetchUserBusinesses(),
         ]);
 

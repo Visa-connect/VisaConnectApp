@@ -1,7 +1,7 @@
 import pool from '../db/config';
 
 export interface Job {
-  id: number;
+  id: string;
   business_id: number;
   title: string;
   description: string;
@@ -77,7 +77,7 @@ class JobsService {
   /**
    * Get job by ID
    */
-  async getJobById(jobId: number): Promise<JobWithBusiness | null> {
+  async getJobById(jobId: string): Promise<JobWithBusiness | null> {
     const query = `
       SELECT 
         j.*,
@@ -194,7 +194,7 @@ class JobsService {
    * Update job status
    */
   async updateJobStatus(
-    jobId: number,
+    jobId: string,
     status: 'active' | 'paused' | 'closed'
   ): Promise<Job | null> {
     const query = `
@@ -212,7 +212,7 @@ class JobsService {
    * Update job details
    */
   async updateJob(
-    jobId: number,
+    jobId: string,
     jobData: Partial<JobSubmission>
   ): Promise<Job | null> {
     const allowedFields = [
@@ -256,7 +256,7 @@ class JobsService {
   /**
    * Delete job
    */
-  async deleteJob(jobId: number): Promise<boolean> {
+  async deleteJob(jobId: string): Promise<boolean> {
     const query = 'DELETE FROM jobs WHERE id = $1';
     const result = await pool.query(query, [jobId]);
     return (result.rowCount ?? 0) > 0;
@@ -265,7 +265,7 @@ class JobsService {
   /**
    * Check if user owns the business that posted the job
    */
-  async checkJobOwnership(jobId: number, userId: string): Promise<boolean> {
+  async checkJobOwnership(jobId: string, userId: string): Promise<boolean> {
     const query = `
       SELECT 1
       FROM jobs j

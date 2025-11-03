@@ -192,13 +192,7 @@ export default function jobsApi(app: Express) {
    */
   app.get('/api/jobs/:id', async (req: Request, res: Response) => {
     try {
-      const jobId = parseInt(req.params.id);
-      if (isNaN(jobId)) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid job ID',
-        });
-      }
+      const jobId = req.params.id;
 
       const job = await jobsService.getJobById(jobId);
       if (!job) {
@@ -287,13 +281,7 @@ export default function jobsApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const jobId = parseInt(req.params.id);
-        if (isNaN(jobId)) {
-          return res.status(400).json({
-            success: false,
-            error: 'Invalid job ID',
-          });
-        }
+        const jobId = req.params.id;
 
         const userId = req.user?.uid;
         if (!userId) {
@@ -344,13 +332,7 @@ export default function jobsApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const jobId = parseInt(req.params.id);
-        if (isNaN(jobId)) {
-          return res.status(400).json({
-            success: false,
-            error: 'Invalid job ID',
-          });
-        }
+        const jobId = req.params.id;
 
         const userId = req.user?.uid;
         if (!userId) {
@@ -408,13 +390,7 @@ export default function jobsApi(app: Express) {
     authenticateUser,
     async (req: Request, res: Response) => {
       try {
-        const jobId = parseInt(req.params.id);
-        if (isNaN(jobId)) {
-          return res.status(400).json({
-            success: false,
-            error: 'Invalid job ID',
-          });
-        }
+        const jobId = req.params.id;
 
         const userId = req.user?.uid;
         if (!userId) {

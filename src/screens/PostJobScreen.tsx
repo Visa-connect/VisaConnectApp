@@ -31,7 +31,7 @@ const PostJobScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>('');
   const [isEditMode, setIsEditMode] = useState(false);
-  const [jobId, setJobId] = useState<number | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
   const [isLoadingJob, setIsLoadingJob] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
@@ -49,7 +49,7 @@ const PostJobScreen: React.FC = () => {
 
   // Load job data for editing
   const loadJobData = useCallback(
-    async (jobId: number) => {
+    async (jobId: string) => {
       try {
         setIsLoadingJob(true);
         const response = await JobsApiService.getJobById(jobId);
@@ -119,11 +119,9 @@ const PostJobScreen: React.FC = () => {
     // Check if we're in edit mode
     const editJobId = searchParams.get('edit');
     if (editJobId) {
-      const jobIdNum = parseInt(editJobId);
-      if (!isNaN(jobIdNum)) {
-        setIsEditMode(true);
-        setJobId(jobIdNum);
-      }
+      const jobId = editJobId;
+      setIsEditMode(true);
+      setJobId(jobId);
     }
   }, [searchParams]);
 

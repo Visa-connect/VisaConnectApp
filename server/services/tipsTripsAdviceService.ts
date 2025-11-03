@@ -21,7 +21,7 @@ export class TipsTripsAdviceService {
   async createPost(
     postData: CreateTipsTripsAdviceRequest,
     creatorId: string
-  ): Promise<number> {
+  ): Promise<string> {
     try {
       // Validate required fields
       if (!postData.title || !postData.description || !postData.post_type) {
@@ -53,7 +53,7 @@ export class TipsTripsAdviceService {
           [postData.title, postData.description, creatorId, postData.post_type]
         );
 
-        const postId = postResult.rows[0].id;
+        const postId = postResult.rows[0].id as string;
 
         // Insert photos if provided
         if (postData.photos && postData.photos.length > 0) {
@@ -99,7 +99,7 @@ export class TipsTripsAdviceService {
   }
 
   // Get a single post by ID
-  async getPostById(postId: number, userId?: string): Promise<TipsTripsAdvice> {
+  async getPostById(postId: string, userId?: string): Promise<TipsTripsAdvice> {
     try {
       const query = `
         SELECT 
@@ -341,7 +341,7 @@ export class TipsTripsAdviceService {
 
   // Update a post
   async updatePost(
-    postId: number,
+    postId: string,
     updateData: UpdateTipsTripsAdviceRequest,
     userId: string
   ): Promise<void> {
@@ -489,7 +489,7 @@ export class TipsTripsAdviceService {
   }
 
   // Delete a post
-  async deletePost(postId: number, userId: string): Promise<void> {
+  async deletePost(postId: string, userId: string): Promise<void> {
     try {
       // Check if post exists and user is the creator
       const postResult = await pool.query(
@@ -527,7 +527,7 @@ export class TipsTripsAdviceService {
 
   // Add a comment to a post
   async addComment(
-    postId: number,
+    postId: string,
     comment: string,
     userId: string
   ): Promise<TipsTripsAdviceComment> {
@@ -585,7 +585,7 @@ export class TipsTripsAdviceService {
 
   // Like/unlike a post
   async toggleLike(
-    postId: number,
+    postId: string,
     userId: string
   ): Promise<{ liked: boolean }> {
     try {
