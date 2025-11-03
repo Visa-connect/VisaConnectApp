@@ -263,9 +263,7 @@ export default function chatApi(app: Express) {
         // Reuse generic reports service via HTTP to keep logic centralized
         const payload: CreateReportData = {
           reporter_id: reporterId,
-          // Explicitly allow 'chat' as a target type
-          // Casting guards against stale type unions in certain build setups
-          target_type: 'chat' as any,
+          target_type: 'chat',
           target_id: conversationId,
           reason: reason.trim(),
         };
