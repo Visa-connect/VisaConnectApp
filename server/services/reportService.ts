@@ -1,4 +1,5 @@
 import pool from '../db/config';
+import admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { emailService, NewReportEmailData } from './emailService';
 
@@ -372,6 +373,23 @@ class ReportService {
               "UPDATE jobs SET status = 'closed', updated_at = NOW() WHERE id = $1",
               [report.target_id]
             );
+          } else if (report.target_type === 'chat') {
+            // Soft-disable the conversation in Firestore so it no longer appears in lists
+            try {
+              const db = admin.firestore();
+              await db
+                .collection('conversations')
+                .doc(String(report.target_id))
+                .set(
+                  {
+                    disabled: true,
+                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                  },
+                  { merge: true }
+                );
+            } catch (fbErr) {
+              console.error('Failed to disable conversation for removed report', fbErr);
+            }
           }
         } catch (deactivateErr) {
           // If deactivation fails, we still keep the report status updated but log the issue
