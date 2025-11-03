@@ -1,16 +1,9 @@
 name: Deploy Staging to Production
 
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy'
-        required: true
-        default: 'production'
-        type: choice
-        options:
-          - production
-          - staging
+  push:
+    branches:
+      - main
 
 env:
   HEROKU_APP_NAME: visa-connect
@@ -24,6 +17,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # For PRs, use the source branch. For pushes, use the current branch
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
           # Fetch full history for git operations
           fetch-depth: 0
 
@@ -49,7 +44,6 @@ jobs:
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
-
       - name: Authenticate Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
@@ -61,21 +55,23 @@ jobs:
         run: |
           heroku stack:set heroku-24 --app ${{ env.HEROKU_APP_NAME }}
 
-      - name: Deploy to Heroku Production
-        uses: akhileshns/heroku-deploy@v3.12.14
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ env.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          branch: main
+      - name: Add Heroku git remote
+        run: |
+          heroku git:remote --app ${{ env.HEROKU_APP_NAME }} || true
+
+      - name: Push to Heroku (git) and release
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          # Push current HEAD to Heroku main
+          git push https://heroku:${HEROKU_API_KEY}@git.heroku.com/${{ env.HEROKU_APP_NAME }}.git HEAD:main --force
 
       - name: Run Database Migrations
         run: |
-          echo "Running database migrations on production..."
+          # Run migrations on the deployed app
           heroku run "cd server && yarn migrate" --app ${{ env.HEROKU_APP_NAME }}
-          echo "✅ Migrations completed successfully!"
 
-      - name: Run production health check
+      - name: Health check
         run: |
           echo "Waiting for deployment to complete..."
 
@@ -93,9 +89,3 @@ jobs:
           done
           echo "Health check failed after $ATTEMPTS attempts. Last response:" && curl -v "$URL" || true
           exit 1
-
-      - name: Notify deployment success
-        if: success()
-        run: |
-          echo "🚀 Production deployment successful!"
-          echo "Production: https://${{ env.PRODUCTION_URL }}"
