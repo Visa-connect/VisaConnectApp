@@ -32,10 +32,10 @@ reportsRouter.post(
         );
       }
 
-      // Validate target_type
-      if (!['job', 'meetup'].includes(target_type)) {
+      // Validate target_type (now supports chat conversations as well)
+      if (!['job', 'meetup', 'chat'].includes(target_type)) {
         throw new AppError(
-          'Invalid target_type. Must be "job" or "meetup"',
+          'Invalid target_type. Must be "job", "meetup", or "chat"',
           ErrorCode.VALIDATION_ERROR,
           400
         );

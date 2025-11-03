@@ -1,6 +1,8 @@
 import { Express, Request, Response } from 'express';
 import { authenticateUser } from '../middleware/auth';
 import { chatService } from '../services/chatService';
+import { reportService } from '../services/reportService';
+import type { CreateReportData } from '../services/reportService';
 import { notificationService } from '../services/notificationService';
 import pool from '../db/config';
 import { userService } from '../services/userService';
@@ -231,6 +233,52 @@ export default function chatApi(app: Express) {
         res
           .status(500)
           .json({ success: false, message: 'Failed to send message' });
+      }
+    }
+  );
+
+  // Report a chat conversation
+  app.post(
+    '/api/chat/conversations/:conversationId/report',
+    authenticateUser,
+    async (req: Request, res: Response) => {
+      try {
+        const reporterId = req.user?.uid;
+        if (!reporterId) {
+          return res
+            .status(401)
+            .json({ success: false, message: 'User not authenticated' });
+        }
+
+        const { conversationId } = req.params;
+        const { reason } = req.body;
+
+        if (!reason || reason.trim().length < 10) {
+          return res.status(400).json({
+            success: false,
+            message: 'Reason must be at least 10 characters long',
+          });
+        }
+
+        // Reuse generic reports service via HTTP to keep logic centralized
+        const payload: CreateReportData = {
+          reporter_id: reporterId,
+          target_type: 'chat',
+          target_id: conversationId,
+          reason: reason.trim(),
+        };
+        const report = await reportService.createReport(payload);
+
+        res.status(201).json({
+          success: true,
+          data: { report_id: report.report_id },
+          message: 'Conversation reported successfully',
+        });
+      } catch (error) {
+        console.error('Error reporting conversation:', error);
+        res
+          .status(500)
+          .json({ success: false, message: 'Failed to report conversation' });
       }
     }
   );

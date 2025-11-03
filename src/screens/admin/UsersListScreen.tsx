@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+// Actions removed; rows are clickable
 import { useAdminStore } from '../../stores/adminStore';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
 import { formatLocationString } from '../../utils/locationUtils';
@@ -13,7 +13,6 @@ const UsersListScreen: React.FC = () => {
     users,
     loading,
     error,
-    deleteUser,
     refreshData,
     currentPage,
     totalPages,
@@ -25,11 +24,36 @@ const UsersListScreen: React.FC = () => {
     nextPage,
     previousPage,
   } = useAdminUsers();
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch users on component mount
   useEffect(() => {
     refreshData();
   }, [refreshData]);
+
+  // Filter users client-side based on search term
+  const filteredUsers = users.filter((user) => {
+    if (!searchTerm.trim()) {
+      return true;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    const fullName = `${user.first_name || ''} ${
+      user.last_name || ''
+    }`.toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    const id = (user.id || '').toLowerCase();
+
+    return (
+      fullName.includes(searchLower) ||
+      email.includes(searchLower) ||
+      id.includes(searchLower)
+    );
+  });
+
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
 
   const handleView = (userId: string) => {
     const user = users.find((u) => u.id === userId);
@@ -39,19 +63,7 @@ const UsersListScreen: React.FC = () => {
     navigate(`/admin/users/${userId}`);
   };
 
-  const handleEdit = (userId: string) => {
-    const user = users.find((u) => u.id === userId);
-    if (user) {
-      dispatch({ type: 'SET_SELECTED_USER', payload: user });
-    }
-    navigate(`/admin/users/${userId}/edit`);
-  };
-
-  const handleDelete = async (userId: string) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      await deleteUser(userId);
-    }
-  };
+  // Edit/Delete actions removed
 
   const getVisaTypeColor = (visaType?: string) => {
     if (!visaType) return 'bg-gray-100 text-gray-800';
@@ -107,6 +119,35 @@ const UsersListScreen: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Name, email, or user ID..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-end space-x-2">
+            <button
+              onClick={clearSearch}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -130,24 +171,34 @@ const UsersListScreen: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Joined
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
+              {/* Actions column removed; entire row is clickable */}
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   No users found.
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+              filteredUsers.map((user) => (
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleView(user.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleView(user.id);
+                    }
+                  }}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <img
@@ -190,31 +241,6 @@ const UsersListScreen: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {new Date(user.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleView(user.id)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="View"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEdit(user.id)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user.id)}
-                        className="text-red-600 hover:text-red-900"
-                        title="Delete"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))

@@ -166,9 +166,6 @@ const AdminReportEditScreen: React.FC = () => {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">Moderate Report</h1>
         </div>
-        <p className="text-gray-600">
-          Report #{report.report_id.slice(-8)} - {report.target_type} report
-        </p>
       </div>
 
       {/* Form */}
@@ -181,12 +178,14 @@ const AdminReportEditScreen: React.FC = () => {
                 <FlagIcon className="h-5 w-5 mr-2" />
                 Report Information
               </div>
-              <button
-                onClick={openTargetModal}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                {report.target_type === 'job' ? 'View job' : 'View meetup'}
-              </button>
+              {report.target_type !== 'chat' && (
+                <button
+                  onClick={openTargetModal}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  View Content
+                </button>
+              )}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -265,19 +264,9 @@ const AdminReportEditScreen: React.FC = () => {
                   required
                 >
                   <option value="pending">Keep Pending</option>
-                  <option value="resolved">Resolve (Keep Post)</option>
-                  <option value="removed">Remove Post</option>
+                  <option value="resolved">Resolve(Keep Content)</option>
+                  <option value="removed">Remove</option>
                 </select>
-                <div className="mt-2 text-sm text-gray-600">
-                  <p>
-                    <strong>Resolve:</strong> Mark report as resolved, post
-                    remains visible
-                  </p>
-                  <p>
-                    <strong>Remove:</strong> Mark report as resolved and remove
-                    the reported post
-                  </p>
-                </div>
               </div>
 
               <div>

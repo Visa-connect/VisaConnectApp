@@ -142,10 +142,9 @@ const ViewTipsTripsAdviceScreen: React.FC = () => {
 
             <Button
               onClick={handleEdit}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
+              className="bg-transparent px-4 py-2 rounded-lg transition-colors flex items-center"
             >
-              <PencilIcon className="h-4 w-4 mr-2" />
-              Edit
+              <PencilIcon className="h-5 w-5 text-black" />
             </Button>
           </div>
         </div>

@@ -141,13 +141,13 @@ const SignInScreen: React.FC = () => {
                 value={form.password}
                 onChange={handleChange}
                 disabled={submitting}
-                className="pr-12"
+                className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
               />
               <button
                 type="button"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center text-gray-400 hover:text-gray-600"
+                className="absolute inset-y-0 right-0 pr-3 grid place-items-center text-gray-400 hover:text-gray-600"
               >
                 {showPassword ? (
                   <EyeSlashIcon className="h-5 w-5" />

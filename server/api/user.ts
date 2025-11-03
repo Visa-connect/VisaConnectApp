@@ -293,7 +293,7 @@ export default function userApi(app: Express) {
     }
   );
 
-  // Admin: Get all users with pagination (admin only)
+  // Admin: Get all users with pagination and search (admin only)
   app.get(
     '/api/admin/users',
     authenticateAdmin,
@@ -301,8 +301,9 @@ export default function userApi(app: Express) {
       try {
         const limit = parseInt(req.query.limit as string) || 50;
         const offset = parseInt(req.query.offset as string) || 0;
+        const search = req.query.search as string | undefined;
 
-        const result = await userService.getAllUsers(limit, offset);
+        const result = await userService.getAllUsers(limit, offset, search);
 
         res.status(200).json({
           success: true,

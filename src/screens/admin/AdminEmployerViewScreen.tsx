@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
-  PencilIcon,
   BuildingOfficeIcon,
   EnvelopeIcon,
   PhoneIcon,
@@ -12,7 +11,6 @@ import {
   ShieldCheckIcon,
   UserIcon,
 } from '@heroicons/react/24/outline';
-import Button from '../../components/Button';
 import {
   adminEmployerService,
   AdminEmployer,
@@ -62,11 +60,7 @@ const AdminEmployerViewScreen: React.FC = () => {
     navigate('/admin/employers');
   };
 
-  const handleEdit = () => {
-    if (employer?.id) {
-      navigate(`/admin/employers/edit/${employer.id}`);
-    }
-  };
+  // Edit action removed
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -135,6 +129,9 @@ const AdminEmployerViewScreen: React.FC = () => {
     );
   }
 
+  const verificationStatus =
+    employer.verification_status || (employer as any).status || '';
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -149,7 +146,7 @@ const AdminEmployerViewScreen: React.FC = () => {
           </button>
 
           <div className="flex items-center space-x-3">
-            <span
+            {/* <span
               className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${
                 employer.is_active
                   ? 'bg-green-100 text-green-800'
@@ -157,24 +154,26 @@ const AdminEmployerViewScreen: React.FC = () => {
               }`}
             >
               {employer.is_active ? 'Active' : 'Inactive'}
-            </span>
+            </span> */}
 
-            <span
+            {/* <span
               className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getVerificationStatusColor(
-                employer.verification_status
+                verificationStatus || 'pending'
               )}`}
             >
-              {employer.verification_status.charAt(0).toUpperCase() +
-                employer.verification_status.slice(1)}
-            </span>
+              {verificationStatus
+                ? verificationStatus.charAt(0).toUpperCase() +
+                  verificationStatus.slice(1)
+                : 'Unknown'}
+            </span> */}
 
-            <Button
+            {/* <Button
               onClick={handleEdit}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center"
             >
               <PencilIcon className="h-4 w-4 mr-2" />
               Edit
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
@@ -407,11 +406,13 @@ const AdminEmployerViewScreen: React.FC = () => {
                 </span>
                 <span
                   className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${getVerificationStatusColor(
-                    employer.verification_status
+                    verificationStatus || 'pending'
                   )}`}
                 >
-                  {employer.verification_status.charAt(0).toUpperCase() +
-                    employer.verification_status.slice(1)}
+                  {verificationStatus
+                    ? verificationStatus.charAt(0).toUpperCase() +
+                      verificationStatus.slice(1)
+                    : 'Unknown'}
                 </span>
               </div>
               {employer.verification_notes && (

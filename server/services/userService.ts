@@ -381,20 +381,36 @@ class UserService {
     return (result.rowCount ?? 0) > 0;
   }
 
-  // Get all users (with pagination)
+  // Get all users (with pagination and search)
   async getAllUsers(
     limit: number = 50,
-    offset: number = 0
+    offset: number = 0,
+    search?: string
   ): Promise<{ users: User[]; total: number }> {
+    let countQuery = 'SELECT COUNT(*) as total FROM users';
+    let usersQuery =
+      'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2';
+    const countParams: any[] = [];
+    const usersParams: any[] = [limit, offset];
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchPattern = `%${search.trim()}%`;
+      const searchCondition = `(first_name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1 OR id::text ILIKE $1)`;
+
+      countQuery = `SELECT COUNT(*) as total FROM users WHERE ${searchCondition}`;
+      countParams.push(searchPattern);
+
+      usersQuery = `SELECT * FROM users WHERE ${searchCondition} ORDER BY created_at DESC LIMIT $2 OFFSET $3`;
+      usersParams.unshift(searchPattern);
+    }
+
     // Get total count
-    const countQuery = 'SELECT COUNT(*) as total FROM users';
-    const countResult = await pool.query(countQuery);
+    const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
     // Get paginated users
-    const usersQuery =
-      'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2';
-    const usersResult = await pool.query(usersQuery, [limit, offset]);
+    const usersResult = await pool.query(usersQuery, usersParams);
 
     return {
       users: usersResult.rows,

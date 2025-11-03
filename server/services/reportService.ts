@@ -1,4 +1,5 @@
 import pool from '../db/config';
+import admin from 'firebase-admin';
 import { v4 as uuidv4 } from 'uuid';
 import { emailService, NewReportEmailData } from './emailService';
 
@@ -6,7 +7,7 @@ export interface Report {
   id: number;
   report_id: string;
   reporter_id: string;
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   target_id: string;
   reason: string;
   status: 'pending' | 'resolved' | 'removed';
@@ -16,7 +17,7 @@ export interface Report {
 
 export interface CreateReportData {
   reporter_id: string;
-  target_type: 'job' | 'meetup';
+  target_type: 'job' | 'meetup' | 'chat';
   target_id: string;
   reason: string;
 }
@@ -29,7 +30,7 @@ export interface SearchReportsParams {
   limit?: number;
   offset?: number;
   status?: 'pending' | 'resolved' | 'removed';
-  target_type?: 'job' | 'meetup';
+  target_type?: 'job' | 'meetup' | 'chat';
   reporter_id?: string;
   search?: string; // Search by report_id or reason text
   date_from?: string;
@@ -340,10 +341,16 @@ class ReportService {
     try {
       await client.query('BEGIN');
 
-      // Update report status
+      // Update report status and toggle is_active when removed
+      const isRemoved = status === 'removed';
       const result = await client.query(
-        'UPDATE reports SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE report_id = $2 RETURNING *',
-        [status, reportId]
+        `UPDATE reports 
+         SET status = $1,
+             is_active = CASE WHEN $3 THEN FALSE ELSE is_active END,
+             updated_at = CURRENT_TIMESTAMP 
+         WHERE report_id = $2 
+         RETURNING *`,
+        [status, reportId, isRemoved]
       );
 
       if (result.rows.length === 0) {
@@ -352,8 +359,49 @@ class ReportService {
 
       // TODO: Add audit trail entry when audit trail table is implemented
 
+      const report = result.rows[0];
+
+      // On removal, deactivate the underlying target from discovery
+      if (status === 'removed') {
+        try {
+          if (report.target_type === 'meetup') {
+            await client.query(
+              'UPDATE meetups SET is_active = FALSE, updated_at = NOW() WHERE id = $1',
+              [report.target_id]
+            );
+          } else if (report.target_type === 'job') {
+            await client.query(
+              "UPDATE jobs SET status = 'closed', updated_at = NOW() WHERE id = $1",
+              [report.target_id]
+            );
+          } else if (report.target_type === 'chat') {
+            // Soft-disable the conversation in Firestore so it no longer appears in lists
+            // Note: Firestore operations are handled separately since they're outside the DB transaction
+            const db = admin.firestore();
+            await db
+              .collection('conversations')
+              .doc(String(report.target_id))
+              .set(
+                {
+                  disabled: true,
+                  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                },
+                { merge: true }
+              );
+          }
+        } catch (deactivateErr) {
+          // If deactivation fails, we still keep the report status updated but log the issue
+          // This applies to both database (meetup/job) and Firestore (chat) deactivation failures
+          console.error('Failed to deactivate target for removed report', {
+            target_type: report.target_type,
+            target_id: report.target_id,
+            error: deactivateErr,
+          });
+        }
+      }
+
       await client.query('COMMIT');
-      return result.rows[0];
+      return report;
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

@@ -5,7 +5,6 @@ import {
   BuildingOfficeIcon,
   LightBulbIcon,
   FlagIcon,
-  EyeIcon,
 } from '@heroicons/react/24/outline';
 import {
   adminTipsTripsAdviceService,
@@ -13,6 +12,7 @@ import {
 } from '../../api/adminTipsTripsAdviceService';
 import { useAdminBusinesses } from '../../hooks/useAdminBusinesses';
 import { useAdminUsers } from '../../hooks/useAdminUsers';
+import { reportService } from '../../api/reportService';
 
 const AdminDashboardScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -21,9 +21,9 @@ const AdminDashboardScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalPosts: 0,
-    activePosts: 0,
     totalUsers: 0,
     totalEmployers: 0,
+    totalReports: 0,
   });
   // const [employerStats, setEmployerStats] = useState<EmployerStats | null>(
   //   null
@@ -61,13 +61,14 @@ const AdminDashboardScreen: React.FC = () => {
         {}
       );
       const allPosts = allPostsResponse.data;
-      const activePosts = allPosts.filter((post) => post.is_active);
+      // Reports stats
+      const reportStats = await reportService.getReportStats();
 
       setStats({
         totalPosts: allPosts.length,
-        activePosts: activePosts.length,
         totalUsers: users.length,
         totalEmployers: businessCounts.all,
+        totalReports: reportStats.total_reports,
       });
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -126,13 +127,6 @@ const AdminDashboardScreen: React.FC = () => {
       bgColor: 'bg-blue-100',
     },
     {
-      name: 'Active Posts',
-      value: stats.activePosts,
-      icon: EyeIcon,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-    },
-    {
       name: 'Total Users',
       value: stats.totalUsers,
       icon: UserGroupIcon,
@@ -145,6 +139,13 @@ const AdminDashboardScreen: React.FC = () => {
       icon: BuildingOfficeIcon,
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
+    },
+    {
+      name: 'Total Reports',
+      value: stats.totalReports,
+      icon: FlagIcon,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
     },
   ];
 
@@ -253,7 +254,18 @@ const AdminDashboardScreen: React.FC = () => {
               {recentPosts.map((post) => (
                 <div
                   key={post.id}
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50"
+                  onClick={() =>
+                    navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`)
+                  }
+                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`);
+                    }
+                  }}
                 >
                   <img
                     className="h-10 w-10 rounded-full object-cover"
@@ -284,14 +296,6 @@ const AdminDashboardScreen: React.FC = () => {
                       {post.post_type.charAt(0).toUpperCase() +
                         post.post_type.slice(1)}
                     </span>
-                    <button
-                      onClick={() =>
-                        navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`)
-                      }
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <EyeIcon className="h-4 w-4" />
-                    </button>
                   </div>
                 </div>
               ))}
