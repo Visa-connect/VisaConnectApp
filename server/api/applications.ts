@@ -1,4 +1,5 @@
 import { Express, Request, Response } from 'express';
+import { validate as validateUUID } from 'uuid';
 import { authenticateUser } from '../middleware/auth';
 import applicationsService, {
   ApplicationSubmission,
@@ -312,10 +313,8 @@ export default function applicationsApi(app: Express) {
         }
 
         // Validate job IDs (UUIDs)
-        const uuidRegex =
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         const validJobIds = jobIds.filter(
-          (id) => typeof id === 'string' && uuidRegex.test(id)
+          (id) => typeof id === 'string' && validateUUID(id)
         );
         if (validJobIds.length !== jobIds.length) {
           throw new AppError(
