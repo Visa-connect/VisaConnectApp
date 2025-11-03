@@ -1,38 +1,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { tokenRefreshService } from '../utils/tokenRefresh';
+import { useNotificationStore } from './notificationStore';
+import { executeWhenHydrated } from '../utils/persistUtils';
+import { User } from '../types/api';
 
-// User data interface
-export interface UserData {
-  uid: string;
-  email: string;
-  first_name?: string;
-  last_name?: string;
-  visa_type?: string;
-  current_location?: {
-    city?: string;
-    state?: string;
-    country?: string;
-  };
-  occupation?: string;
-  employer?: string;
-  nationality?: string;
-  languages?: string[];
-  other_us_jobs?: string[];
-  relationship_status?: string;
-  hobbies?: string[];
-  favorite_state?: string;
-  preferred_outings?: string[];
-  has_car?: boolean;
-  offers_rides?: boolean;
-  road_trips?: boolean;
-  favorite_place?: string;
-  travel_tips?: string;
-  willing_to_guide?: boolean;
-  mentorship_interest?: boolean;
-  job_boards?: string[];
-  visa_advice?: string;
-  profile_answers?: Record<string, any>;
+// User data interface - extends the consolidated User interface with uid field
+export interface UserData extends Omit<User, 'id'> {
+  uid: string; // Use uid instead of id for consistency with Firebase
 }
+
+// Helper function to convert User (from API) to UserData (for store)
+export const userToUserData = (user: User): UserData => {
+  const { id, ...rest } = user;
+  return { ...rest, uid: id };
+};
+
+// Helper function to convert UserData (from store) to User (for API)
+export const userDataToUser = (userData: UserData): User => {
+  const { uid, ...rest } = userData;
+  return { ...rest, id: uid };
+};
 
 // Store interface
 interface UserStore {
@@ -49,6 +37,12 @@ interface UserStore {
   clearUser: () => void;
   setLoading: (loading: boolean) => void;
 
+  // Token management
+  getToken: () => string | null;
+  setToken: (token: string) => void;
+  removeToken: () => void;
+  ensureValidToken: () => Promise<boolean>;
+
   // Computed values
   getFullName: () => string;
   getLocation: () => string;
@@ -62,17 +56,72 @@ export const useUserStore = create<UserStore>()(
       // Initialize from localStorage for backward compatibility
       init: () => {
         const userData = localStorage.getItem('userData');
-        const userToken = localStorage.getItem('userToken');
+        const userToken = get().getToken();
 
         if (userData && userToken) {
           try {
             const user = JSON.parse(userData);
             set({ user, isAuthenticated: true, hasToken: true });
+
+            // Start token monitoring for existing user
+            if (tokenRefreshService.isTokenValid(userToken)) {
+              try {
+                tokenRefreshService.startTokenMonitoring(
+                  userToken,
+                  (newToken) => {
+                    // Token refreshed successfully
+                    get().setToken(newToken);
+                    console.log('Token automatically refreshed on init');
+                  },
+                  (error) => {
+                    // Token refresh failed, clear user data
+                    console.error(
+                      'Automatic token refresh failed on init:',
+                      error
+                    );
+                    get().clearUser();
+                  },
+                  () => get().getToken() // Token getter function (storage-agnostic)
+                );
+              } catch (error) {
+                console.error(
+                  'Error starting token monitoring on init:',
+                  error
+                );
+                get().clearUser();
+              }
+            } else {
+              // Token is expired, clear user data
+              console.log('Token expired on init, clearing user data');
+              get().clearUser();
+              return;
+            }
+
+            // Fetch notifications if user is already authenticated
+            const hydrateAndFetch = () => {
+              const notificationStore = useNotificationStore.getState();
+              if (notificationStore.shouldRefresh()) {
+                notificationStore.fetchNotifications().catch((error) => {
+                  console.error(
+                    'Failed to fetch notifications on init:',
+                    error
+                  );
+                });
+                notificationStore.fetchUnreadCount().catch((error) => {
+                  console.error('Failed to fetch unread count on init:', error);
+                });
+              }
+            };
+
+            // Ensure the notification store is hydrated before use to avoid race conditions
+            executeWhenHydrated(useNotificationStore, hydrateAndFetch);
           } catch (error) {
             console.error(
               'Failed to parse user data from localStorage:',
               error
             );
+            // Clear invalid data
+            get().clearUser();
           }
         }
       },
@@ -84,10 +133,50 @@ export const useUserStore = create<UserStore>()(
 
       // Actions
       setUser: (user: UserData) => {
-        const hasToken = !!localStorage.getItem('userToken');
+        const hasToken = !!get().getToken();
         set({ user, isAuthenticated: true, hasToken });
         // Also update localStorage for backward compatibility
         localStorage.setItem('userData', JSON.stringify(user));
+
+        // Start token monitoring if we have a token
+        if (hasToken) {
+          const currentToken = get().getToken();
+          if (currentToken) {
+            tokenRefreshService.startTokenMonitoring(
+              currentToken,
+              (newToken) => {
+                // Token refreshed successfully
+                get().setToken(newToken);
+                console.log('Token automatically refreshed');
+              },
+              (error) => {
+                // Token refresh failed, clear user data
+                console.error('Automatic token refresh failed:', error);
+                get().clearUser();
+              },
+              () => get().getToken() // Token getter function (storage-agnostic)
+            );
+          }
+        }
+
+        // Fetch notifications after successful login
+        if (hasToken) {
+          const runFetch = () => {
+            const notificationStore = useNotificationStore.getState();
+            notificationStore.fetchNotifications().catch((error) => {
+              console.error(
+                'Failed to fetch notifications after login:',
+                error
+              );
+            });
+            notificationStore.fetchUnreadCount().catch((error) => {
+              console.error('Failed to fetch unread count after login:', error);
+            });
+          };
+
+          // Ensure notification store is hydrated first
+          executeWhenHydrated(useNotificationStore, runFetch);
+        }
       },
 
       updateUser: (updates: Partial<UserData>) => {
@@ -101,13 +190,59 @@ export const useUserStore = create<UserStore>()(
       },
 
       clearUser: () => {
+        // Stop token monitoring
+        tokenRefreshService.stopTokenMonitoring();
+
         set({ user: null, isAuthenticated: false, hasToken: false });
         // Clear localStorage
         localStorage.removeItem('userData');
-        localStorage.removeItem('userToken');
+        get().removeToken();
+
+        // Clear notifications when user logs out
+        const notificationStore = useNotificationStore.getState();
+        notificationStore.clearNotifications();
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      // Token management
+      getToken: () => localStorage.getItem('userToken'),
+      setToken: (token: string) => {
+        localStorage.setItem('userToken', token);
+        // Clear cache when token is manually set to ensure consistency
+        // tokenRefreshService.clearCache(); // Temporarily disabled
+      },
+      removeToken: () => localStorage.removeItem('userToken'),
+
+      ensureValidToken: async () => {
+        try {
+          const currentToken = get().getToken();
+          if (!currentToken) {
+            console.log('No token to validate');
+            return false;
+          }
+
+          // Check if token is still valid before attempting refresh
+          if (tokenRefreshService.isTokenValid(currentToken)) {
+            console.log('Token is still valid, no refresh needed');
+            return true;
+          }
+
+          console.log('Refreshing token...');
+          const newToken = await tokenRefreshService.manualRefresh();
+
+          // Update token in localStorage and store
+          get().setToken(newToken);
+
+          console.log('Token refreshed successfully');
+          return true;
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          // If refresh fails, clear user data to force re-login
+          get().clearUser();
+          return false;
+        }
+      },
 
       // Computed values
       getFullName: () => {

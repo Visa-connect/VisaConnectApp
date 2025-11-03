@@ -38,7 +38,14 @@ export interface User {
   mentorship_interest?: boolean;
   job_boards?: string[];
   visa_advice?: string;
-  profile_answers?: Record<string, any>;
+  profile_photo_url?: string | null;
+  profile_photo_public_id?: string | null;
+  bio?: string;
+  resume_url?: string | null;
+  resume_filename?: string | null;
+  resume_public_id?: string | null;
+  timezone?: string | null;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
 
   created_at?: Date;
   updated_at?: Date;
@@ -58,6 +65,7 @@ export interface BasicUserData {
   };
   occupation?: string; // Job title/role
   employer?: string; // Company name
+  timezone?: string | null; // User's timezone
 }
 
 // Extended user data for profile updates (includes all fields)
@@ -85,19 +93,41 @@ export interface CreateUserData extends BasicUserData {
   mentorship_interest?: boolean;
   job_boards?: string[];
   visa_advice?: string;
-  profile_answers?: Record<string, any>;
+  profile_photo_url?: string | null;
+  profile_photo_public_id?: string | null;
+  bio?: string;
+  resume_url?: string | null;
+  resume_filename?: string | null;
+  resume_public_id?: string | null;
+  timezone?: string | null;
+  helped_count?: number; // Count of unique users who have given this user a thumbs-up
 }
 
-export class UserService {
+// Interface for chat thumbs-up data
+export interface ChatThumbsUpData {
+  giver_id: string;
+  receiver_id: string;
+  chat_message_id: string;
+}
+
+// Interface for thumbs-up response
+export interface ThumbsUpResponse {
+  success: boolean;
+  message: string;
+  helped_count?: number;
+  already_given?: boolean;
+}
+
+class UserService {
   // Create a new user with basic information
   async createUser(userData: BasicUserData): Promise<User> {
     const id = userData.id || uuidv4();
     const query = `
               INSERT INTO users (
-                id, email, first_name, last_name, visa_type, current_location, occupation, employer
+                id, email, first_name, last_name, visa_type, current_location, occupation, employer, timezone, created_at, updated_at
               )
               VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
               )
               RETURNING *
             `;
@@ -113,6 +143,7 @@ export class UserService {
         : null,
       userData.occupation,
       userData.employer,
+      userData.timezone,
     ];
 
     const result = await pool.query(query, values);
@@ -142,130 +173,66 @@ export class UserService {
     const values: any[] = [];
     let paramCount = 1;
 
-    if (updates.first_name !== undefined) {
-      setClause.push(`first_name = $${paramCount++}`);
-      values.push(updates.first_name);
-    }
-    if (updates.last_name !== undefined) {
-      setClause.push(`last_name = $${paramCount++}`);
-      values.push(updates.last_name);
-    }
-    if (updates.visa_type !== undefined) {
-      setClause.push(`visa_type = $${paramCount++}`);
-      values.push(updates.visa_type);
-    }
-    if (updates.current_location !== undefined) {
-      setClause.push(`current_location = $${paramCount++}`);
-      values.push(JSON.stringify(updates.current_location));
-    }
-    if (updates.occupation !== undefined) {
-      setClause.push(`occupation = $${paramCount++}`);
-      values.push(updates.occupation);
-    }
-    if (updates.employer !== undefined) {
-      setClause.push(`employer = $${paramCount++}`);
-      values.push(updates.employer);
-    }
-    if (updates.interests !== undefined) {
-      setClause.push(`interests = $${paramCount++}`);
-      values.push(updates.interests);
-    }
+    // Whitelist of allowed column names to prevent SQL injection
+    const allowedColumns = new Set([
+      'first_name',
+      'last_name',
+      'visa_type',
+      'current_location',
+      'occupation',
+      'employer',
+      'interests',
+      'nationality',
+      'languages',
+      'first_time_in_us_year',
+      'first_time_in_us_location',
+      'first_time_in_us_visa',
+      'job_discovery_method',
+      'visa_change_journey',
+      'other_us_jobs',
+      'hobbies',
+      'favorite_state',
+      'preferred_outings',
+      'has_car',
+      'offers_rides',
+      'relationship_status',
+      'road_trips',
+      'favorite_place',
+      'travel_tips',
+      'willing_to_guide',
+      'mentorship_interest',
+      'job_boards',
+      'visa_advice',
+      'profile_photo_url',
+      'profile_photo_public_id',
+      'bio',
+      'resume_url',
+      'resume_filename',
+      'resume_public_id',
+      'timezone',
+      'helped_count',
+    ]);
 
-    // Background & Identity fields
-    if (updates.nationality !== undefined) {
-      setClause.push(`nationality = $${paramCount++}`);
-      values.push(updates.nationality);
-    }
-    if (updates.languages !== undefined) {
-      setClause.push(`languages = $${paramCount++}`);
-      values.push(updates.languages);
-    }
-    if (updates.first_time_in_us_year !== undefined) {
-      setClause.push(`first_time_in_us_year = $${paramCount++}`);
-      values.push(updates.first_time_in_us_year);
-    }
-    if (updates.first_time_in_us_location !== undefined) {
-      setClause.push(`first_time_in_us_location = $${paramCount++}`);
-      values.push(updates.first_time_in_us_location);
-    }
-    if (updates.first_time_in_us_visa !== undefined) {
-      setClause.push(`first_time_in_us_visa = $${paramCount++}`);
-      values.push(updates.first_time_in_us_visa);
-    }
-    if (updates.job_discovery_method !== undefined) {
-      setClause.push(`job_discovery_method = $${paramCount++}`);
-      values.push(updates.job_discovery_method);
-    }
-    if (updates.visa_change_journey !== undefined) {
-      setClause.push(`visa_change_journey = $${paramCount++}`);
-      values.push(updates.visa_change_journey);
-    }
-    if (updates.other_us_jobs !== undefined) {
-      setClause.push(`other_us_jobs = $${paramCount++}`);
-      values.push(updates.other_us_jobs);
-    }
+    // Special handling for JSON fields
+    const jsonFields = new Set(['current_location']);
 
-    // Lifestyle & Personality fields
-    if (updates.hobbies !== undefined) {
-      setClause.push(`hobbies = $${paramCount++}`);
-      values.push(updates.hobbies);
-    }
-    if (updates.favorite_state !== undefined) {
-      setClause.push(`favorite_state = $${paramCount++}`);
-      values.push(updates.favorite_state);
-    }
-    if (updates.preferred_outings !== undefined) {
-      setClause.push(`preferred_outings = $${paramCount++}`);
-      values.push(updates.preferred_outings);
-    }
-    if (updates.has_car !== undefined) {
-      setClause.push(`has_car = $${paramCount++}`);
-      values.push(updates.has_car);
-    }
-    if (updates.offers_rides !== undefined) {
-      setClause.push(`offers_rides = $${paramCount++}`);
-      values.push(updates.offers_rides);
-    }
-    if (updates.relationship_status !== undefined) {
-      setClause.push(`relationship_status = $${paramCount++}`);
-      values.push(updates.relationship_status);
-    }
+    // Iterate through all update fields dynamically
+    for (const [key, value] of Object.entries(updates)) {
+      // Validate that the column name is in our whitelist
+      if (!allowedColumns.has(key)) {
+        throw new Error(`Invalid column name: ${key}`);
+      }
 
-    // Travel & Exploration fields
-    if (updates.road_trips !== undefined) {
-      setClause.push(`road_trips = $${paramCount++}`);
-      values.push(updates.road_trips);
-    }
-    if (updates.favorite_place !== undefined) {
-      setClause.push(`favorite_place = $${paramCount++}`);
-      values.push(updates.favorite_place);
-    }
-    if (updates.travel_tips !== undefined) {
-      setClause.push(`travel_tips = $${paramCount++}`);
-      values.push(updates.travel_tips);
-    }
-    if (updates.willing_to_guide !== undefined) {
-      setClause.push(`willing_to_guide = $${paramCount++}`);
-      values.push(updates.willing_to_guide);
-    }
+      if (value !== undefined) {
+        setClause.push(`${key} = $${paramCount++}`);
 
-    // Knowledge & Community fields
-    if (updates.mentorship_interest !== undefined) {
-      setClause.push(`mentorship_interest = $${paramCount++}`);
-      values.push(updates.mentorship_interest);
-    }
-    if (updates.job_boards !== undefined) {
-      setClause.push(`job_boards = $${paramCount++}`);
-      values.push(updates.job_boards);
-    }
-    if (updates.visa_advice !== undefined) {
-      setClause.push(`visa_advice = $${paramCount++}`);
-      values.push(updates.visa_advice);
-    }
-
-    if (updates.profile_answers !== undefined) {
-      setClause.push(`profile_answers = $${paramCount++}`);
-      values.push(JSON.stringify(updates.profile_answers));
+        // Handle JSON fields
+        if (jsonFields.has(key)) {
+          values.push(JSON.stringify(value));
+        } else {
+          values.push(value);
+        }
+      }
     }
 
     if (setClause.length === 0) {
@@ -382,9 +349,13 @@ export class UserService {
       setClause.push(`visa_advice = $${paramCount++}`);
       values.push(profileData.visa_advice);
     }
-    if (profileData.profile_answers !== undefined) {
-      setClause.push(`profile_answers = $${paramCount++}`);
-      values.push(JSON.stringify(profileData.profile_answers));
+    if (profileData.profile_photo_url !== undefined) {
+      setClause.push(`profile_photo_url = $${paramCount++}`);
+      values.push(profileData.profile_photo_url);
+    }
+    if (profileData.profile_photo_public_id !== undefined) {
+      setClause.push(`profile_photo_public_id = $${paramCount++}`);
+      values.push(profileData.profile_photo_public_id);
     }
 
     if (setClause.length === 0) {
@@ -403,25 +374,6 @@ export class UserService {
     return result.rows[0] || null;
   }
 
-  // Update specific profile section
-  async updateProfileSection(
-    id: string,
-    section: string,
-    data: any
-  ): Promise<User | null> {
-    const query = `
-      UPDATE users 
-      SET profile_answers = COALESCE(profile_answers, '{}'::jsonb) || $1::jsonb,
-          updated_at = NOW()
-      WHERE id = $2
-      RETURNING *
-    `;
-
-    const sectionData = { [section]: data };
-    const result = await pool.query(query, [JSON.stringify(sectionData), id]);
-    return result.rows[0] || null;
-  }
-
   // Delete user
   async deleteUser(id: string): Promise<boolean> {
     const query = 'DELETE FROM users WHERE id = $1';
@@ -429,12 +381,41 @@ export class UserService {
     return (result.rowCount ?? 0) > 0;
   }
 
-  // Get all users (with pagination)
-  async getAllUsers(limit: number = 50, offset: number = 0): Promise<User[]> {
-    const query =
+  // Get all users (with pagination and search)
+  async getAllUsers(
+    limit: number = 50,
+    offset: number = 0,
+    search?: string
+  ): Promise<{ users: User[]; total: number }> {
+    let countQuery = 'SELECT COUNT(*) as total FROM users';
+    let usersQuery =
       'SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2';
-    const result = await pool.query(query, [limit, offset]);
-    return result.rows;
+    const countParams: any[] = [];
+    const usersParams: any[] = [limit, offset];
+
+    // Add search filter if provided
+    if (search && search.trim()) {
+      const searchPattern = `%${search.trim()}%`;
+      const searchCondition = `(first_name ILIKE $1 OR last_name ILIKE $1 OR email ILIKE $1 OR id::text ILIKE $1)`;
+
+      countQuery = `SELECT COUNT(*) as total FROM users WHERE ${searchCondition}`;
+      countParams.push(searchPattern);
+
+      usersQuery = `SELECT * FROM users WHERE ${searchCondition} ORDER BY created_at DESC LIMIT $2 OFFSET $3`;
+      usersParams.unshift(searchPattern);
+    }
+
+    // Get total count
+    const countResult = await pool.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0].total);
+
+    // Get paginated users
+    const usersResult = await pool.query(usersQuery, usersParams);
+
+    return {
+      users: usersResult.rows,
+      total,
+    };
   }
 
   // Search users by criteria
@@ -477,6 +458,188 @@ export class UserService {
     const result = await pool.query(query, values);
     return result.rows;
   }
+
+  // Search users by text query (for Connect screen)
+  async searchUsersByText(
+    searchQuery: string,
+    currentUserId: string
+  ): Promise<User[]> {
+    const query = `
+      SELECT id, first_name, last_name, visa_type, current_location, occupation, 
+             profile_photo_url, bio, created_at
+      FROM users 
+      WHERE id != $1 
+        AND (
+          LOWER(first_name) LIKE LOWER($2) OR
+          LOWER(last_name) LIKE LOWER($2) OR
+          LOWER(occupation) LIKE LOWER($2) OR
+          LOWER(visa_type) LIKE LOWER($2) OR
+          LOWER(current_location::text) LIKE LOWER($2) OR
+          LOWER(bio) LIKE LOWER($2)
+        )
+      ORDER BY 
+        CASE 
+          WHEN LOWER(first_name) LIKE LOWER($2) OR LOWER(last_name) LIKE LOWER($2) THEN 1
+          WHEN LOWER(occupation) LIKE LOWER($2) THEN 2
+          WHEN LOWER(visa_type) LIKE LOWER($2) THEN 3
+          ELSE 4
+        END,
+        created_at DESC
+      LIMIT 20
+    `;
+
+    const searchTerm = `%${searchQuery}%`;
+    const result = await pool.query(query, [currentUserId, searchTerm]);
+    return result.rows;
+  }
+
+  // Give a thumbs-up to a user (chat functionality)
+  async giveThumbsUp(data: ChatThumbsUpData): Promise<ThumbsUpResponse> {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Check if thumbs-up already exists (prevent duplicates)
+      const existingThumbsUp = await client.query(
+        'SELECT id FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+        [data.giver_id, data.receiver_id]
+      );
+
+      if (existingThumbsUp.rows.length > 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: 'You have already given this user a thumbs-up',
+          already_given: true,
+        };
+      }
+
+      // Insert new thumbs-up record
+      await client.query(
+        `INSERT INTO chat_thumbs_up (giver_id, receiver_id, chat_message_id)
+         VALUES ($1, $2, $3)`,
+        [data.giver_id, data.receiver_id, data.chat_message_id]
+      );
+
+      // Update helped_count for the receiver
+      await client.query(
+        'UPDATE users SET helped_count = helped_count + 1, updated_at = NOW() WHERE id = $1',
+        [data.receiver_id]
+      );
+
+      // Get updated helped_count
+      const updatedUser = await client.query(
+        'SELECT helped_count FROM users WHERE id = $1',
+        [data.receiver_id]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'Thumbs-up given successfully',
+        helped_count: updatedUser.rows[0]?.helped_count || 0,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Remove a thumbs-up from a user (if needed)
+  async removeThumbsUp(
+    giverId: string,
+    receiverId: string
+  ): Promise<ThumbsUpResponse> {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Check if thumbs-up exists
+      const existingThumbsUp = await client.query(
+        'SELECT id FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+        [giverId, receiverId]
+      );
+
+      if (existingThumbsUp.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return {
+          success: false,
+          message: 'No thumbs-up found to remove',
+        };
+      }
+
+      // Remove thumbs-up record
+      await client.query(
+        'DELETE FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+        [giverId, receiverId]
+      );
+
+      // Update helped_count for the receiver (decrease by 1)
+      await client.query(
+        'UPDATE users SET helped_count = GREATEST(helped_count - 1, 0), updated_at = NOW() WHERE id = $1',
+        [receiverId]
+      );
+
+      // Get updated helped_count
+      const updatedUser = await client.query(
+        'SELECT helped_count FROM users WHERE id = $1',
+        [receiverId]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'Thumbs-up removed successfully',
+        helped_count: updatedUser.rows[0]?.helped_count || 0,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  // Check if a user has given a thumbs-up to another user
+  async hasGivenThumbsUp(
+    giverId: string,
+    receiverId: string
+  ): Promise<boolean> {
+    const result = await pool.query(
+      'SELECT id FROM chat_thumbs_up WHERE giver_id = $1 AND receiver_id = $2',
+      [giverId, receiverId]
+    );
+    return result.rows.length > 0;
+  }
+
+  // Get thumbs-up statistics for a user
+  async getThumbsUpStats(userId: string): Promise<{
+    helped_count: number;
+    thumbs_up_given: number;
+  }> {
+    // Get helped_count from users table
+    const userResult = await pool.query(
+      'SELECT helped_count FROM users WHERE id = $1',
+      [userId]
+    );
+
+    // Get count of thumbs-up given by this user
+    const givenResult = await pool.query(
+      'SELECT COUNT(*) as count FROM chat_thumbs_up WHERE giver_id = $1',
+      [userId]
+    );
+
+    return {
+      helped_count: userResult.rows[0]?.helped_count || 0,
+      thumbs_up_given: parseInt(givenResult.rows[0]?.count || '0'),
+    };
+  }
 }
 
-export default new UserService();
+export const userService = new UserService();

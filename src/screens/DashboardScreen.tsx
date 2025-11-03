@@ -3,20 +3,13 @@ import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import DrawerMenu from '../components/DrawerMenu';
 import { useUserStore } from '../stores/userStore';
+import { useNotificationStore } from '../stores/notificationStore';
 
 const DashboardScreen: React.FC = () => {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { user, isLoading, getCompletion } = useUserStore();
+  const { unreadCount } = useNotificationStore();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const navigate = useNavigate();
-
-  // Zustand store
-  const {
-    user,
-    isAuthenticated,
-    isLoading,
-    getFullName,
-    getLocation,
-    getCompletion,
-  } = useUserStore();
 
   // Get completion data from store
   const completion = getCompletion();
@@ -34,47 +27,17 @@ const DashboardScreen: React.FC = () => {
     }
   }, [user]);
 
-  const handleMenuClick = () => setMenuOpen(true);
-  const handleOverlayClick = () => setMenuOpen(false);
+  const handleOverlayClick = () => setIsDrawerOpen(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col relative">
+    <div className="relative">
       <DrawerMenu
-        open={menuOpen}
+        open={isDrawerOpen}
         onClose={handleOverlayClick}
         navigate={navigate}
         highlight={undefined}
       />
-      {/* Navigation Bar */}
-      <div className="bg-white px-4 md:px-6 py-2 md:py-4 border-b shadow-sm">
-        <div className="flex items-center justify-between">
-          <button className="text-2xl text-gray-600" onClick={handleMenuClick}>
-            ☰
-          </button>
-          <div className="flex items-center gap-2 md:gap-3">
-            <span className="text-2xl md:text-3xl font-bold text-blue-600">
-              V
-            </span>
-            <span className="font-bold text-lg md:text-xl text-gray-800">
-              VisaConnect
-            </span>
-          </div>
-          {/* Desktop Navigation - Hidden on mobile */}
-          <div className="hidden md:flex items-center gap-4">
-            <span className="text-gray-600">Dashboard</span>
-            <span className="text-gray-500">Work</span>
-            <span className="text-gray-500">Social</span>
-            <span className="text-gray-500">Chat</span>
-            <span className="text-gray-500">Settings</span>
-            <span className="text-gray-500">Contact</span>
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-gray-600 text-sm">👤</span>
-            </div>
-          </div>
-          {/* Mobile Spacer */}
-          <div className="w-6 md:hidden"></div>
-        </div>
-      </div>
+
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
           <svg
@@ -111,46 +74,59 @@ const DashboardScreen: React.FC = () => {
           {/* Notifications Section - Mobile First */}
           <div className="mb-6 md:mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-lg md:text-xl text-gray-900">
-                Notifications (0 new)
-              </h2>
-              <span className="text-gray-500 text-xl">→</span>
+              <div className="flex items-center space-x-3">
+                <h2 className="font-bold text-lg md:text-xl text-gray-900">
+                  Notifications
+                </h2>
+                {unreadCount > 0 && (
+                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-red-100 bg-red-600 rounded-full">
+                    {unreadCount}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => navigate('/notifications')}
+                className="text-gray-500 text-xl hover:text-gray-700 transition-colors"
+                aria-label="View all notifications"
+              >
+                →
+              </button>
             </div>
           </div>
 
-          {/* Personalized Experience Card */}
-          <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6 md:mb-8">
-            <h2 className="font-bold text-lg md:text-xl text-gray-900 mb-3">
-              Personalized experience
-            </h2>
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-blue-500 text-base md:text-lg">✓</span>
-              <span className="text-gray-700 text-sm md:text-base">
-                {completion.completed} out of {completion.total} completed
-              </span>
-            </div>
-            {completion.percentage > 0 && (
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${completion.percentage}%` }}
-                ></div>
+          {/* Personalized Experience Card - Only show if not all steps completed */}
+          {completion.completed < completion.total && (
+            <div className="bg-white rounded-xl p-4 md:p-6 shadow-sm mb-6 md:mb-8">
+              <h2 className="font-bold text-lg md:text-xl text-gray-900 mb-3">
+                Personalized experience
+              </h2>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-blue-500 text-base md:text-lg">✓</span>
+                <span className="text-gray-700 text-sm md:text-base">
+                  {completion.completed} out of {completion.total} completed
+                </span>
               </div>
-            )}
-            <div className="text-center">
-              <Button
-                variant="primary"
-                className="w-full md:w-auto px-6 md:px-8 py-2 md:py-3 text-base md:text-lg"
-                onClick={() => navigate('/background')}
-              >
-                {completion.completed === 0
-                  ? 'Start questionnaire'
-                  : completion.completed === completion.total
-                  ? 'View profile'
-                  : 'Continue questionnaire'}
-              </Button>
+              {completion.percentage > 0 && (
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${completion.percentage}%` }}
+                  ></div>
+                </div>
+              )}
+              <div className="text-center">
+                <Button
+                  variant="primary"
+                  className="w-full md:w-auto px-6 md:px-8 py-2 md:py-3 text-base md:text-lg"
+                  onClick={() => navigate('/background')}
+                >
+                  {completion.completed === 0
+                    ? 'Start questionnaire'
+                    : 'Continue questionnaire'}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Connect, Grow & Thrive Section */}
           <div className="text-center mb-6 md:mb-8">
@@ -170,6 +146,7 @@ const DashboardScreen: React.FC = () => {
               variant="primary"
               size="sm"
               className="absolute top-3 right-3 md:top-4 md:right-4 text-sm md:text-base px-4 md:px-6 py-2 md:py-3"
+              onClick={() => navigate('/work')}
             >
               Explore
             </Button>
@@ -194,6 +171,7 @@ const DashboardScreen: React.FC = () => {
               variant="primary"
               size="sm"
               className="absolute top-3 right-3 md:top-4 md:right-4 text-sm md:text-base px-4 md:px-6 py-2 md:py-3"
+              onClick={() => navigate('/social')}
             >
               Explore
             </Button>

@@ -1,20 +1,21 @@
 import React from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
+import { openVisaConnectEmail } from '../utils/emailUtils';
 
 interface DrawerMenuProps {
   open: boolean;
   onClose: () => void;
   navigate: (path: string) => void;
-  highlight?: 'settings';
+  highlight?: string;
 }
 
 const menuItems = [
-  { label: 'Dashboard', route: '/dashboard' },
-  { label: 'Work', route: '/work' },
-  { label: 'Social', route: '/social' },
-  { label: 'Chat', route: '/chat' },
-  { label: 'Settings', route: '/settings', highlight: true },
-  { label: 'Contact us', route: '/contact' },
+  { label: 'Dashboard', route: '/dashboard', key: 'dashboard', enabled: true },
+  { label: 'Work', route: '/work', key: 'work', enabled: true },
+  { label: 'Social', route: '/social', key: 'social', enabled: true },
+  { label: 'Chat', route: '/chat', key: 'chat', enabled: true },
+  { label: 'Settings', route: '/settings', key: 'settings', enabled: true },
+  { label: 'Contact us', route: '/contact', key: 'contact', enabled: true },
 ];
 
 const DrawerMenu: React.FC<DrawerMenuProps> = ({
@@ -25,15 +26,20 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({
 }) => {
   if (!open) return null;
 
-  const handleMenuItemClick = (item: (typeof menuItems)[0]) => {
-    onClose();
-    if (item.route) {
-      navigate(item.route);
-    }
+  const handleEmailVisaConnect = () => {
+    openVisaConnectEmail();
   };
 
-  // Only Dashboard and Settings are enabled
-  const enabledLabels = ['Dashboard', 'Settings'];
+  const handleMenuItemClick = (item: (typeof menuItems)[0]) => {
+    if (item.enabled) {
+      onClose();
+      if (item.key === 'contact') {
+        handleEmailVisaConnect();
+      } else if (item.route) {
+        navigate(item.route);
+      }
+    }
+  };
 
   return (
     <>
@@ -57,34 +63,22 @@ const DrawerMenu: React.FC<DrawerMenuProps> = ({
         </div>
         {/* Menu Items */}
         <nav className="flex flex-col px-2 pt-2 pb-4">
-          {menuItems.slice(0, 5).map((item) => {
-            const enabled = enabledLabels.includes(item.label);
-            return (
-              <button
-                key={item.label}
-                className={`w-full text-left px-6 py-3 rounded transition font-medium text-base ${
-                  item.label === 'Settings' && highlight === 'settings'
+          {menuItems.map((item) => (
+            <button
+              key={item.label}
+              className={`w-full text-left px-6 py-3 rounded transition font-medium text-base ${
+                item.enabled
+                  ? item.key === highlight
                     ? 'bg-gray-100 font-bold text-gray-900'
                     : 'text-gray-800 hover:bg-gray-50'
-                } ${item.label === 'Settings' ? 'mt-1' : ''} ${
-                  !enabled ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
-                onClick={enabled ? () => handleMenuItemClick(item) : undefined}
-                disabled={!enabled}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-          {/* Divider */}
-          <div className="border-t border-gray-200 my-2" />
-          {/* Contact us */}
-          <button
-            className="w-full text-left px-6 py-3 rounded transition text-gray-800 hover:bg-gray-50 font-medium text-base opacity-50 cursor-not-allowed"
-            disabled
-          >
-            Contact us
-          </button>
+                  : 'text-gray-400 opacity-50 cursor-not-allowed'
+              }`}
+              onClick={() => handleMenuItemClick(item)}
+              disabled={!item.enabled}
+            >
+              {item.label}
+            </button>
+          ))}
         </nav>
       </div>
     </>

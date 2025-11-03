@@ -9,7 +9,22 @@ import { US_CITIES } from '../../data/usCities';
 import { apiPatch } from '../../api';
 import { useUserStore } from '../../stores/userStore';
 
-const countryNames = countries.map((c) => c.name.common).sort();
+// Create a comprehensive list that includes both country names and nationalities
+const countryNames = countries
+  .map((c) => {
+    const names = [c.name.common];
+    // Add nationality/demonym if available
+    if (c.demonyms?.eng?.m) {
+      names.push(c.demonyms.eng.m);
+    }
+    if (c.demonyms?.eng?.f && c.demonyms.eng.f !== c.demonyms.eng.m) {
+      names.push(c.demonyms.eng.f);
+    }
+    return names;
+  })
+  .flat()
+  .filter((name, index, array) => array.indexOf(name) === index) // Remove duplicates
+  .sort();
 // Extract and deduplicate all languages from world-countries
 const languageSet = new Set<string>();
 countries.forEach((c) => {
@@ -71,11 +86,33 @@ const BackgroundScreen: React.FC = () => {
             !form.languages.includes(l)
         );
 
+  // Function to get nationality from country name or return nationality if already valid
+  const getNationalityFromCountryName = (value: string): string => {
+    // First check if the value is already a nationality/demonym
+    const isAlreadyNationality = countries.some(
+      (c) => c.demonyms?.eng?.m === value || c.demonyms?.eng?.f === value
+    );
+
+    if (isAlreadyNationality) {
+      return value; // Already a nationality, return as-is
+    }
+
+    // If not a nationality, try to find the country and get its nationality
+    const country = countries.find((c) => c.name.common === value);
+    if (country?.demonyms?.eng?.m) {
+      return country.demonyms.eng.m;
+    }
+
+    return value; // Fallback to original value if no conversion possible
+  };
+
   // Pre-populate form with existing user data
   useEffect(() => {
     if (user) {
       setForm({
-        nationality: user.nationality || '',
+        nationality: user.nationality
+          ? getNationalityFromCountryName(user.nationality)
+          : '',
         languages: user.languages || [],
         workHistory: user.other_us_jobs?.join(', ') || '',
         relationshipStatus: user.relationship_status || '',
@@ -91,30 +128,39 @@ const BackgroundScreen: React.FC = () => {
     }
   }, [user, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Function to map nationality back to country name
+  const getCountryNameFromNationality = (nationality: string): string => {
+    const country = countries.find((c) => {
+      // Check if it matches the country name
+      if (c.name.common === nationality) return true;
+      // Check if it matches the nationality/demonym
+      if (c.demonyms?.eng?.m === nationality) return true;
+      if (c.demonyms?.eng?.f === nationality) return true;
+      return false;
+    });
+    return country ? country.name.common : nationality;
   };
 
-  const handleStayInUSChange = (value: 'yes' | 'no') => {
-    setForm({ ...form, stayInUS: value });
-  };
-
-  const handleContinue = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     setApiError('');
     try {
       if (!user?.uid) throw new Error('User not authenticated');
 
+      // Map nationality back to country name for storage
+      const countryName = getCountryNameFromNationality(form.nationality);
+
       // Update user profile with background information
       const updateData = {
-        nationality: form.nationality,
+        nationality: countryName,
         languages: form.languages,
         other_us_jobs: form.workHistory ? [form.workHistory] : [],
         relationship_status: form.relationshipStatus,
         // Map stayInUS to a more appropriate field or store in profile_answers
         profile_answers: {
           background_identity: {
-            nationality: form.nationality,
+            nationality: form.nationality, // Keep original input for display
             languages: form.languages,
             workHistory: form.workHistory,
             relationshipStatus: form.relationshipStatus,
@@ -134,6 +180,10 @@ const BackgroundScreen: React.FC = () => {
       setApiError(err.message || 'Failed to save background info');
       setLoading(false);
     }
+  };
+
+  const handleStayInUSChange = (value: 'yes' | 'no') => {
+    setForm({ ...form, stayInUS: value });
   };
 
   return (
@@ -207,20 +257,22 @@ const BackgroundScreen: React.FC = () => {
                 }
               >
                 <div className="relative">
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={(val: string) => val}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      setQuery(e.target.value)
-                    }
-                    placeholder="Enter your nationality"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={(val: string) => val}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setQuery(e.target.value)
+                      }
+                      placeholder="Enter your nationality (e.g., Italian, American, etc.)"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -320,21 +372,23 @@ const BackgroundScreen: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={() => ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setLangQuery(e.target.value);
-                      setLangOpen(true);
-                    }}
-                    placeholder="Enter languages you speak"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => ''}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setLangQuery(e.target.value);
+                        setLangOpen(true);
+                      }}
+                      placeholder="Enter languages you speak"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -408,17 +462,21 @@ const BackgroundScreen: React.FC = () => {
                 }
               >
                 <div className="relative">
-                  <Listbox.Button className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base text-left focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4 flex items-center justify-between">
-                    <span>
-                      {relationshipOptions.find(
-                        (o) => o.value === form.relationshipStatus
-                      )?.label || 'Select status'}
-                    </span>
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400 ml-2"
-                      aria-hidden="true"
-                    />
-                  </Listbox.Button>
+                  <div className="relative">
+                    <Listbox.Button className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base text-left focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4 flex items-center">
+                      <span>
+                        {relationshipOptions.find(
+                          (o) => o.value === form.relationshipStatus
+                        )?.label || 'Select status'}
+                      </span>
+                    </Listbox.Button>
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -473,8 +531,10 @@ const BackgroundScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.stayInUS === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.stayInUS === 'yes'
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
                   } focus:outline-none`}
                   onClick={() => handleStayInUSChange('yes')}
                 >
@@ -484,9 +544,9 @@ const BackgroundScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.stayInUS === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => handleStayInUSChange('no')}
                 >
                   No
@@ -499,7 +559,7 @@ const BackgroundScreen: React.FC = () => {
           <Button
             variant="primary"
             className="w-full max-w-md mb-2 mx-4"
-            onClick={handleContinue}
+            onClick={handleSubmit}
             disabled={loading}
           >
             Save & Continue

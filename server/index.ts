@@ -3,15 +3,14 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
-import { config } from './config/env';
+import { WebSocketService } from './services/websocketService';
 
 // Database connection
 import pool from './db/config';
 // Register API routes
-import authApi from './api/auth';
-import userApi from './api/user';
+import { registerApiRoutes } from './api';
 
-// Initialize Firebase Admin SDK
+// Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
 
 if (process.env.FIREBASE_SERVICE_ACCOUNT) {
@@ -31,7 +30,7 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
   try {
     serviceAccount = require(path.join(
       __dirname,
-      './firebaseServiceAccount.json'
+      './firebase-stage-credentials.json'
     ));
     console.log('✅ Using Firebase service account from local file');
   } catch (error) {
@@ -44,6 +43,9 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
+  storageBucket:
+    process.env.FIREBASE_STORAGE_BUCKET ||
+    'visaconnectus-stage.firebasestorage.app',
 });
 
 const app: Express = express();
@@ -99,8 +101,7 @@ app.get('/api/health', async (req: Request, res: Response) => {
 });
 
 // Register API routes
-authApi(app);
-userApi(app);
+registerApiRoutes(app);
 
 // Only serve static files in production
 if (process.env.NODE_ENV !== 'development') {
@@ -142,6 +143,10 @@ if (process.env.NODE_ENV !== 'development') {
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Initialize WebSocket service for real-time chat
+new WebSocketService(server);
+console.log('✅ WebSocket service initialized for real-time chat');
 
 // Graceful shutdown
 process.on('SIGTERM', () => {

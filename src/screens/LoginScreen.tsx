@@ -1,47 +1,12 @@
 import React, { useState } from 'react';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import { apiPostPublic } from '../api';
 import { useUserStore } from '../stores/userStore';
 import logo from '../assets/images/logo.png';
-
-// Types for login response
-interface LoginResponse {
-  success: boolean;
-  message: string;
-  user: {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-    visa_type?: string;
-    current_location?: {
-      city: string;
-      state: string;
-      country: string;
-    };
-    occupation?: string;
-    employer?: string;
-    nationality?: string;
-    languages?: string[];
-    other_us_jobs?: string[];
-    relationship_status?: string;
-    hobbies?: string[];
-    favorite_state?: string;
-    preferred_outings?: string[];
-    has_car?: boolean;
-    offers_rides?: boolean;
-    road_trips?: boolean;
-    favorite_place?: string;
-    travel_tips?: string;
-    willing_to_guide?: boolean;
-    mentorship_interest?: boolean;
-    job_boards?: string[];
-    visa_advice?: string;
-    profile_answers?: Record<string, any>;
-  };
-  token: string; // Firebase ID token for authenticated API calls
-}
+import { LoginResponse } from '../types/api';
+import { userToUserData } from '../stores/userStore';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -56,17 +21,20 @@ const Input = React.forwardRef<
 Input.displayName = 'Input';
 
 const SignInScreen: React.FC = () => {
+  // Email/password login state
   const [form, setForm] = useState({
     email: '',
     password: '',
   });
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   // Zustand store
-  const { setUser, setLoading } = useUserStore();
+  const { setUser, setToken } = useUserStore();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -93,7 +61,7 @@ const SignInScreen: React.FC = () => {
     setApiError('');
 
     try {
-      // Login with backend API
+      // Simple email/password login
       const loginResponse = await apiPostPublic<LoginResponse>(
         '/api/auth/login',
         {
@@ -102,70 +70,32 @@ const SignInScreen: React.FC = () => {
         }
       );
 
-      console.log('Login response:', loginResponse); // Debug log
+      if (loginResponse.success) {
+        // Store the Firebase ID token (always present on successful login)
+        setToken(loginResponse.token);
 
-      if (loginResponse.user) {
-        // Store the Firebase ID token if provided by backend
-        if (loginResponse.token) {
-          localStorage.setItem('userToken', loginResponse.token);
-        }
-
-        // Create user data object
-        const userData = {
-          uid: loginResponse.user.id,
-          email: loginResponse.user.email,
-          first_name: loginResponse.user.first_name || '',
-          last_name: loginResponse.user.last_name || '',
-          visa_type: loginResponse.user.visa_type || '',
-          current_location: loginResponse.user.current_location || {},
-          occupation: loginResponse.user.occupation || '',
-          employer: loginResponse.user.employer || '',
-          // Include all profile fields for completion calculation
-          nationality: loginResponse.user.nationality,
-          languages: loginResponse.user.languages || [],
-          other_us_jobs: loginResponse.user.other_us_jobs || [],
-          relationship_status: loginResponse.user.relationship_status,
-          hobbies: loginResponse.user.hobbies || [],
-          favorite_state: loginResponse.user.favorite_state,
-          preferred_outings: loginResponse.user.preferred_outings || [],
-          has_car: loginResponse.user.has_car,
-          offers_rides: loginResponse.user.offers_rides,
-          road_trips: loginResponse.user.road_trips,
-          favorite_place: loginResponse.user.favorite_place,
-          travel_tips: loginResponse.user.travel_tips,
-          willing_to_guide: loginResponse.user.willing_to_guide,
-          mentorship_interest: loginResponse.user.mentorship_interest,
-          job_boards: loginResponse.user.job_boards || [],
-          visa_advice: loginResponse.user.visa_advice,
-          profile_answers: loginResponse.user.profile_answers || {},
-        };
-
-        // Store in Zustand store (this also updates localStorage for backward compatibility)
+        // Convert API response to store format
+        const userData = userToUserData(loginResponse.user);
         setUser(userData);
+
+        // Store in localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(userData));
+        if (loginResponse.token) {
+          localStorage.setItem('token', loginResponse.token);
+        }
 
         // Navigate to dashboard
         navigate('/dashboard');
       } else {
-        throw new Error('Invalid response from server');
+        setApiError('Login failed. Please check your credentials.');
       }
     } catch (error: any) {
-      // Handle backend API errors
-      let userFriendlyError = 'Sign in failed';
-
-      if (error.message) {
-        if (error.message.includes('Invalid email or password')) {
-          userFriendlyError = 'Username and/or password is invalid';
-        } else if (error.message.includes('Authentication failed')) {
-          userFriendlyError = 'Authentication failed. Please try again.';
-        } else if (error.message.includes('Invalid response from server')) {
-          userFriendlyError = 'Server error. Please try again.';
-        } else {
-          userFriendlyError =
-            error.message || 'Sign in failed. Please try again.';
-        }
-      }
-
-      setApiError(userFriendlyError);
+      console.error('Login error:', error);
+      setApiError(
+        error.response?.data?.message ||
+          error.message ||
+          'Login failed. Please try again.'
+      );
     } finally {
       setSubmitting(false);
     }
@@ -182,60 +112,65 @@ const SignInScreen: React.FC = () => {
           <p className="text-gray-600 text-center">Sign in to your account</p>
         </div>
 
-        {/* Form */}
-        <form className="w-full" onSubmit={handleSubmit}>
-          {apiError && (
-            <div className="w-full bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-              <p className="text-red-600 text-sm">{apiError}</p>
-            </div>
-          )}
+        {/* Email/Password Login Form */}
+        <div className="w-full">
+          <form className="w-full" onSubmit={handleSubmit}>
+            {apiError && (
+              <div className="w-full bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <p className="text-red-600 text-sm">{apiError}</p>
+              </div>
+            )}
 
-          <div className="mb-4">
             <Input
-              name="email"
               type="email"
-              placeholder="Email address"
+              name="email"
+              placeholder="Email"
               value={form.email}
               onChange={handleChange}
-              required
+              disabled={submitting}
             />
             {errors.email && (
-              <span className="text-red-500 text-sm">{errors.email}</span>
+              <p className="text-red-500 text-sm -mt-2 mb-2">{errors.email}</p>
             )}
-          </div>
 
-          <div className="mb-6">
-            <Input
-              name="password"
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Password"
+                value={form.password}
+                onChange={handleChange}
+                disabled={submitting}
+                className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 pr-3 grid place-items-center text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? (
+                  <EyeSlashIcon className="h-5 w-5" />
+                ) : (
+                  <EyeIcon className="h-5 w-5" />
+                )}
+              </button>
+            </div>
             {errors.password && (
-              <span className="text-red-500 text-sm">{errors.password}</span>
+              <p className="text-red-500 text-sm -mt-2 mb-2">
+                {errors.password}
+              </p>
             )}
-          </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className="w-full mb-4"
-            disabled={submitting}
-          >
-            {submitting ? 'Signing In...' : 'Sign In'}
-          </Button>
-        </form>
-
-        {/* Forgot Password */}
-        <button className="text-sky-500 underline text-base mb-6">
-          Forgot Password?
-        </button>
+            <Button type="submit" disabled={submitting} className="w-full">
+              {submitting ? 'Signing in...' : 'Sign In'}
+            </Button>
+          </form>
+        </div>
 
         {/* Back to Welcome */}
         <button
-          className="text-gray-500 underline text-base"
+          className="text-gray-500 underline text-base mt-5"
           onClick={() => navigate('/')}
         >
           ← Back to Welcome

@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import Button from '../../components/Button';
+import LocationInput from '../../components/LocationInput';
 import { useNavigate } from 'react-router-dom';
 import { MapPinIcon } from '@heroicons/react/24/outline';
 import { apiPatch } from '../../api';
 import { useUserStore } from '../../stores/userStore';
+import { LocationData } from '../../types/location';
 
 const TravelExplorationScreen: React.FC = () => {
   const [form, setForm] = useState({
     roadTrips: 'yes' as 'yes' | 'no',
-    favoritePlace: '',
+    favoritePlace: { address: '' } as LocationData,
     travelTips: '',
-    willingToGuide: 'no' as 'yes' | 'no',
+    willingToGuide: 'yes' as 'yes' | 'no',
   });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -19,14 +21,29 @@ const TravelExplorationScreen: React.FC = () => {
   // Zustand store
   const { user, updateUser } = useUserStore();
 
+  // Handle location change
+  const handleLocationChange = (location: LocationData) => {
+    setForm({ ...form, favoritePlace: location });
+  };
+
   // Pre-populate form with existing user data
   useEffect(() => {
     if (user) {
       setForm({
-        roadTrips: user.road_trips ? 'yes' : 'no',
-        favoritePlace: user.favorite_place || '',
+        roadTrips:
+          user.road_trips !== undefined
+            ? user.road_trips
+              ? 'yes'
+              : 'no'
+            : 'yes',
+        favoritePlace: { address: user.favorite_place || '' },
         travelTips: user.travel_tips || '',
-        willingToGuide: user.willing_to_guide ? 'yes' : 'no',
+        willingToGuide:
+          user.willing_to_guide !== undefined
+            ? user.willing_to_guide
+              ? 'yes'
+              : 'no'
+            : 'yes',
       });
     }
   }, [user]);
@@ -47,13 +64,13 @@ const TravelExplorationScreen: React.FC = () => {
       // Update user profile with travel exploration information
       const updateData = {
         road_trips: form.roadTrips === 'yes',
-        favorite_place: form.favoritePlace,
+        favorite_place: form.favoritePlace.address,
         travel_tips: form.travelTips,
         willing_to_guide: form.willingToGuide === 'yes',
         profile_answers: {
           travel_exploration: {
             roadTrips: form.roadTrips,
-            favoritePlace: form.favoritePlace,
+            favoritePlace: form.favoritePlace.address,
             travelTips: form.travelTips,
             willingToGuide: form.willingToGuide,
           },
@@ -138,8 +155,10 @@ const TravelExplorationScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.roadTrips === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.roadTrips === 'yes'
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
                   } focus:outline-none`}
                   onClick={() => setForm({ ...form, roadTrips: 'yes' })}
                 >
@@ -149,9 +168,9 @@ const TravelExplorationScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.roadTrips === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => setForm({ ...form, roadTrips: 'no' })}
                 >
                   No
@@ -159,17 +178,12 @@ const TravelExplorationScreen: React.FC = () => {
               </div>
             </div>
             <div className="mb-4">
-              <label className="block text-gray-800 font-medium mb-2">
-                What's your favorite city or place you've visited here?
-              </label>
-              <input
-                name="favoritePlace"
+              <LocationInput
+                value={form.favoritePlace.address}
+                onChange={handleLocationChange}
                 placeholder="Enter your favorite place"
-                value={form.favoritePlace}
-                onChange={(e) =>
-                  setForm({ ...form, favoritePlace: e.target.value })
-                }
-                className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                label="What's your favorite city or place you've visited here?"
+                allowCurrentLocation={true}
               />
             </div>
             <div className="mb-4">
@@ -193,8 +207,10 @@ const TravelExplorationScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.willingToGuide === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.willingToGuide === 'yes'
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
                   } focus:outline-none`}
                   onClick={() => setForm({ ...form, willingToGuide: 'yes' })}
                 >
@@ -204,9 +220,9 @@ const TravelExplorationScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.willingToGuide === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => setForm({ ...form, willingToGuide: 'no' })}
                 >
                   No

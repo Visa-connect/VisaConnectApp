@@ -1,0 +1,217 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import ChatList from '../components/ChatList';
+import Chat from '../components/Chat';
+import ThumbsUpButton from '../components/ThumbsUpButton';
+import { useUserStore } from '../stores/userStore';
+
+const ChatScreen: React.FC = () => {
+  const navigate = useNavigate();
+  const { conversationId } = useParams<{ conversationId: string }>();
+  const location = useLocation();
+
+  const [selectedConversationId, setSelectedConversationId] =
+    useState<string>('');
+  const [otherUserId, setOtherUserId] = useState<string>('');
+  const [otherUserName, setOtherUserName] = useState<string>('');
+  const [otherUserPhoto, setOtherUserPhoto] = useState<string>('');
+  const [otherUserDetails, setOtherUserDetails] = useState<any>(null);
+
+  // Scroll management for chat messages
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback(() => {
+    if (chatScrollRef.current) {
+      const container = chatScrollRef.current;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      container.scrollTop = maxScroll;
+
+      // Also try smooth scroll as backup
+      setTimeout(() => {
+        container.scrollTo({
+          top: maxScroll,
+          behavior: 'smooth',
+        });
+      }, 10);
+    }
+  }, []);
+
+  // Handle direct navigation to a specific conversation
+  useEffect(() => {
+    if (conversationId) {
+      setSelectedConversationId(conversationId);
+
+      // Get user info from location state (passed from PublicProfileScreen)
+      if (location.state) {
+        const { otherUserId, otherUserName, otherUserPhoto } =
+          location.state as {
+            otherUserId: string;
+            otherUserName: string;
+            otherUserPhoto: string | null;
+          };
+        setOtherUserId(otherUserId);
+        setOtherUserName(otherUserName);
+        setOtherUserPhoto(otherUserPhoto || '');
+      }
+    }
+  }, [conversationId, location.state]);
+
+  // Fetch user details when conversation is selected
+  useEffect(() => {
+    if (selectedConversationId) {
+      fetchUserDetails(selectedConversationId);
+    }
+  }, [selectedConversationId]);
+
+  // Function to fetch user details from the database
+  const fetchUserDetails = async (conversationId: string) => {
+    try {
+      const response = await fetch(
+        `/api/chat/conversations/${conversationId}/user-info`,
+        {
+          headers: {
+            Authorization: `Bearer ${useUserStore.getState().getToken()}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setOtherUserDetails(data.data);
+          // Ensure otherUserId is set when opening via direct link (e.g., from notifications)
+          if (data.data.id) {
+            setOtherUserId(data.data.id);
+          }
+          // Update the name and photo if we have better data
+          if (data.data.fullName && data.data.fullName !== 'User') {
+            setOtherUserName(data.data.fullName);
+          }
+          if (data.data.profilePhotoUrl) {
+            setOtherUserPhoto(data.data.profilePhotoUrl);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    }
+  };
+
+  const handleSelectConversation = (
+    conversationId: string,
+    otherUserId: string,
+    otherUserName: string,
+    otherUserPhoto?: string
+  ) => {
+    setSelectedConversationId(conversationId);
+    setOtherUserId(otherUserId);
+    setOtherUserName(otherUserName);
+    setOtherUserPhoto(otherUserPhoto || '');
+  };
+
+  // If a conversation is selected, show the chat view
+  if (selectedConversationId) {
+    return (
+      <div className="flex flex-col h-full bg-gray-50">
+        {/* Chat Header - Sticky at top */}
+        <div className="sticky top-0 flex-shrink-0 bg-gray-50 border-b border-gray-200 shadow-sm z-10">
+          <div className="relative px-4 py-3 flex items-center">
+            <button
+              onClick={() => {
+                setSelectedConversationId('');
+                // If we came from a direct conversation URL, go back to chat list
+                if (conversationId) {
+                  navigate('/chat');
+                }
+              }}
+              className="absolute left-4 z-10 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+            >
+              <svg
+                className="w-6 h-6 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Centered User Info */}
+            <div className="flex items-center justify-center flex-1">
+              {otherUserPhoto ? (
+                <img
+                  src={otherUserPhoto}
+                  alt={otherUserName}
+                  onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                  className="w-10 h-10 rounded-full object-cover mr-3 cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div
+                  onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                  className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                  <span className="text-gray-600 font-medium">
+                    {(otherUserDetails?.fullName || otherUserName)
+                      .charAt(0)
+                      .toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="text-center">
+                <h2
+                  onClick={() => navigate(`/public-profile/${otherUserId}`)}
+                  className="font-semibold text-gray-900 hover:text-blue-600 transition-colors cursor-pointer"
+                >
+                  {otherUserDetails?.fullName || otherUserName}
+                </h2>
+              </div>
+
+              {/* Thumbs-up Button */}
+              <div className="flex justify-center">
+                <ThumbsUpButton
+                  receiverId={otherUserId}
+                  conversationId={selectedConversationId}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Messages - Takes remaining space and handles its own scrolling */}
+        <div
+          ref={chatScrollRef}
+          className="flex-1 overflow-y-auto max-w-4xl mx-auto w-full"
+        >
+          <Chat
+            conversationId={selectedConversationId}
+            otherUserId={otherUserId}
+            otherUserName={otherUserName}
+            otherUserPhoto={otherUserPhoto}
+            onScrollToBottom={scrollToBottom}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // Main chat list view
+  return (
+    <div className="flex flex-col bg-gray-50 h-screen">
+      {/* Chat List */}
+      <div className="flex-1 overflow-hidden max-w-4xl mx-auto w-full">
+        <ChatList
+          onSelectConversation={handleSelectConversation}
+          selectedConversationId={selectedConversationId}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default ChatScreen;

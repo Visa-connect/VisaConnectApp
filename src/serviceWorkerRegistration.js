@@ -1,6 +1,8 @@
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
+// Temporarily disabled variable
+/*
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
     // [::1] is the IPv6 localhost address.
@@ -10,50 +12,28 @@ const isLocalhost = Boolean(
       /^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/
     )
 );
+*/
 
 export function register(config) {
-  if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
-    // The URL constructor is available in all browsers that support SW.
-    const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
-    if (publicUrl.origin !== window.location.origin) {
-      // Our service worker won't work if PUBLIC_URL is on a different origin
-      // from what our page is served on. This might happen if a CDN is used to
-      // serve assets; see https://github.com/facebook/create-react-app/issues/2374
-      return;
-    }
+  // Temporarily disable service worker to prevent refresh loops
+  console.log('Service worker registration disabled to prevent refresh loops');
 
-    window.addEventListener('load', () => {
-      // Add cache-busting parameter to service worker URL
-      const swUrl = `${process.env.PUBLIC_URL}/sw.js?v=${Date.now()}`;
-
-      if (isLocalhost) {
-        // This is running on localhost. Let's check if a service worker still exists or not.
-        checkValidServiceWorker(swUrl, config);
-
-        // Add some additional logging to localhost, pointing developers to the
-        // service worker/PWA documentation.
-        navigator.serviceWorker.ready.then(() => {
-          console.log(
-            'This web app is being served cache-first by a service ' +
-              'worker. To learn more, visit https://cra.link/PWA'
-          );
-        });
-      } else {
-        // Is not localhost. Just register service worker
-        registerValidSW(swUrl, config);
-      }
+  // Unregister any existing service workers
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      registrations.forEach((registration) => {
+        registration.unregister();
+        console.log('Unregistered existing service worker');
+      });
     });
   }
+
+  return;
 }
 
+// Temporarily disabled function
+/*
 function registerValidSW(swUrl, config) {
-  // First, unregister any existing service workers to clear old caches
-  navigator.serviceWorker.getRegistrations().then((registrations) => {
-    for (let registration of registrations) {
-      registration.unregister();
-    }
-  });
-
   navigator.serviceWorker
     .register(swUrl, { updateViaCache: 'none' })
     .then((registration) => {
@@ -104,8 +84,10 @@ function registerValidSW(swUrl, config) {
     .catch((error) => {
       console.error('Error during service worker registration:', error);
     });
-}
+*/
 
+// Temporarily disabled function
+/*
 function checkValidServiceWorker(swUrl, config) {
   // Check if the service worker can be found. If it can't reload the page.
   fetch(swUrl, {
@@ -135,6 +117,7 @@ function checkValidServiceWorker(swUrl, config) {
       );
     });
 }
+*/
 
 export function unregister() {
   if ('serviceWorker' in navigator) {

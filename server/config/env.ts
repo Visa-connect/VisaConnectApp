@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
+// Load .env file if it exists (dotenv is safe to call in production)
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 interface Config {
@@ -21,6 +22,18 @@ interface Config {
     serviceAccount: string | undefined;
     webApiKey: string | undefined;
   };
+  cloudinary: {
+    cloudName: string | undefined;
+    apiKey: string | undefined;
+    apiSecret: string | undefined;
+  };
+  email: {
+    sendGridApiKey: string | undefined;
+    adminEmail: string | undefined;
+    fromEmail: string | undefined;
+    adminDashboardUrl: string | undefined;
+    appUrl: string | undefined;
+  };
 }
 
 export const config: Config = {
@@ -38,6 +51,18 @@ export const config: Config = {
   },
   firebase: {
     serviceAccount: process.env.FIREBASE_SERVICE_ACCOUNT,
-    webApiKey: process.env.FIREBASE_WEB_API_KEY,
+    webApiKey: process.env.REACT_APP_FIREBASE_WEB_API_KEY,
+  },
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+  },
+  email: {
+    sendGridApiKey: process.env.SENDGRID_API_KEY,
+    adminEmail: process.env.ADMIN_EMAIL,
+    fromEmail: process.env.FROM_EMAIL,
+    adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL,
+    appUrl: process.env.APP_URL,
   },
 };

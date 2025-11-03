@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
 import AutoComplete from '../components/AutoComplete';
@@ -6,19 +7,15 @@ import { US_CITIES } from '../data/usCities';
 import { apiPostPublic } from '../api';
 import logo from '../assets/images/logo.png';
 import { useUserStore } from '../stores/userStore';
-
-// Types for API responses
-interface RegisterResponse {
-  success: boolean;
-  message: string;
-  data: {
-    id: string;
-    email: string;
-    first_name?: string;
-    last_name?: string;
-  };
-  token: string; // Include token in both registration and response
-}
+import { visaTypes } from '../utils/visaTypes';
+import {
+  isValidEmail,
+  isValidPassword,
+  isNotEmpty,
+  VALIDATION_MESSAGES,
+} from '../utils/validation';
+import { RegisterResponse } from '../types/api';
+import { userToUserData } from '../stores/userStore';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -31,10 +28,6 @@ const Input = React.forwardRef<
   />
 ));
 Input.displayName = 'Input';
-
-const visaTypes = ['H2B', 'J1', 'H1B', 'F1'];
-
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CreateAccountPage: React.FC = () => {
   const [step, setStep] = useState(1);
@@ -56,20 +49,26 @@ const CreateAccountPage: React.FC = () => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [customVisaType, setCustomVisaType] = useState('');
   const navigate = useNavigate();
-  const { setUser } = useUserStore();
+  const { setUser, setToken } = useUserStore();
 
   const validateStep1 = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!form.first_name.trim())
-      newErrors.first_name = 'First name is required.';
-    if (!form.last_name.trim()) newErrors.last_name = 'Last name is required.';
-    if (!form.email.trim()) newErrors.email = 'Email is required.';
-    else if (!emailRegex.test(form.email))
-      newErrors.email = 'Invalid email address.';
-    if (!form.password) newErrors.password = 'Password is required.';
-    else if (form.password.length < 6)
-      newErrors.password = 'Password must be at least 6 characters.';
+    if (!isNotEmpty(form.first_name))
+      newErrors.first_name = VALIDATION_MESSAGES.FIELD_REQUIRED;
+    if (!isNotEmpty(form.last_name))
+      newErrors.last_name = VALIDATION_MESSAGES.FIELD_REQUIRED;
+    if (!isNotEmpty(form.email))
+      newErrors.email = VALIDATION_MESSAGES.EMAIL_REQUIRED;
+    else if (!isValidEmail(form.email))
+      newErrors.email = VALIDATION_MESSAGES.EMAIL_INVALID;
+    if (!form.password)
+      newErrors.password = VALIDATION_MESSAGES.PASSWORD_REQUIRED;
+    else if (!isValidPassword(form.password))
+      newErrors.password = VALIDATION_MESSAGES.PASSWORD_TOO_SHORT;
     if (!form.confirmPassword)
       newErrors.confirmPassword = 'Please confirm your password.';
     else if (form.password !== form.confirmPassword)
@@ -79,7 +78,11 @@ const CreateAccountPage: React.FC = () => {
 
   const validateStep2 = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!form.visa_type) newErrors.visa_type = 'Visa type is required.';
+    if (!form.visa_type) {
+      newErrors.visa_type = 'Visa type is required.';
+    } else if (form.visa_type === 'other' && !customVisaType.trim()) {
+      newErrors.visa_type = 'Please specify your visa type.';
+    }
     if (
       !form.current_location.city.trim() ||
       !form.current_location.state.trim()
@@ -92,7 +95,11 @@ const CreateAccountPage: React.FC = () => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    if (name === 'visa_type' && value !== 'other') {
+      setCustomVisaType('');
+    }
     setErrors({ ...errors, [e.target.name]: '' });
     setApiError('');
   };
@@ -128,28 +135,27 @@ const CreateAccountPage: React.FC = () => {
           password: form.password,
           first_name: form.first_name,
           last_name: form.last_name,
-          visa_type: form.visa_type,
+          visa_type:
+            form.visa_type === 'other' ? customVisaType : form.visa_type,
           current_location: form.current_location,
           occupation: form.occupation,
           employer: form.employer,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }
       );
 
-      if (response.data) {
-        // Create user data object for the store
-        const userData = {
-          uid: response.data.id,
-          email: response.data.email,
-          first_name: response.data.first_name,
-          last_name: response.data.last_name,
-          visa_type: form.visa_type,
-          current_location: form.current_location,
-          occupation: form.occupation,
-          employer: form.employer,
-        };
+      if (response.user) {
+        // Convert API response to store format and merge with form data
+        const userData = userToUserData(response.user);
+        // Add form-specific data that might not be in the API response
+        userData.visa_type =
+          form.visa_type === 'other' ? customVisaType : form.visa_type;
+        userData.current_location = form.current_location;
+        userData.occupation = form.occupation;
+        userData.employer = form.employer;
 
-        // Update both localStorage and user store
-        localStorage.setItem('userToken', response.token);
+        // Update both user store and localStorage
+        setToken(response.token);
         setUser(userData); // This updates the user store and sets isAuthenticated to true
       }
 
@@ -225,27 +231,61 @@ const CreateAccountPage: React.FC = () => {
                   {errors.email}
                 </span>
               )}
-              <Input
-                name="password"
-                placeholder="Password"
-                type="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <Input
+                  name="password"
+                  placeholder="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+                <button
+                  type="button"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 pr-3 grid place-items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               {errors.password && (
                 <span className="text-red-500 text-sm mb-2">
                   {errors.password}
                 </span>
               )}
-              <Input
-                name="confirmPassword"
-                placeholder="Confirm password"
-                type="password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-              />
+              <div className="relative">
+                <Input
+                  name="confirmPassword"
+                  placeholder="Confirm password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={form.confirmPassword}
+                  onChange={handleChange}
+                  required
+                  className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
+                <button
+                  type="button"
+                  aria-label={
+                    showConfirmPassword
+                      ? 'Hide confirm password'
+                      : 'Show confirm password'
+                  }
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 pr-3 grid place-items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showConfirmPassword ? (
+                    <EyeSlashIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <span className="text-red-500 text-sm mb-2">
                   {errors.confirmPassword}
@@ -275,10 +315,11 @@ const CreateAccountPage: React.FC = () => {
                     Current Visa Type (e.g. H2B, J1, H1B, F1)
                   </option>
                   {visaTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
+                    <option key={type.value} value={type.value}>
+                      {type.label}
                     </option>
                   ))}
+                  <option value="other">Other (specify below)</option>
                 </select>
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   ▲
@@ -289,6 +330,15 @@ const CreateAccountPage: React.FC = () => {
                   </span>
                 )}
               </div>
+              {form.visa_type === 'other' && (
+                <Input
+                  name="customVisaType"
+                  placeholder="Enter your visa type"
+                  value={customVisaType}
+                  onChange={(e) => setCustomVisaType(e.target.value)}
+                  required
+                />
+              )}
               <AutoComplete
                 label="Current Location"
                 value={

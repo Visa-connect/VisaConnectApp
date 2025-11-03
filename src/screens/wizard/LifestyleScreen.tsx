@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { HandThumbUpIcon } from '@heroicons/react/24/outline';
 import { Combobox, Transition } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
-import { COMMON_HOBBIES } from '../../data/commonOptions';
+import { COMMON_HOBBIES, COMMON_OUTINGS } from '../../data/commonOptions';
+import { US_STATES } from '../../data/usStates';
 import { apiPatch } from '../../api';
 import { useUserStore } from '../../stores/userStore';
 
@@ -24,12 +25,15 @@ const LifestyleScreen: React.FC = () => {
   const [form, setForm] = useState({
     hobbies: [] as string[],
     favoriteState: '',
-    outings: '',
+    outings: [] as string[],
     hasCar: 'yes' as 'yes' | 'no',
-    willingToDrive: 'no' as 'yes' | 'no',
+    willingToDrive: 'yes' as 'yes' | 'no',
   });
   const [hobbiesQuery, setHobbiesQuery] = useState('');
   const [hobbiesOpen, setHobbiesOpen] = useState(false);
+  const [stateQuery, setStateQuery] = useState('');
+  const [outingsQuery, setOutingsQuery] = useState('');
+  const [outingsOpen, setOutingsOpen] = useState(false);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
@@ -43,9 +47,15 @@ const LifestyleScreen: React.FC = () => {
       setForm({
         hobbies: user.hobbies || [],
         favoriteState: user.favorite_state || '',
-        outings: user.preferred_outings?.join(', ') || '',
-        hasCar: user.has_car ? 'yes' : 'no',
-        willingToDrive: user.offers_rides ? 'yes' : 'no',
+        outings: user.preferred_outings || [],
+        hasCar:
+          user.has_car !== undefined ? (user.has_car ? 'yes' : 'no') : 'yes',
+        willingToDrive:
+          user.offers_rides !== undefined
+            ? user.offers_rides
+              ? 'yes'
+              : 'no'
+            : 'yes',
       });
     }
   }, [user]);
@@ -57,9 +67,15 @@ const LifestyleScreen: React.FC = () => {
     }
   }, [user, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  // Sync stateQuery with form.favoriteState
+  useEffect(() => {
+    setStateQuery(form.favoriteState);
+  }, [form.favoriteState]);
+
+  // Sync outingsQuery with form.outings (for display purposes)
+  useEffect(() => {
+    setOutingsQuery('');
+  }, [form.outings]);
 
   const handleToggle = (
     field: 'hasCar' | 'willingToDrive',
@@ -78,14 +94,14 @@ const LifestyleScreen: React.FC = () => {
       const updateData = {
         hobbies: form.hobbies,
         favorite_state: form.favoriteState,
-        preferred_outings: form.outings ? [form.outings] : [],
+        preferred_outings: form.outings,
         has_car: form.hasCar === 'yes',
         offers_rides: form.willingToDrive === 'yes',
         profile_answers: {
           lifestyle_personality: {
             hobbies: form.hobbies,
             favoriteState: form.favoriteState,
-            outings: form.outings ? [form.outings] : [],
+            outings: form.outings,
             hasCar: form.hasCar,
             willingToDrive: form.willingToDrive,
           },
@@ -186,10 +202,6 @@ const LifestyleScreen: React.FC = () => {
                   // Ensure dropdown closes when losing focus
                   setHobbiesOpen(false);
                 }}
-                onBlur={() => {
-                  // Additional safety to close dropdown
-                  setTimeout(() => setHobbiesOpen(false), 100);
-                }}
                 multiple
                 as={React.Fragment}
                 open={hobbiesOpen}
@@ -219,45 +231,47 @@ const LifestyleScreen: React.FC = () => {
                       </span>
                     ))}
                   </div>
-                  <Combobox.Input
-                    className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
-                    displayValue={() => hobbiesQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setHobbiesQuery(e.target.value);
-                      setHobbiesOpen(true);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
-                      if (
-                        e.key === 'Enter' &&
-                        hobbiesQuery.trim() &&
-                        !form.hobbies.includes(hobbiesQuery.trim())
-                      ) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const customValue = hobbiesQuery.trim();
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => hobbiesQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setHobbiesQuery(e.target.value);
+                        setHobbiesOpen(true);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (
+                          e.key === 'Enter' &&
+                          hobbiesQuery.trim() &&
+                          !form.hobbies.includes(hobbiesQuery.trim())
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const customValue = hobbiesQuery.trim();
 
-                        // Add the custom value to the form
-                        setForm({
-                          ...form,
-                          hobbies: [...form.hobbies, customValue],
-                        });
+                          // Add the custom value to the form
+                          setForm({
+                            ...form,
+                            hobbies: [...form.hobbies, customValue],
+                          });
 
-                        // Clear the input and close dropdown immediately
-                        setHobbiesQuery('');
-                        setHobbiesOpen(false);
+                          // Clear the input and close dropdown immediately
+                          setHobbiesQuery('');
+                          setHobbiesOpen(false);
 
-                        // Force the input to clear by updating the display value
-                        e.currentTarget.value = '';
-                      }
-                    }}
-                    placeholder="Enter hobbies and interests"
-                  />
-                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <ChevronUpDownIcon
-                      className="h-5 w-5 text-gray-400"
-                      aria-hidden="true"
+                          // Force the input to clear by updating the display value
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                      placeholder="Enter hobbies and interests"
                     />
-                  </Combobox.Button>
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
                   <Transition
                     as={Fragment}
                     leave="transition ease-in duration-100"
@@ -334,12 +348,83 @@ const LifestyleScreen: React.FC = () => {
               <label className="block text-gray-800 font-medium mb-2">
                 What's your favorite state in the U.S.?
               </label>
-              <Input
-                name="favoriteState"
-                placeholder="Enter your favorite state"
+              <Combobox
                 value={form.favoriteState}
-                onChange={handleChange}
-              />
+                onChange={(value: string) =>
+                  setForm({ ...form, favoriteState: value })
+                }
+              >
+                <div className="relative">
+                  <div className="relative w-full cursor-default overflow-hidden rounded-xl bg-white border border-gray-200 shadow-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-opacity-75 focus-visible:ring-offset-2 focus-visible:ring-offset-sky-300 sm:text-sm">
+                    <Combobox.Input
+                      className="w-full border-none py-3 pl-4 pr-10 text-base leading-5 text-gray-900 focus:ring-0 focus:outline-none"
+                      displayValue={(state: string) => state}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                        setStateQuery(event.target.value)
+                      }
+                      placeholder="Enter your favorite state"
+                    />
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
+                  <Transition
+                    as={Fragment}
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-10">
+                      {US_STATES.filter((state) =>
+                        state.toLowerCase().includes(stateQuery.toLowerCase())
+                      ).map((state) => (
+                        <Combobox.Option
+                          key={state}
+                          className={({ active }: { active: boolean }) =>
+                            `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                              active ? 'bg-sky-400 text-white' : 'text-gray-900'
+                            }`
+                          }
+                          value={state}
+                        >
+                          {({
+                            selected,
+                            active,
+                          }: {
+                            selected: boolean;
+                            active: boolean;
+                          }) => (
+                            <>
+                              <span
+                                className={`block truncate ${
+                                  selected ? 'font-medium' : 'font-normal'
+                                }`}
+                              >
+                                {state}
+                              </span>
+                              {selected ? (
+                                <span
+                                  className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                                    active ? 'text-white' : 'text-sky-400'
+                                  }`}
+                                >
+                                  <CheckIcon
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                              ) : null}
+                            </>
+                          )}
+                        </Combobox.Option>
+                      ))}
+                    </Combobox.Options>
+                  </Transition>
+                </div>
+              </Combobox>
             </div>
 
             <div className="mb-4">
@@ -347,12 +432,165 @@ const LifestyleScreen: React.FC = () => {
                 What kind of outings do you enjoy most? (Beach, party, museum,
                 hike)
               </label>
-              <Input
-                name="outings"
-                placeholder="Enter your preferred outings"
+              <Combobox
                 value={form.outings}
-                onChange={handleChange}
-              />
+                onChange={(vals: string[]) => {
+                  // Handle custom values that start with "ADD_CUSTOM:"
+                  const processedVals = vals.map((val) => {
+                    if (val.startsWith('ADD_CUSTOM:')) {
+                      return val.replace('ADD_CUSTOM:', '');
+                    }
+                    return val;
+                  });
+
+                  setForm({ ...form, outings: processedVals });
+                  setOutingsQuery('');
+                  setOutingsOpen(false);
+                }}
+                onClose={() => {
+                  // Ensure dropdown closes when losing focus
+                  setOutingsOpen(false);
+                }}
+                multiple
+                as={React.Fragment}
+                open={outingsOpen}
+                onOpenChange={setOutingsOpen}
+              >
+                <div className="relative">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {form.outings.map((outing) => (
+                      <span
+                        key={outing}
+                        className="inline-flex items-center bg-sky-100 text-sky-800 rounded-full px-3 py-1 text-sm font-medium"
+                      >
+                        {outing}
+                        <button
+                          type="button"
+                          className="ml-2 text-sky-400 hover:text-sky-700 focus:outline-none"
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              outings: form.outings.filter((o) => o !== outing),
+                            })
+                          }
+                          aria-label={`Remove ${outing}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="relative">
+                    <Combobox.Input
+                      className="w-full px-4 py-3 pr-10 rounded-xl bg-white border border-gray-200 shadow-sm text-base focus:outline-none focus:ring-2 focus:ring-sky-300 mb-4"
+                      displayValue={() => outingsQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setOutingsQuery(e.target.value);
+                        setOutingsOpen(true);
+                      }}
+                      onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                        if (
+                          e.key === 'Enter' &&
+                          outingsQuery.trim() &&
+                          !form.outings.includes(outingsQuery.trim())
+                        ) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const customValue = outingsQuery.trim();
+
+                          // Add the custom value to the form
+                          setForm({
+                            ...form,
+                            outings: [...form.outings, customValue],
+                          });
+
+                          // Clear the input and close dropdown immediately
+                          setOutingsQuery('');
+                          setOutingsOpen(false);
+
+                          // Force the input to clear by updating the display value
+                          e.currentTarget.value = '';
+                        }
+                      }}
+                      placeholder="Enter your preferred outings"
+                    />
+                    <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <ChevronUpDownIcon
+                        className="h-5 w-5 text-gray-400"
+                        aria-hidden="true"
+                      />
+                    </Combobox.Button>
+                  </div>
+                  <Transition
+                    as={Fragment}
+                    leave="transition ease-in duration-100"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                  >
+                    <Combobox.Options className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none">
+                      {/* Always show custom add option if user typed something not already selected */}
+                      {outingsQuery.trim() &&
+                        !form.outings.includes(outingsQuery.trim()) && (
+                          <Combobox.Option
+                            value={`ADD_CUSTOM:${outingsQuery.trim()}`}
+                            className={({ active }: { active: boolean }) =>
+                              `cursor-pointer select-none relative py-3 px-4 ${
+                                active
+                                  ? 'bg-green-100 text-green-900'
+                                  : 'text-green-700'
+                              }`
+                            }
+                          >
+                            <span className="block truncate font-medium">
+                              + Add "{outingsQuery.trim()}"
+                            </span>
+                          </Combobox.Option>
+                        )}
+
+                      {/* Show filtered predefined options */}
+                      {COMMON_OUTINGS.filter(
+                        (outing) =>
+                          outing
+                            .toLowerCase()
+                            .includes(outingsQuery.toLowerCase()) &&
+                          !form.outings.includes(outing)
+                      ).map((outing) => (
+                        <Combobox.Option
+                          key={outing}
+                          value={outing}
+                          className={({ active }: { active: boolean }) =>
+                            `cursor-pointer select-none relative py-3 px-4 ${
+                              active
+                                ? 'bg-sky-100 text-sky-900'
+                                : 'text-gray-900'
+                            }`
+                          }
+                        >
+                          {({ selected }: { selected: boolean }) => (
+                            <>
+                              <span
+                                className={`block truncate ${
+                                  selected ? 'font-semibold' : 'font-normal'
+                                }`}
+                              >
+                                {outing}
+                              </span>
+                              {selected ? (
+                                <span className="absolute inset-y-0 right-4 flex items-center text-sky-600">
+                                  <CheckIcon
+                                    className="h-5 w-5"
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                              ) : null}
+                            </>
+                          )}
+                        </Combobox.Option>
+                      ))}
+                    </Combobox.Options>
+                  </Transition>
+                </div>
+              </Combobox>
             </div>
 
             <div className="mb-4">
@@ -362,8 +600,10 @@ const LifestyleScreen: React.FC = () => {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className={`px-6 py-3 rounded-full font-semibold text-white ${
-                    form.hasCar === 'yes' ? 'bg-sky-400' : 'bg-sky-200'
+                  className={`px-6 py-3 rounded-full font-semibold border-2 ${
+                    form.hasCar === 'yes'
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
                   } focus:outline-none`}
                   onClick={() => handleToggle('hasCar', 'yes')}
                 >
@@ -373,9 +613,9 @@ const LifestyleScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.hasCar === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => handleToggle('hasCar', 'no')}
                 >
                   No
@@ -392,9 +632,9 @@ const LifestyleScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.willingToDrive === 'yes'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => handleToggle('willingToDrive', 'yes')}
                 >
                   Yes
@@ -403,9 +643,9 @@ const LifestyleScreen: React.FC = () => {
                   type="button"
                   className={`px-6 py-3 rounded-full font-semibold border-2 ${
                     form.willingToDrive === 'no'
-                      ? 'border-sky-400 text-sky-400'
-                      : 'border-gray-300 text-gray-800'
-                  } bg-white focus:outline-none`}
+                      ? 'border-sky-400 text-white bg-sky-400'
+                      : 'border-gray-300 text-gray-800 bg-white'
+                  } focus:outline-none`}
                   onClick={() => handleToggle('willingToDrive', 'no')}
                 >
                   No

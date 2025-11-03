@@ -5,6 +5,9 @@
 /server/node_modules
 /.pnp
 .pnp.js
+server/node_modules/
+server/coverage/
+server/.env.test 
 
 # testing
 /coverage
@@ -22,11 +25,19 @@
 
 # Firebase
 server/firebaseServiceAccount.json
-server/firebase-stage.json
+server/firebase-stage-credentials.json
 
 # Build artifacts
 /server/dist
 
+# Documentation and history files that may contain secrets
+.specstory/
+.cursorindexingignore
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Lock files - using yarn, ignore npm lock files
+package-lock.json
+server/package-lock.json

@@ -1,103 +1,106 @@
 name: Deploy to Staging
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - feature/*
-      - bugfix/*
-      - hotfix/*
   pull_request:
     branches:
-      - main
-      - develop
+      - staging
+  push:
+    branches:
+      - staging
 
 env:
   HEROKU_APP_NAME: visa-connect-stage
-  HEROKU_APP_NAME_PROD: visa-connect
+  STAGING_URL: staging.visaconnectus.com
 
 jobs:
   deploy-staging:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # For PRs, use the source branch. For pushes, use the current branch
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
+          # Fetch full history for git operations
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'yarn'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
+      - name: Run linting
+        run: yarn lint
+
       - name: Run tests
-        run: |
-          yarn test --watchAll=false --coverage
-          yarn lint
+        run: yarn test --watchAll=false --coverage
 
       - name: Build application
         run: yarn build
 
-      - name: Deploy to Heroku Staging
-        uses: akhileshns/heroku-deploy@v3.12.14
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ env.HEROKU_APP_NAME }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          branch: ${{ github.ref }}
-
-      - name: Run health check
+      - name: Install Heroku CLI
         run: |
-          sleep 30
-          curl -f https://${{ env.HEROKU_APP_NAME }}-113080622b06.herokuapp.com/api/health || exit 1
-
-  deploy-production:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: deploy-staging
-    environment: production
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-
-      - name: Run tests
+          curl https://cli-assets.heroku.com/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Authenticate Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          yarn test --watchAll=false --coverage
-          yarn lint
+          heroku auth:token >/dev/null 2>&1 || true
+          heroku auth:whoami || heroku auth:token >/dev/null 2>&1
 
-      - name: Build application
-        run: yarn build
-
-      - name: Deploy to Heroku Production
-        uses: akhileshns/heroku-deploy@v3.12.14
-        with:
-          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
-          heroku_app_name: ${{ env.HEROKU_APP_NAME_PROD }}
-          heroku_email: ${{ secrets.HEROKU_EMAIL }}
-          branch: main
-
-      - name: Run production health check
+      - name: Ensure Heroku app stack
         run: |
-          sleep 30
-          curl -f https://${{ env.HEROKU_APP_NAME_PROD }}.herokuapp.com/api/health || exit 1
+          heroku stack:set heroku-24 --app ${{ env.HEROKU_APP_NAME }}
 
-      - name: Notify deployment success
-        if: success()
+      - name: Add Heroku git remote
         run: |
-          echo "🚀 Production deployment successful!"
-          echo "App: https://${{ env.HEROKU_APP_NAME_PROD }}.herokuapp.com"
+          heroku git:remote --app ${{ env.HEROKU_APP_NAME }} || true
+
+      - name: Push to Heroku (git) and release
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          # Push current HEAD to Heroku main
+          git push https://heroku:${HEROKU_API_KEY}@git.heroku.com/${{ env.HEROKU_APP_NAME }}.git HEAD:main --force
+
+      - name: Run Database Migrations
+        run: |
+          # Run migrations on the deployed app
+          heroku run "cd server && yarn migrate" --app ${{ env.HEROKU_APP_NAME }}
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to complete..."
+
+          ATTEMPTS=5
+          SLEEP=15
+          URL="https://${{ env.STAGING_URL }}/api/health"
+          echo "Running health check against: $URL"
+          for i in $(seq 1 $ATTEMPTS); do
+            if curl -fsS "$URL" > /dev/null; then
+              echo "Health check passed."
+              exit 0
+            fi
+            echo "Attempt $i/$ATTEMPTS failed. Sleeping ${SLEEP}s..."
+            sleep $SLEEP
+          done
+          echo "Health check failed after $ATTEMPTS attempts. Last response:" && curl -v "$URL" || true
+          exit 1
+
+      # - name: Comment on PR
+      #   if: github.event_name == 'pull_request'
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       github.rest.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: `🚀 **Deployed to staging!**\n\n- **Branch**: \`${{ github.head_ref }}\`\n- **Environment**: Staging\n- **URL**: https://${{ env.STAGING_URL }}\n- **Commit**: \`${{ github.sha }}\`\n\nReady for testing! 🧪`
+      #       })
