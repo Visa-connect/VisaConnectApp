@@ -13,6 +13,7 @@ const EmployersListScreen: React.FC = () => {
   const [filter, setFilter] = useState<
     'all' | 'pending' | 'approved' | 'rejected'
   >('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchEmployers = useCallback(async () => {
     try {
@@ -69,9 +70,26 @@ const EmployersListScreen: React.FC = () => {
     }
   };
 
-  const filteredEmployers = employers.filter(
-    (employer) => filter === 'all' || employer.status === filter
-  );
+  const filteredEmployers = employers.filter((employer) => {
+    // Apply status filter
+    const statusMatch = filter === 'all' || employer.status === filter;
+
+    // Apply search filter
+    if (!searchTerm.trim()) {
+      return statusMatch;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    const nameMatch = employer.name?.toLowerCase().includes(searchLower);
+    const ownerMatch = employer.owner_name?.toLowerCase().includes(searchLower);
+    const idMatch = employer.id.toString().includes(searchLower);
+
+    return statusMatch && (nameMatch || ownerMatch || idMatch);
+  });
+
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
 
   const tabs = [
     { key: 'all' as const, label: 'All', count: employers.length },
@@ -146,6 +164,35 @@ const EmployersListScreen: React.FC = () => {
             </button>
           ))}
         </nav>
+      </div>
+
+      {/* Search Bar */}
+      <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Business name, owner name, or ID..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-end space-x-2">
+            <button
+              onClick={clearSearch}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Table */}

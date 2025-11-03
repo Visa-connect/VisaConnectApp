@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // Actions removed; rows are clickable
 import { useAdminStore } from '../../stores/adminStore';
@@ -24,11 +24,36 @@ const UsersListScreen: React.FC = () => {
     nextPage,
     previousPage,
   } = useAdminUsers();
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch users on component mount
   useEffect(() => {
     refreshData();
   }, [refreshData]);
+
+  // Filter users client-side based on search term
+  const filteredUsers = users.filter((user) => {
+    if (!searchTerm.trim()) {
+      return true;
+    }
+
+    const searchLower = searchTerm.toLowerCase().trim();
+    const fullName = `${user.first_name || ''} ${
+      user.last_name || ''
+    }`.toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    const id = (user.id || '').toLowerCase();
+
+    return (
+      fullName.includes(searchLower) ||
+      email.includes(searchLower) ||
+      id.includes(searchLower)
+    );
+  });
+
+  const clearSearch = () => {
+    setSearchTerm('');
+  };
 
   const handleView = (userId: string) => {
     const user = users.find((u) => u.id === userId);
@@ -94,6 +119,35 @@ const UsersListScreen: React.FC = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="bg-white shadow-sm rounded-lg p-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Search */}
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search
+            </label>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Name, email, or user ID..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-end space-x-2">
+            <button
+              onClick={clearSearch}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Table */}
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
@@ -121,7 +175,7 @@ const UsersListScreen: React.FC = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {users.length === 0 ? (
+            {filteredUsers.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -131,7 +185,7 @@ const UsersListScreen: React.FC = () => {
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              filteredUsers.map((user) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50 cursor-pointer"

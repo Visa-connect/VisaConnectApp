@@ -4,6 +4,7 @@ import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../../components/Button';
 import { useAdminAuth } from '../../hooks/useAdminAuth';
 import { ApiErrorResponse } from '../../types/api';
+import logo from '../../assets/images/logo.png';
 
 const AdminLoginScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -71,17 +72,8 @@ const AdminLoginScreen: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Logo */}
         <div className="flex justify-center">
-          <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">V</span>
-          </div>
+          <img src={logo} alt="VisaConnect Logo" className="h-16 w-auto" />
         </div>
-
-        <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          Admin Portal
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Sign in to access the VisaConnect admin dashboard
-        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -164,7 +156,7 @@ const AdminLoginScreen: React.FC = () => {
           </form>
 
           {/* Clear Token Button */}
-          <div className="mt-4">
+          {/* <div className="mt-4">
             <button
               type="button"
               onClick={() => {
@@ -176,7 +168,7 @@ const AdminLoginScreen: React.FC = () => {
             >
               Clear Admin Token (if having issues)
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -182,7 +182,11 @@ const AdminReportEditScreen: React.FC = () => {
                 onClick={openTargetModal}
                 className="text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
-                {report.target_type === 'job' ? 'View job' : 'View meetup'}
+                {report.target_type === 'job'
+                  ? 'View job'
+                  : report.target_type === 'meetup'
+                  ? 'View meetup'
+                  : 'View chat'}
               </button>
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
