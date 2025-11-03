@@ -239,7 +239,7 @@ const CreateAccountPage: React.FC = () => {
                   value={form.password}
                   onChange={handleChange}
                   required
-                  className="pr-10"
+                  className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
                 <button
                   type="button"
@@ -267,7 +267,7 @@ const CreateAccountPage: React.FC = () => {
                   value={form.confirmPassword}
                   onChange={handleChange}
                   required
-                  className="pr-10"
+                  className="appearance-none block w-full px-3 py-2 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
                 <button
                   type="button"
