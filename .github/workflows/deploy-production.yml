@@ -14,9 +14,7 @@ on:
 
 env:
   HEROKU_APP_NAME: visa-connect
-  HEROKU_APP_NAME_STAGING: visa-connect-stage
   PRODUCTION_URL: visaconnectus.com
-  STAGING_URL: staging.visaconnectus.com
 
 jobs:
   deploy-production:
@@ -25,6 +23,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Fetch full history for git operations
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -49,6 +50,17 @@ jobs:
           curl https://cli-assets.heroku.com/install.sh | sh
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Authenticate Heroku
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          heroku auth:token >/dev/null 2>&1 || true
+          heroku auth:whoami || heroku auth:token >/dev/null 2>&1
+
+      - name: Ensure Heroku app stack
+        run: |
+          heroku stack:set heroku-24 --app ${{ env.HEROKU_APP_NAME }}
+
       - name: Deploy to Heroku Production
         uses: akhileshns/heroku-deploy@v3.12.14
         with:
@@ -60,17 +72,30 @@ jobs:
       - name: Run Database Migrations
         run: |
           echo "Running database migrations on production..."
-          heroku run "cd server && npm run migrate" --app ${{ env.HEROKU_APP_NAME }}
+          heroku run "cd server && yarn migrate" --app ${{ env.HEROKU_APP_NAME }}
           echo "✅ Migrations completed successfully!"
 
       - name: Run production health check
         run: |
-          sleep 30
-          curl -f https://${{ env.HEROKU_APP_NAME }}.herokuapp.com/api/health || exit 1
+          echo "Waiting for deployment to complete..."
+
+          ATTEMPTS=5
+          SLEEP=15
+          URL="https://${{ env.PRODUCTION_URL }}/api/health"
+          echo "Running health check against: $URL"
+          for i in $(seq 1 $ATTEMPTS); do
+            if curl -fsS "$URL" > /dev/null; then
+              echo "Health check passed."
+              exit 0
+            fi
+            echo "Attempt $i/$ATTEMPTS failed. Sleeping ${SLEEP}s..."
+            sleep $SLEEP
+          done
+          echo "Health check failed after $ATTEMPTS attempts. Last response:" && curl -v "$URL" || true
+          exit 1
 
       - name: Notify deployment success
         if: success()
         run: |
           echo "🚀 Production deployment successful!"
           echo "Production: https://${{ env.PRODUCTION_URL }}"
-          echo "Staging: https://${{ env.STAGING_URL }}"

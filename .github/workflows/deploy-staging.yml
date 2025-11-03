@@ -72,7 +72,7 @@ jobs:
       - name: Run Database Migrations
         run: |
           # Run migrations on the deployed app
-          heroku run "cd server && npm run migrate" --app ${{ env.HEROKU_APP_NAME }}
+          heroku run "cd server && yarn migrate" --app ${{ env.HEROKU_APP_NAME }}
 
       - name: Health check
         run: |
