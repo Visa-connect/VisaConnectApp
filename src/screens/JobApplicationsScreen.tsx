@@ -88,8 +88,8 @@ const JobApplicationsScreen: React.FC = () => {
 
         // Fetch job details and applications in parallel
         const [jobResponse, applicationsResponse] = await Promise.all([
-          JobsApiService.getJobById(parseInt(jobId)),
-          ApplicationsApiService.getJobApplications(parseInt(jobId), {
+          JobsApiService.getJobById(jobId),
+          ApplicationsApiService.getJobApplications(jobId, {
             limit: 100,
             order_by: 'created_at',
             order_direction: 'DESC',

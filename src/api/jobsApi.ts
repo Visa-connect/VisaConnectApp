@@ -1,7 +1,7 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './index';
 
 export interface Job {
-  id: number;
+  id: string;
   business_id: number;
   title: string;
   description: string;
@@ -96,7 +96,7 @@ export class JobsApiService {
   /**
    * Get job by ID
    */
-  static async getJobById(jobId: number): Promise<JobResponse> {
+  static async getJobById(jobId: string): Promise<JobResponse> {
     return apiGet<JobResponse>(`/api/jobs/${jobId}`);
   }
 
@@ -127,7 +127,7 @@ export class JobsApiService {
    * Update job details
    */
   static async updateJob(
-    jobId: number,
+    jobId: string,
     jobData: Partial<JobSubmission>
   ): Promise<JobResponse> {
     return apiPut<JobResponse>(`/api/jobs/${jobId}`, jobData);
@@ -137,7 +137,7 @@ export class JobsApiService {
    * Update job status
    */
   static async updateJobStatus(
-    jobId: number,
+    jobId: string,
     status: 'active' | 'paused' | 'closed'
   ): Promise<JobResponse> {
     return apiPut<JobResponse>(`/api/jobs/${jobId}/status`, { status });
@@ -147,7 +147,7 @@ export class JobsApiService {
    * Delete job
    */
   static async deleteJob(
-    jobId: number
+    jobId: string
   ): Promise<{ success: boolean; message: string }> {
     return apiDelete<{ success: boolean; message: string }>(
       `/api/jobs/${jobId}`

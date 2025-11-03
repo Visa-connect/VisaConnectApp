@@ -25,7 +25,7 @@ const MeetupDetailsScreen: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const meetupData = await meetupService.getMeetup(parseInt(meetupId));
+        const meetupData = await meetupService.getMeetup(meetupId);
         setMeetup(meetupData);
       } catch (err) {
         console.error('Error fetching meetup:', err);

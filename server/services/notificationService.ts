@@ -249,8 +249,8 @@ export class NotificationService {
     employerId: string,
     applicantName: string,
     jobTitle: string,
-    jobId: number,
-    applicationId: number,
+    jobId: string,
+    applicationId: string,
     conversationId: string
   ): Promise<Notification> {
     return this.createNotification({
@@ -276,7 +276,7 @@ export class NotificationService {
     meetupCreatorId: string,
     interestedUserName: string,
     meetupTitle: string,
-    meetupId: number
+    meetupId: string
   ): Promise<Notification> {
     return this.createNotification({
       user_id: meetupCreatorId,
@@ -323,7 +323,7 @@ export class NotificationService {
   async createMeetupUpdateNotification(
     interestedUserId: string,
     meetupTitle: string,
-    meetupId: number,
+    meetupId: string,
     updateType: string
   ): Promise<Notification> {
     return this.createNotification({

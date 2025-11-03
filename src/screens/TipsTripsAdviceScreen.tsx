@@ -53,7 +53,7 @@ const TipsTripsAdviceScreen: React.FC = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  const handleTripsClick = async (postId: number) => {
+  const handleTripsClick = async (postId: string) => {
     if (!user) {
       // Redirect to login if user is not authenticated
       navigate('/login');
@@ -117,7 +117,7 @@ const TipsTripsAdviceScreen: React.FC = () => {
     }
   };
 
-  const handlePostClick = (postId: number) => {
+  const handlePostClick = (postId: string) => {
     navigate(`/tips-trips-advice/${postId}`);
   };
 

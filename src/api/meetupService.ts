@@ -1,7 +1,7 @@
 import { apiGet, apiPost, apiPut } from './index';
 
 export interface Meetup {
-  id: number;
+  id: string;
   title: string;
   description: string;
   location: string;
@@ -76,7 +76,7 @@ export interface CategoriesResponse {
 
 export interface CreateMeetupResponse {
   success: boolean;
-  data: { meetupId: number };
+  data: { meetupId: string };
   message: string;
 }
 
@@ -102,7 +102,7 @@ class MeetupService {
   }
 
   // Get a specific meetup by ID
-  async getMeetup(meetupId: number): Promise<Meetup> {
+  async getMeetup(meetupId: string): Promise<Meetup> {
     const response: MeetupResponse = await apiGet(`/api/meetups/${meetupId}`);
     return response.data;
   }
@@ -116,7 +116,7 @@ class MeetupService {
   }
 
   // Create a new meetup
-  async createMeetup(meetupData: CreateMeetupRequest): Promise<number> {
+  async createMeetup(meetupData: CreateMeetupRequest): Promise<string> {
     const response: CreateMeetupResponse = await apiPost(
       '/api/meetups',
       meetupData
@@ -126,7 +126,7 @@ class MeetupService {
 
   // Express interest in a meetup
   async expressInterest(
-    meetupId: number
+    meetupId: string
   ): Promise<{ success: boolean; message: string; code?: string }> {
     try {
       const response = (await apiPost(
@@ -151,7 +151,7 @@ class MeetupService {
 
   // Remove interest from a meetup
   async removeInterest(
-    meetupId: number
+    meetupId: string
   ): Promise<{ success: boolean; message: string; code?: string }> {
     try {
       const response = (await apiPost(
@@ -190,7 +190,7 @@ class MeetupService {
 
   // Update a meetup
   async updateMeetup(
-    meetupId: number,
+    meetupId: string,
     updateData: CreateMeetupRequest
   ): Promise<void> {
     await apiPut(`/api/meetups/${meetupId}`, updateData);

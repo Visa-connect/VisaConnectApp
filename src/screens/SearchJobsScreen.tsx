@@ -27,7 +27,7 @@ const SearchJobsScreen: React.FC = () => {
   });
   const [totalJobs, setTotalJobs] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-  const [appliedJobs, setAppliedJobs] = useState<Set<number>>(new Set());
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
 
   const handleOverlayClick = () => {
     setIsDrawerOpen(false);
@@ -38,7 +38,7 @@ const SearchJobsScreen: React.FC = () => {
   };
 
   // Check which jobs the user has applied to (efficient bulk check)
-  const checkAppliedJobs = async (jobIds: number[]) => {
+  const checkAppliedJobs = async (jobIds: string[]) => {
     try {
       if (jobIds.length === 0) {
         setAppliedJobs(new Set());
@@ -134,7 +134,7 @@ const SearchJobsScreen: React.FC = () => {
   };
 
   // Handle job click
-  const handleJobClick = (jobId: number) => {
+  const handleJobClick = (jobId: string) => {
     navigate(`/job/${jobId}`);
   };
 

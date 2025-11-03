@@ -18,7 +18,7 @@ export interface MeetupCategory {
 }
 
 export interface Meetup {
-  id?: number;
+  id?: string;
   creator_id: string;
   category_id: number;
   title: string;
@@ -46,14 +46,14 @@ export interface Meetup {
 
 export interface MeetupInterest {
   id?: number;
-  meetup_id: number;
+  meetup_id: string;
   user_id: string;
   created_at?: Date;
 }
 
 export interface MeetupReport {
   id?: number;
-  meetup_id: number;
+  meetup_id: string;
   reporter_id: string;
   reason: string;
   status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
@@ -222,7 +222,7 @@ class MeetupService {
   }
 
   // Get a meetup by ID with enhanced data
-  async getMeetup(meetupId: number, userId?: string): Promise<Meetup | null> {
+  async getMeetup(meetupId: string, userId?: string): Promise<Meetup | null> {
     try {
       const result = await pool.query(
         `SELECT m.*, 
@@ -431,7 +431,7 @@ class MeetupService {
   }
 
   // Express interest in a meetup
-  async expressInterest(meetupId: number, userId: string): Promise<void> {
+  async expressInterest(meetupId: string, userId: string): Promise<void> {
     try {
       // Check if meetup exists
       const meetupResult = await pool.query(
@@ -475,7 +475,7 @@ class MeetupService {
   }
 
   // Remove interest in a meetup
-  async removeInterest(meetupId: number, userId: string): Promise<void> {
+  async removeInterest(meetupId: string, userId: string): Promise<void> {
     try {
       // Check if meetup exists
       const meetupResult = await pool.query(
@@ -510,10 +510,10 @@ class MeetupService {
 
   // Report a meetup
   async reportMeetup(
-    meetupId: number,
+    meetupId: string,
     reporterId: string,
     reason: string
-  ): Promise<number> {
+  ): Promise<string> {
     try {
       const result = await pool.query(
         `INSERT INTO meetup_reports (
@@ -522,7 +522,7 @@ class MeetupService {
         RETURNING id`,
         [meetupId, reporterId, reason]
       );
-      return result.rows[0].id;
+      return result.rows[0].id as string;
     } catch (error) {
       console.error('Error reporting meetup:', error);
       throw new Error('Failed to report meetup');
@@ -652,7 +652,7 @@ class MeetupService {
 
   // Update a meetup (only by creator)
   async updateMeetup(
-    meetupId: number,
+    meetupId: string,
     userId: string,
     updateData: UpdateMeetupRequest
   ): Promise<void> {
@@ -755,7 +755,7 @@ class MeetupService {
   }
 
   // Delete a meetup (only by creator)
-  async deleteMeetup(meetupId: number, userId: string): Promise<void> {
+  async deleteMeetup(meetupId: string, userId: string): Promise<void> {
     try {
       // Check if user is the creator
       const meetupResult = await pool.query(

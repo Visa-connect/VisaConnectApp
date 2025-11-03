@@ -1,4 +1,5 @@
 import { Express, Request, Response } from 'express';
+import { validate as validateUUID } from 'uuid';
 import { authenticateUser } from '../middleware/auth';
 import applicationsService, {
   ApplicationSubmission,
@@ -9,6 +10,19 @@ import { chatService } from '../services/chatService';
 import { notificationService } from '../services/notificationService';
 import { AppError, ErrorCode } from '../types/errors';
 import pool from '../db/config';
+
+// Helper functions to validate UUID route parameters
+function validateJobId(jobId: string): void {
+  if (!validateUUID(jobId)) {
+    throw new AppError('Invalid job ID format', ErrorCode.BAD_REQUEST);
+  }
+}
+
+function validateApplicationId(applicationId: string): void {
+  if (!validateUUID(applicationId)) {
+    throw new AppError('Invalid application ID format', ErrorCode.BAD_REQUEST);
+  }
+}
 
 // Validate if URL is from trusted Firebase Storage domain
 const isValidResumeUrl = (url: string): boolean => {
@@ -121,7 +135,7 @@ export default function applicationsApi(app: Express) {
         }
 
         const applicationData: ApplicationSubmission = {
-          job_id: parseInt(job_id),
+          job_id: job_id,
           user_id: userId,
           qualifications,
           location,
@@ -229,10 +243,8 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const jobId = parseInt(req.params.jobId);
-        if (isNaN(jobId)) {
-          throw new AppError('Invalid job ID', ErrorCode.VALIDATION_ERROR);
-        }
+        const jobId = req.params.jobId;
+        validateJobId(jobId);
 
         const {
           status,
@@ -314,13 +326,13 @@ export default function applicationsApi(app: Express) {
           });
         }
 
-        // Validate job IDs
+        // Validate job IDs (UUIDs)
         const validJobIds = jobIds.filter(
-          (id) => typeof id === 'number' && id > 0
+          (id) => typeof id === 'string' && validateUUID(id)
         );
         if (validJobIds.length !== jobIds.length) {
           throw new AppError(
-            'Invalid job IDs provided',
+            'Invalid job IDs provided. Job IDs must be valid UUIDs',
             ErrorCode.VALIDATION_ERROR
           );
         }
@@ -429,13 +441,8 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const applicationId = parseInt(req.params.applicationId);
-        if (isNaN(applicationId)) {
-          throw new AppError(
-            'Invalid application ID',
-            ErrorCode.VALIDATION_ERROR
-          );
-        }
+        const applicationId = req.params.applicationId;
+        validateApplicationId(applicationId);
 
         const application = await applicationsService.getApplicationById(
           applicationId
@@ -488,13 +495,8 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const applicationId = parseInt(req.params.applicationId);
-        if (isNaN(applicationId)) {
-          throw new AppError(
-            'Invalid application ID',
-            ErrorCode.VALIDATION_ERROR
-          );
-        }
+        const applicationId = req.params.applicationId;
+        validateApplicationId(applicationId);
 
         const { status } = req.body;
         if (
@@ -575,13 +577,8 @@ export default function applicationsApi(app: Express) {
           throw new AppError('User not authenticated', ErrorCode.UNAUTHORIZED);
         }
 
-        const applicationId = parseInt(req.params.applicationId);
-        if (isNaN(applicationId)) {
-          throw new AppError(
-            'Invalid application ID',
-            ErrorCode.VALIDATION_ERROR
-          );
-        }
+        const applicationId = req.params.applicationId;
+        validateApplicationId(applicationId);
 
         // Check if application exists and belongs to user
         const application = await applicationsService.getApplicationById(

@@ -1,8 +1,8 @@
 import { apiGet, apiPost, apiPut, apiDelete } from './index';
 
 export interface JobApplication {
-  id: number;
-  job_id: number;
+  id: string;
+  job_id: string;
   user_id: string;
   qualifications: string;
   location: string;
@@ -24,7 +24,7 @@ export interface JobApplicationWithDetails extends JobApplication {
 }
 
 export interface ApplicationSubmission {
-  job_id: number;
+  job_id: string;
   qualifications: string;
   location: string;
   visa_type: string;
@@ -71,7 +71,7 @@ export class ApplicationsApiService {
    * Get applications for a specific job
    */
   static async getJobApplications(
-    jobId: number,
+    jobId: string,
     filters: {
       status?: string;
       limit?: number;
@@ -100,11 +100,11 @@ export class ApplicationsApiService {
   /**
    * Check if user has applied to specific jobs (bulk check)
    */
-  static async checkAppliedJobs(jobIds: number[]): Promise<{
+  static async checkAppliedJobs(jobIds: string[]): Promise<{
     success: boolean;
-    data: number[];
+    data: string[];
   }> {
-    const response = await apiPost<{ success: boolean; data: number[] }>(
+    const response = await apiPost<{ success: boolean; data: string[] }>(
       '/api/applications/check-applications',
       { jobIds }
     );
@@ -143,7 +143,7 @@ export class ApplicationsApiService {
    * Get application by ID
    */
   static async getApplicationById(
-    applicationId: number
+    applicationId: string
   ): Promise<ApplicationResponse> {
     return apiGet<ApplicationResponse>(`/api/applications/${applicationId}`);
   }
@@ -152,7 +152,7 @@ export class ApplicationsApiService {
    * Update application status
    */
   static async updateApplicationStatus(
-    applicationId: number,
+    applicationId: string,
     status: 'pending' | 'reviewed' | 'accepted' | 'rejected'
   ): Promise<ApplicationResponse> {
     return apiPut<ApplicationResponse>(
@@ -165,7 +165,7 @@ export class ApplicationsApiService {
    * Delete application
    */
   static async deleteApplication(
-    applicationId: number
+    applicationId: string
   ): Promise<{ success: boolean; message: string }> {
     return apiDelete<{ success: boolean; message: string }>(
       `/api/applications/${applicationId}`
@@ -188,7 +188,7 @@ export class ApplicationsApiService {
    * Check if user has applied to a job
    */
   static async hasAppliedToJob(
-    jobId: number
+    jobId: string
   ): Promise<{ success: boolean; hasApplied: boolean }> {
     try {
       const response = await this.getMyApplications({ limit: 1000 });

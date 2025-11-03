@@ -52,7 +52,7 @@ const EditMeetupScreen: React.FC = () => {
 
       // Fetch meetup details and categories in parallel
       const [meetupData, categoriesData] = await Promise.all([
-        meetupService.getMeetup(parseInt(meetupId!)),
+        meetupService.getMeetup(meetupId!),
         meetupService.getCategories(),
       ]);
 
@@ -188,7 +188,7 @@ const EditMeetupScreen: React.FC = () => {
         photo_public_id: formData.photo_public_id,
       };
 
-      await meetupService.updateMeetup(parseInt(meetupId), meetupData);
+      await meetupService.updateMeetup(meetupId, meetupData);
 
       setSuccessMessage('Meetup updated successfully!');
 

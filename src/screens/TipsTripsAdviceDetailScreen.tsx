@@ -22,9 +22,7 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const postData = await tipsTripsAdviceService.getPostById(
-          parseInt(postId)
-        );
+        const postData = await tipsTripsAdviceService.getPostById(postId);
         setPost(postData);
       } catch (err) {
         console.error('Error fetching post:', err);

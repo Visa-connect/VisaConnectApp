@@ -2,7 +2,7 @@ import { apiGet, apiPost, apiPut, apiDelete } from './index';
 
 // Types for Tips, Trips, and Advice
 export interface TipsTripsAdvicePost {
-  id: number;
+  id: string;
   title: string;
   description: string;
   creator_id: string;
@@ -19,7 +19,7 @@ export interface TipsTripsAdvicePost {
   };
   photos: {
     id: number;
-    post_id: number;
+    post_id: string;
     photo_url: string;
     photo_public_id: string;
     display_order: number;
@@ -83,7 +83,7 @@ export interface TipsTripsAdviceListResponse {
 export interface CreateTipsTripsAdviceResponse {
   success: boolean;
   data: {
-    postId: number;
+    postId: string;
   };
   message?: string;
 }
@@ -108,7 +108,7 @@ export interface LikeResponse {
 
 class TipsTripsAdviceService {
   // Create a new post
-  async createPost(postData: CreateTipsTripsAdviceRequest): Promise<number> {
+  async createPost(postData: CreateTipsTripsAdviceRequest): Promise<string> {
     const response: CreateTipsTripsAdviceResponse = await apiPost(
       '/api/tips-trips-advice',
       postData
@@ -117,7 +117,7 @@ class TipsTripsAdviceService {
   }
 
   // Get a single post by ID
-  async getPostById(postId: number): Promise<TipsTripsAdvicePost> {
+  async getPostById(postId: string): Promise<TipsTripsAdvicePost> {
     const response: TipsTripsAdviceResponse = await apiGet(
       `/api/tips-trips-advice/${postId}`
     );
@@ -154,19 +154,19 @@ class TipsTripsAdviceService {
 
   // Update a post
   async updatePost(
-    postId: number,
+    postId: string,
     updateData: UpdateTipsTripsAdviceRequest
   ): Promise<void> {
     await apiPut(`/api/tips-trips-advice/${postId}`, updateData);
   }
 
   // Delete a post
-  async deletePost(postId: number): Promise<void> {
+  async deletePost(postId: string): Promise<void> {
     await apiDelete(`/api/tips-trips-advice/${postId}`);
   }
 
   // Add a comment to a post
-  async addComment(postId: number, comment: string): Promise<any> {
+  async addComment(postId: string, comment: string): Promise<any> {
     const response: CommentResponse = await apiPost(
       `/api/tips-trips-advice/${postId}/comments`,
       { comment }
@@ -175,7 +175,7 @@ class TipsTripsAdviceService {
   }
 
   // Like/unlike a post
-  async toggleLike(postId: number): Promise<{ liked: boolean }> {
+  async toggleLike(postId: string): Promise<{ liked: boolean }> {
     const response: LikeResponse = await apiPost(
       `/api/tips-trips-advice/${postId}/like`,
       {}

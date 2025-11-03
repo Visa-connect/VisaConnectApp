@@ -51,7 +51,7 @@ const MeetupsScreen: React.FC = () => {
     setSearchQuery('');
   };
 
-  const handleMeetupClick = (meetupId: number) => {
+  const handleMeetupClick = (meetupId: string) => {
     navigate(`/meetups/${meetupId}`);
   };
 

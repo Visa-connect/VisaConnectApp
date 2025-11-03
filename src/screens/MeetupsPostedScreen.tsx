@@ -32,11 +32,11 @@ const MeetupsPostedScreen: React.FC = () => {
     navigate('/settings');
   };
 
-  const handleMeetupClick = (meetupId: number) => {
+  const handleMeetupClick = (meetupId: string) => {
     navigate(`/meetups/${meetupId}`);
   };
 
-  const handleEditMeetup = (e: React.MouseEvent, meetupId: number) => {
+  const handleEditMeetup = (e: React.MouseEvent, meetupId: string) => {
     e.stopPropagation(); // Prevent triggering the card click
     navigate(`/edit-meetup/${meetupId}`);
   };

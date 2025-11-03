@@ -23,7 +23,7 @@ const JobsPostedScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applicationCounts, setApplicationCounts] = useState<
-    Record<number, number>
+    Record<string, number>
   >({});
 
   const handleOverlayClick = () => {
@@ -57,7 +57,7 @@ const JobsPostedScreen: React.FC = () => {
 
         // Get all jobs for user's businesses
         const allJobs: JobWithBusiness[] = [];
-        const counts: Record<number, number> = {};
+        const counts: Record<string, number> = {};
 
         for (const business of businessesResponse.data) {
           try {
@@ -143,15 +143,15 @@ const JobsPostedScreen: React.FC = () => {
     return 'Salary not specified';
   };
 
-  const handleViewApplications = (jobId: number) => {
+  const handleViewApplications = (jobId: string) => {
     navigate(`/job-applications/${jobId}`);
   };
 
-  const handleEditJob = (jobId: number) => {
+  const handleEditJob = (jobId: string) => {
     navigate(`/post-job?edit=${jobId}`);
   };
 
-  const handleViewJob = (jobId: number) => {
+  const handleViewJob = (jobId: string) => {
     navigate(`/job/${jobId}`);
   };
 
