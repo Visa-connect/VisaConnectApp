@@ -1,5 +1,6 @@
 import { Express, Request, Response } from 'express';
 import multer from 'multer';
+import { validate as validateUUID } from 'uuid';
 import { authenticateUser } from '../middleware/auth';
 import { authenticateAdmin } from '../middleware/adminAuth';
 import { tipsTripsAdviceService } from '../services/tipsTripsAdviceService';
@@ -11,6 +12,13 @@ import {
   AddCommentRequest,
 } from '../types/tipsTripsAdvice';
 import { uploadTipsPhoto } from '../services/firebaseStorageService';
+
+// Helper function to validate postId UUID
+function validatePostId(postId: string): void {
+  if (!validateUUID(postId)) {
+    throw new AppError('Invalid post ID format', ErrorCode.BAD_REQUEST);
+  }
+}
 
 // Configure multer for memory storage
 const upload = multer({
@@ -144,6 +152,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = req.params.postId;
+        validatePostId(postId);
         const userId = req.user?.uid;
 
         const post = await tipsTripsAdviceService.getPostById(postId, userId);
@@ -226,6 +235,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = req.params.postId;
+        validatePostId(postId);
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -345,6 +355,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = req.params.postId;
+        validatePostId(postId);
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -388,6 +399,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = req.params.postId;
+        validatePostId(postId);
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -446,6 +458,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = req.params.postId;
+        validatePostId(postId);
         const userId = req.user?.uid;
 
         if (!userId) {
@@ -640,6 +653,7 @@ export default function tipsTripsAdviceApi(app: Express) {
       try {
         const userId = req.adminUser?.uid;
         const postId = req.params.postId;
+        validatePostId(postId);
 
         if (!userId) {
           return res.status(401).json({
@@ -753,6 +767,7 @@ export default function tipsTripsAdviceApi(app: Express) {
     async (req: Request, res: Response) => {
       try {
         const postId = req.params.postId;
+        validatePostId(postId);
 
         const post = await tipsTripsAdviceService.getPostById(postId);
 
@@ -829,6 +844,7 @@ export default function tipsTripsAdviceApi(app: Express) {
       try {
         const userId = req.adminUser?.uid;
         const postId = req.params.postId;
+        validatePostId(postId);
 
         if (!userId) {
           return res.status(401).json({
