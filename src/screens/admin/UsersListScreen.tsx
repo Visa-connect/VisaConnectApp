@@ -190,6 +190,14 @@ const UsersListScreen: React.FC = () => {
                   key={user.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleView(user.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleView(user.id);
+                    }
+                  }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">

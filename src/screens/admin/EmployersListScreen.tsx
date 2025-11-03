@@ -237,6 +237,14 @@ const EmployersListScreen: React.FC = () => {
                   key={employer.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleView(employer.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleView(employer.id);
+                    }
+                  }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
