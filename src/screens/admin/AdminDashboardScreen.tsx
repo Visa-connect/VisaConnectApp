@@ -258,6 +258,14 @@ const AdminDashboardScreen: React.FC = () => {
                     navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`)
                   }
                   className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate(`/admin/tipsTripsAndAdvice/edit/${post.id}`);
+                    }
+                  }}
                 >
                   <img
                     className="h-10 w-10 rounded-full object-cover"
