@@ -9,9 +9,16 @@
 -- 5. Replace primary keys
 -- 6. Recreate foreign key constraints with UUIDs
 -- 7. Update indexes
+--
+-- WARNING: This migration is wrapped in a transaction. If it fails, all changes will be rolled back.
+-- Ensure you have a database backup before running this in production.
+--
+-- Note: CREATE EXTENSION must run outside a transaction, so it's done first.
 
 -- Ensure pgcrypto extension is enabled
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+BEGIN;
 
 -- ============================================================================
 -- STEP 1: MEETUPS TABLE
@@ -228,4 +235,6 @@ CREATE INDEX IF NOT EXISTS idx_tips_likes_post_id ON tips_trips_advice_likes(pos
 -- Reports table has been updated during the migration steps above
 -- Note: reports.target_id is VARCHAR(255), so it can store UUIDs
 -- The updates happened before dropping the old integer id columns
+
+COMMIT;
 
