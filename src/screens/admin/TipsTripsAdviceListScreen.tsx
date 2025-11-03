@@ -140,6 +140,14 @@ const TipsTripsAdviceListScreen: React.FC = () => {
                   key={post.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleView(post.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleView(post.id);
+                    }
+                  }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
