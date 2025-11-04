@@ -170,8 +170,6 @@ describe('LifestyleScreen', () => {
           preferred_outings: ['Beach', 'Museum'],
           has_car: true,
           offers_rides: true,
-          outings: ['Beach', 'Museum'],
-          willing_to_drive: 'yes',
         });
       });
 

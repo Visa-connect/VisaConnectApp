@@ -96,9 +96,7 @@ const LifestyleScreen: React.FC = () => {
         favorite_state: form.favoriteState,
         preferred_outings: form.outings,
         has_car: form.hasCar === 'yes',
-        offers_rides: form.willingToDrive === 'yes',
-        outings: form.outings,
-        willing_to_drive: form.willingToDrive,
+        offers_rides: form.willingToDrive === 'yes' ? true : false,
       };
 
       await apiPatch('/api/user/profile', updateData);
