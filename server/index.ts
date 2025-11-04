@@ -66,6 +66,25 @@ pool
 app.use(express.json()); // For parsing JSON bodies
 app.use(cors()); // Enable CORS for all routes
 
+// Content Security Policy - Allow necessary resources
+app.use((req: Request, res: Response, next) => {
+  // Only set CSP in production to avoid conflicts with React dev server
+  if (process.env.NODE_ENV === 'production') {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' 'unsafe-inline' data:; " +
+        "font-src 'self' data:; " +
+        "img-src 'self' data: https: blob:; " +
+        "connect-src 'self' https://identitytoolkit.googleapis.com https://www.googleapis.com wss: ws:; " +
+        "manifest-src 'self'; " +
+        "frame-ancestors 'none';"
+    );
+  }
+  next();
+});
+
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
@@ -104,11 +123,11 @@ app.get('/api/health', async (req: Request, res: Response) => {
 // Register API routes
 registerApiRoutes(app);
 
-// Only serve static files in production
-if (process.env.NODE_ENV !== 'development') {
-  // Serve static files from the React app build FIRST
-  const buildPath = path.join(__dirname, '../../build');
+// Serve static files and handle root route
+const buildPath = path.join(__dirname, '../../build');
 
+if (process.env.NODE_ENV !== 'development') {
+  // Production: Serve static files from build directory
   console.log('Serving static files from:', buildPath);
 
   // Check if build directory exists
@@ -117,18 +136,29 @@ if (process.env.NODE_ENV !== 'development') {
     console.warn(
       '⚠️  Static file serving disabled. API endpoints will still work.'
     );
+
+    // Still provide a catch-all for root route
+    app.get('*', (req: Request, res: Response) => {
+      if (req.path.startsWith('/api/')) {
+        res.status(404).json({ error: 'API endpoint not found' });
+        return;
+      }
+      res.status(404).json({
+        error: 'Frontend not built. Please run: npm run build',
+      });
+    });
   } else {
     // Add cache-busting headers for static assets
     app.use(
       express.static(buildPath, {
-        setHeaders: (res, path) => {
-          if (path.endsWith('.js') || path.endsWith('.css')) {
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
             // Cache static assets for 1 year with cache busting
             res.setHeader(
               'Cache-Control',
               'public, max-age=31536000, immutable'
             );
-          } else if (path.endsWith('.html')) {
+          } else if (filePath.endsWith('.html')) {
             // Don't cache HTML files
             res.setHeader(
               'Cache-Control',
@@ -177,7 +207,9 @@ if (process.env.NODE_ENV !== 'development') {
     });
   }
 } else {
-  console.log('Development mode: Static file serving disabled');
+  // Development mode: Frontend is served by React dev server on port 3000
+  // API requests are proxied from frontend to this server on port 8080
+  // No root route handler - users should access frontend on port 3000
 }
 
 const server = app.listen(PORT, () => {
