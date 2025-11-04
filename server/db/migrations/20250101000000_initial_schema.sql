@@ -237,26 +237,32 @@ DROP TRIGGER IF EXISTS update_businesses_updated_at ON businesses;
 DROP TRIGGER IF EXISTS update_business_categories_updated_at ON business_categories;
 
 -- Create triggers to automatically update updated_at
+-- Drop triggers if they exist, then create them
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at 
     BEFORE UPDATE ON users 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_meetups_updated_at ON meetups;
 CREATE TRIGGER update_meetups_updated_at 
     BEFORE UPDATE ON meetups 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_meetup_reports_updated_at ON meetup_reports;
 CREATE TRIGGER update_meetup_reports_updated_at 
     BEFORE UPDATE ON meetup_reports 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_businesses_updated_at ON businesses;
 CREATE TRIGGER update_businesses_updated_at 
     BEFORE UPDATE ON businesses 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_business_categories_updated_at ON business_categories;
 CREATE TRIGGER update_business_categories_updated_at 
     BEFORE UPDATE ON business_categories 
     FOR EACH ROW 

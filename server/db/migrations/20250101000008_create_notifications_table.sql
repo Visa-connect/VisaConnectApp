@@ -32,6 +32,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop trigger if it exists, then create it
+DROP TRIGGER IF EXISTS trigger_notifications_updated_at ON notifications;
 CREATE TRIGGER trigger_notifications_updated_at
     BEFORE UPDATE ON notifications
     FOR EACH ROW

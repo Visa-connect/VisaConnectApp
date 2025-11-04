@@ -30,6 +30,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drop trigger if it exists, then create it
+DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON jobs;
 CREATE TRIGGER trigger_update_jobs_updated_at
     BEFORE UPDATE ON jobs
     FOR EACH ROW
