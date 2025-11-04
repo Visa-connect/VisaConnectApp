@@ -177,6 +177,7 @@ describe('BackgroundScreen', () => {
           other_us_jobs: ['New York, NY'],
           relationship_status: 'single',
           nationality: 'American',
+          stay_in_us: true,
         });
       });
 
