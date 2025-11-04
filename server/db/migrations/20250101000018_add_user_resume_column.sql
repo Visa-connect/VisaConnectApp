@@ -3,9 +3,9 @@
 -- instead of uploading a fresh resume for each job application
 
 ALTER TABLE users 
-ADD COLUMN resume_url TEXT,
-ADD COLUMN resume_filename VARCHAR(255),
-ADD COLUMN resume_public_id VARCHAR(255);
+ADD COLUMN IF NOT EXISTS resume_url TEXT,
+ADD COLUMN IF NOT EXISTS resume_filename VARCHAR(255),
+ADD COLUMN IF NOT EXISTS resume_public_id VARCHAR(255);
 
 -- Add comments for documentation
 COMMENT ON COLUMN users.resume_url IS 'URL to the uploaded resume file';
