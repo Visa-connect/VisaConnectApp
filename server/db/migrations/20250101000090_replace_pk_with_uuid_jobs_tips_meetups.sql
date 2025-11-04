@@ -25,18 +25,19 @@ BEGIN;
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE meetups ADD COLUMN id_new UUID;
+ALTER TABLE meetups ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE meetups SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE meetups ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE meetups DROP CONSTRAINT IF EXISTS meetups_id_new_unique CASCADE;
 ALTER TABLE meetups ADD CONSTRAINT meetups_id_new_unique UNIQUE (id_new);
 
 -- Add temporary UUID columns to child tables
-ALTER TABLE meetup_interests ADD COLUMN meetup_id_new UUID;
-ALTER TABLE meetup_reports ADD COLUMN meetup_id_new UUID;
+ALTER TABLE meetup_interests ADD COLUMN IF NOT EXISTS meetup_id_new UUID;
+ALTER TABLE meetup_reports ADD COLUMN IF NOT EXISTS meetup_id_new UUID;
 
 -- Update foreign key references in child tables using the new UUID column
 UPDATE meetup_interests mi
@@ -53,12 +54,30 @@ ALTER TABLE meetup_reports DROP CONSTRAINT IF EXISTS meetup_reports_meetup_id_fk
 
 -- Drop old columns and rename new ones
 ALTER TABLE meetup_interests DROP COLUMN IF EXISTS meetup_id;
-ALTER TABLE meetup_interests RENAME COLUMN meetup_id_new TO meetup_id;
-ALTER TABLE meetup_interests ALTER COLUMN meetup_id SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_interests' AND column_name = 'meetup_id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_interests' AND column_name = 'meetup_id')
+    THEN
+        ALTER TABLE meetup_interests RENAME COLUMN meetup_id_new TO meetup_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_interests' AND column_name = 'meetup_id') THEN
+        ALTER TABLE meetup_interests ALTER COLUMN meetup_id SET NOT NULL;
+    END IF;
+END $$;
 
 ALTER TABLE meetup_reports DROP COLUMN IF EXISTS meetup_id;
-ALTER TABLE meetup_reports RENAME COLUMN meetup_id_new TO meetup_id;
-ALTER TABLE meetup_reports ALTER COLUMN meetup_id SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_reports' AND column_name = 'meetup_id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_reports' AND column_name = 'meetup_id')
+    THEN
+        ALTER TABLE meetup_reports RENAME COLUMN meetup_id_new TO meetup_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_reports' AND column_name = 'meetup_id') THEN
+        ALTER TABLE meetup_reports ALTER COLUMN meetup_id SET NOT NULL;
+    END IF;
+END $$;
 
 -- Update reports table for meetups (while old integer id still exists)
 -- Note: reports.target_id is VARCHAR(255), so we need to cast the integer id to text for comparison
@@ -70,14 +89,34 @@ WHERE r.target_type = 'meetup' AND r.target_id ~ '^[0-9]+$'
 -- Drop old primary key and rename new column
 ALTER TABLE meetups DROP CONSTRAINT IF EXISTS meetups_pkey;
 ALTER TABLE meetups DROP COLUMN IF EXISTS id;
-ALTER TABLE meetups RENAME COLUMN id_new TO id;
-ALTER TABLE meetups ADD PRIMARY KEY (id);
+-- Only rename if id_new column exists and id doesn't exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetups' AND column_name = 'id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetups' AND column_name = 'id')
+    THEN
+        ALTER TABLE meetups RENAME COLUMN id_new TO id;
+    END IF;
+END $$;
+-- Only add primary key if it doesn't already exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'meetups_pkey' 
+        AND conrelid = 'meetups'::regclass
+    ) THEN
+        ALTER TABLE meetups ADD PRIMARY KEY (id);
+    END IF;
+END $$;
 
 -- Recreate foreign key constraints with UUIDs
+ALTER TABLE meetup_interests DROP CONSTRAINT IF EXISTS meetup_interests_meetup_id_fkey;
 ALTER TABLE meetup_interests 
   ADD CONSTRAINT meetup_interests_meetup_id_fkey 
   FOREIGN KEY (meetup_id) REFERENCES meetups(id) ON DELETE CASCADE;
 
+ALTER TABLE meetup_reports DROP CONSTRAINT IF EXISTS meetup_reports_meetup_id_fkey;
 ALTER TABLE meetup_reports 
   ADD CONSTRAINT meetup_reports_meetup_id_fkey 
   FOREIGN KEY (meetup_id) REFERENCES meetups(id) ON DELETE CASCADE;
@@ -87,19 +126,20 @@ ALTER TABLE meetup_reports
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE tips_trips_advice ADD COLUMN id_new UUID;
+ALTER TABLE tips_trips_advice ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE tips_trips_advice SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE tips_trips_advice ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE tips_trips_advice DROP CONSTRAINT IF EXISTS tips_trips_advice_id_new_unique CASCADE;
 ALTER TABLE tips_trips_advice ADD CONSTRAINT tips_trips_advice_id_new_unique UNIQUE (id_new);
 
 -- Add temporary UUID columns to child tables
-ALTER TABLE tips_trips_advice_photos ADD COLUMN post_id_new UUID;
-ALTER TABLE tips_trips_advice_comments ADD COLUMN post_id_new UUID;
-ALTER TABLE tips_trips_advice_likes ADD COLUMN post_id_new UUID;
+ALTER TABLE tips_trips_advice_photos ADD COLUMN IF NOT EXISTS post_id_new UUID;
+ALTER TABLE tips_trips_advice_comments ADD COLUMN IF NOT EXISTS post_id_new UUID;
+ALTER TABLE tips_trips_advice_likes ADD COLUMN IF NOT EXISTS post_id_new UUID;
 
 -- Update foreign key references in child tables
 UPDATE tips_trips_advice_photos ttap
@@ -121,32 +161,80 @@ ALTER TABLE tips_trips_advice_likes DROP CONSTRAINT IF EXISTS tips_trips_advice_
 
 -- Drop old columns and rename new ones
 ALTER TABLE tips_trips_advice_photos DROP COLUMN IF EXISTS post_id;
-ALTER TABLE tips_trips_advice_photos RENAME COLUMN post_id_new TO post_id;
-ALTER TABLE tips_trips_advice_photos ALTER COLUMN post_id SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_photos' AND column_name = 'post_id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_photos' AND column_name = 'post_id')
+    THEN
+        ALTER TABLE tips_trips_advice_photos RENAME COLUMN post_id_new TO post_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_photos' AND column_name = 'post_id') THEN
+        ALTER TABLE tips_trips_advice_photos ALTER COLUMN post_id SET NOT NULL;
+    END IF;
+END $$;
 
 ALTER TABLE tips_trips_advice_comments DROP COLUMN IF EXISTS post_id;
-ALTER TABLE tips_trips_advice_comments RENAME COLUMN post_id_new TO post_id;
-ALTER TABLE tips_trips_advice_comments ALTER COLUMN post_id SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_comments' AND column_name = 'post_id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_comments' AND column_name = 'post_id')
+    THEN
+        ALTER TABLE tips_trips_advice_comments RENAME COLUMN post_id_new TO post_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_comments' AND column_name = 'post_id') THEN
+        ALTER TABLE tips_trips_advice_comments ALTER COLUMN post_id SET NOT NULL;
+    END IF;
+END $$;
 
 ALTER TABLE tips_trips_advice_likes DROP COLUMN IF EXISTS post_id;
-ALTER TABLE tips_trips_advice_likes RENAME COLUMN post_id_new TO post_id;
-ALTER TABLE tips_trips_advice_likes ALTER COLUMN post_id SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_likes' AND column_name = 'post_id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_likes' AND column_name = 'post_id')
+    THEN
+        ALTER TABLE tips_trips_advice_likes RENAME COLUMN post_id_new TO post_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_likes' AND column_name = 'post_id') THEN
+        ALTER TABLE tips_trips_advice_likes ALTER COLUMN post_id SET NOT NULL;
+    END IF;
+END $$;
 
 -- Drop old primary key and rename new column
 ALTER TABLE tips_trips_advice DROP CONSTRAINT IF EXISTS tips_trips_advice_pkey;
 ALTER TABLE tips_trips_advice DROP COLUMN IF EXISTS id;
-ALTER TABLE tips_trips_advice RENAME COLUMN id_new TO id;
-ALTER TABLE tips_trips_advice ADD PRIMARY KEY (id);
+-- Only rename if id_new column exists and id doesn't exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice' AND column_name = 'id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice' AND column_name = 'id')
+    THEN
+        ALTER TABLE tips_trips_advice RENAME COLUMN id_new TO id;
+    END IF;
+END $$;
+-- Only add primary key if it doesn't already exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'tips_trips_advice_pkey' 
+        AND conrelid = 'tips_trips_advice'::regclass
+    ) THEN
+        ALTER TABLE tips_trips_advice ADD PRIMARY KEY (id);
+    END IF;
+END $$;
 
 -- Recreate foreign key constraints with UUIDs
+ALTER TABLE tips_trips_advice_photos DROP CONSTRAINT IF EXISTS tips_trips_advice_photos_post_id_fkey;
 ALTER TABLE tips_trips_advice_photos 
   ADD CONSTRAINT tips_trips_advice_photos_post_id_fkey 
   FOREIGN KEY (post_id) REFERENCES tips_trips_advice(id) ON DELETE CASCADE;
 
+ALTER TABLE tips_trips_advice_comments DROP CONSTRAINT IF EXISTS tips_trips_advice_comments_post_id_fkey;
 ALTER TABLE tips_trips_advice_comments 
   ADD CONSTRAINT tips_trips_advice_comments_post_id_fkey 
   FOREIGN KEY (post_id) REFERENCES tips_trips_advice(id) ON DELETE CASCADE;
 
+ALTER TABLE tips_trips_advice_likes DROP CONSTRAINT IF EXISTS tips_trips_advice_likes_post_id_fkey;
 ALTER TABLE tips_trips_advice_likes 
   ADD CONSTRAINT tips_trips_advice_likes_post_id_fkey 
   FOREIGN KEY (post_id) REFERENCES tips_trips_advice(id) ON DELETE CASCADE;
@@ -156,17 +244,18 @@ ALTER TABLE tips_trips_advice_likes
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE jobs ADD COLUMN id_new UUID;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE jobs SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE jobs ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_id_new_unique CASCADE;
 ALTER TABLE jobs ADD CONSTRAINT jobs_id_new_unique UNIQUE (id_new);
 
 -- Add temporary UUID column to child table
-ALTER TABLE job_applications ADD COLUMN job_id_new UUID;
+ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS job_id_new UUID;
 
 -- Update foreign key references in child tables
 UPDATE job_applications ja
@@ -185,16 +274,44 @@ WHERE r.target_type = 'job' AND r.target_id ~ '^[0-9]+$'
 
 -- Drop old column and rename new one
 ALTER TABLE job_applications DROP COLUMN IF EXISTS job_id;
-ALTER TABLE job_applications RENAME COLUMN job_id_new TO job_id;
-ALTER TABLE job_applications ALTER COLUMN job_id SET NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'job_id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'job_id')
+    THEN
+        ALTER TABLE job_applications RENAME COLUMN job_id_new TO job_id;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'job_id') THEN
+        ALTER TABLE job_applications ALTER COLUMN job_id SET NOT NULL;
+    END IF;
+END $$;
 
 -- Drop old primary key and rename new column
 ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_pkey;
 ALTER TABLE jobs DROP COLUMN IF EXISTS id;
-ALTER TABLE jobs RENAME COLUMN id_new TO id;
-ALTER TABLE jobs ADD PRIMARY KEY (id);
+-- Only rename if id_new column exists and id doesn't exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'id')
+    THEN
+        ALTER TABLE jobs RENAME COLUMN id_new TO id;
+    END IF;
+END $$;
+-- Only add primary key if it doesn't already exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'jobs_pkey' 
+        AND conrelid = 'jobs'::regclass
+    ) THEN
+        ALTER TABLE jobs ADD PRIMARY KEY (id);
+    END IF;
+END $$;
 
 -- Recreate foreign key constraints with UUIDs
+ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_job_id_fkey;
 ALTER TABLE job_applications 
   ADD CONSTRAINT job_applications_job_id_fkey 
   FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE;
@@ -204,20 +321,39 @@ ALTER TABLE job_applications
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE job_applications ADD COLUMN id_new UUID;
+ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE job_applications SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE job_applications ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_id_new_unique CASCADE;
 ALTER TABLE job_applications ADD CONSTRAINT job_applications_id_new_unique UNIQUE (id_new);
 
 -- Drop old primary key and rename new column
 ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_pkey;
 ALTER TABLE job_applications DROP COLUMN IF EXISTS id;
-ALTER TABLE job_applications RENAME COLUMN id_new TO id;
-ALTER TABLE job_applications ADD PRIMARY KEY (id);
+-- Only rename if id_new column exists and id doesn't exist
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'id_new')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'id')
+    THEN
+        ALTER TABLE job_applications RENAME COLUMN id_new TO id;
+    END IF;
+END $$;
+-- Only add primary key if it doesn't already exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'job_applications_pkey' 
+        AND conrelid = 'job_applications'::regclass
+    ) THEN
+        ALTER TABLE job_applications ADD PRIMARY KEY (id);
+    END IF;
+END $$;
 
 -- ============================================================================
 -- STEP 5: UPDATE INDEXES AND CONSTRAINTS
