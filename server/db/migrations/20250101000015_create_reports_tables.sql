@@ -20,12 +20,12 @@ CREATE TABLE IF NOT EXISTS reports (
 -- Fields needed: id, report_id, action, admin_id, notes, timestamp
 
 -- Create indexes for efficient querying
-CREATE INDEX idx_reports_status ON reports(status);
-CREATE INDEX idx_reports_target_type ON reports(target_type);
-CREATE INDEX idx_reports_target_id ON reports(target_id);
-CREATE INDEX idx_reports_reporter_id ON reports(reporter_id);
-CREATE INDEX idx_reports_created_at ON reports(created_at);
-CREATE INDEX idx_reports_status_target_type ON reports(status, target_type);
+CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
+CREATE INDEX IF NOT EXISTS idx_reports_target_type ON reports(target_type);
+CREATE INDEX IF NOT EXISTS idx_reports_target_id ON reports(target_id);
+CREATE INDEX IF NOT EXISTS idx_reports_reporter_id ON reports(reporter_id);
+CREATE INDEX IF NOT EXISTS idx_reports_created_at ON reports(created_at);
+CREATE INDEX IF NOT EXISTS idx_reports_status_target_type ON reports(status, target_type);
 
 -- Add comments for documentation
 COMMENT ON TABLE reports IS 'Stores user reports for jobs and meetups';

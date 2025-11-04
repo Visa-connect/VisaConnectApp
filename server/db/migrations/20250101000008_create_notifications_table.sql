@@ -1,5 +1,5 @@
 -- Create notifications table
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
@@ -13,11 +13,11 @@ CREATE TABLE notifications (
 );
 
 -- Create indexes for performance
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_type ON notifications(type);
-CREATE INDEX idx_notifications_read_at ON notifications(read_at);
-CREATE INDEX idx_notifications_created_at ON notifications(created_at);
-CREATE INDEX idx_notifications_user_unread ON notifications(user_id, read_at) WHERE read_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+CREATE INDEX IF NOT EXISTS idx_notifications_read_at ON notifications(read_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, read_at) WHERE read_at IS NULL;
 
 -- Add foreign key constraint (assuming users table exists)
 -- ALTER TABLE notifications ADD CONSTRAINT fk_notifications_user_id 
