@@ -32,6 +32,7 @@
     "build:client": "react-scripts build",
     "build:server": "cd server && npm install && npm run build",
     "test": "react-scripts test",
+    "test:ci": "react-scripts test --watchAll=false",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
     "test:coverage:server": "cd server && yarn test:coverage",
     "test:coverage:all": "npm run test:coverage && npm run test:coverage:server",
@@ -43,7 +44,8 @@
     "scripts:list-firebase-users": "node scripts/list-firebase-users.js",
     "scripts:make-admin": "node scripts/make-admin.js",
     "scripts:set-admin-claims": "node scripts/set-admin-claims.js",
-    "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate"
+    "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate",
+    "prepare": "husky"
   },
   "eslintConfig": {
     "extends": [
@@ -71,6 +73,7 @@
     "@types/express": "^5.0.3",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.0",
+    "husky": "^9.1.7",
     "postcss": "^8.5.6",
     "tailwindcss": "3",
     "ts-node": "^10.9.2"
