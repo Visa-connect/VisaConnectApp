@@ -136,7 +136,6 @@ const BackgroundScreen: React.FC = () => {
       if (!user?.uid) throw new Error('User not authenticated');
 
       // Update user profile with background information
-      console.log('FORM DATA', form);
       const updateData = {
         languages: form.languages,
         other_us_jobs: form.workHistory ? [form.workHistory] : [],
