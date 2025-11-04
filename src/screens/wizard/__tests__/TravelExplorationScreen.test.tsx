@@ -133,11 +133,15 @@ describe('TravelExplorationScreen', () => {
     it('should toggle road trips option', async () => {
       renderWithProviders(<TravelExplorationScreen />);
 
-      const roadTripButtons = screen.getAllByText(/yes|no/i);
-      const yesButton = roadTripButtons[0];
-      const noButton = roadTripButtons[1];
+      const roadTripButtons = screen.getAllByRole('button', {
+        name: /yes|no/i,
+      });
+      const noButton = roadTripButtons.find((btn) =>
+        btn.textContent?.toLowerCase().includes('no')
+      );
 
-      fireEvent.click(noButton);
+      expect(noButton).toBeInTheDocument();
+      fireEvent.click(noButton!);
 
       await waitFor(() => {
         expect(noButton).toHaveClass(/bg-sky-400/);
@@ -173,18 +177,25 @@ describe('TravelExplorationScreen', () => {
     it('should toggle willing to guide option', async () => {
       renderWithProviders(<TravelExplorationScreen />);
 
-      const guideButtons = screen.getAllByText(/yes|no/i);
-      const noButton = guideButtons.find((btn) =>
-        btn.closest('div')?.textContent?.includes('travel guide')
-      );
+      // Find all Yes/No buttons - there are two sets: road trips and willing to guide
+      // The "willing to guide" buttons come after the road trips buttons
+      const allButtons = screen.getAllByRole('button', { name: /yes|no/i });
 
-      if (noButton) {
-        fireEvent.click(noButton);
+      // The willing to guide section has 2 buttons (Yes/No), so we get the last 2 buttons
+      // Road trips has 2 buttons, willing to guide has 2 buttons = 4 total
+      expect(allButtons.length).toBeGreaterThanOrEqual(4);
 
-        await waitFor(() => {
-          expect(noButton).toBeInTheDocument();
-        });
-      }
+      // Get the "No" button from the willing to guide section (should be the 4th button)
+      const noButton = allButtons[3]; // Index 3 = 4th button (No for willing to guide)
+
+      expect(noButton).toBeInTheDocument();
+      expect(noButton.textContent?.toLowerCase()).toContain('no');
+
+      fireEvent.click(noButton);
+
+      await waitFor(() => {
+        expect(noButton).toHaveClass(/bg-sky-400/);
+      });
     });
   });
 
