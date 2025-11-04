@@ -35,7 +35,7 @@
     "lint": "npx eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "npx eslint src --ext .ts,.tsx,.js,.jsx --fix",
     "eject": "react-scripts eject",
-    "dev": "concurrently \"react-scripts start\" \"cd server && nodemon index.ts\"",
+    "dev": "concurrently --names \"FRONTEND,BACKEND\" --prefix-colors \"blue,green\" \"PORT=3000 react-scripts start\" \"cd server && PORT=8080 nodemon index.ts\"",
     "scripts:get-auth-token": "node scripts/get-auth-token.js",
     "scripts:list-firebase-users": "node scripts/list-firebase-users.js",
     "scripts:make-admin": "node scripts/make-admin.js",
