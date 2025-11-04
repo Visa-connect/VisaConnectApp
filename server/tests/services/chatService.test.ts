@@ -28,7 +28,7 @@ describe('ChatService', () => {
   describe('createConversation', () => {
     it('should have the correct method signature', () => {
       expect(typeof chatService.createConversation).toBe('function');
-      expect(chatService.createConversation.length).toBe(2);
+      expect(chatService.createConversation.length).toBe(3);
     });
 
     it('should handle errors gracefully', async () => {
@@ -45,13 +45,6 @@ describe('ChatService', () => {
     });
 
     it('should accept the correct message structure', () => {
-      const messageStructure = {
-        senderId: 'user1',
-        receiverId: 'user2',
-        content: 'Hello',
-        read: false,
-      };
-
       // Test that the method exists and can be called
       expect(chatService.sendMessage).toBeDefined();
     });
