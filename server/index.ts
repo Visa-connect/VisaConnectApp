@@ -67,13 +67,16 @@ app.use(express.json()); // For parsing JSON bodies
 app.use(cors()); // Enable CORS for all routes
 
 // Content Security Policy - Allow necessary resources
+// Note: 'unsafe-inline' is required for React apps built with Create React App
+// as React uses inline scripts during hydration and Webpack may generate inline scripts.
+// Consider migrating to a custom build setup to use nonces/hashes for better security.
 app.use((req: Request, res: Response, next) => {
   // Only set CSP in production to avoid conflicts with React dev server
   if (process.env.NODE_ENV === 'production') {
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+        "script-src 'self' 'unsafe-inline'; " +
         "style-src 'self' 'unsafe-inline' data:; " +
         "font-src 'self' data:; " +
         "img-src 'self' data: https: blob:; " +
