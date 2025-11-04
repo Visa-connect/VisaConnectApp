@@ -116,7 +116,12 @@ const BackgroundScreen: React.FC = () => {
         languages: user.languages || [],
         workHistory: user.other_us_jobs?.join(', ') || '',
         relationshipStatus: user.relationship_status || '',
-        stayInUS: 'yes', // Default value, could be stored in profile_answers
+        stayInUS:
+          user.stay_in_us !== undefined
+            ? user.stay_in_us
+              ? 'yes'
+              : 'no'
+            : 'yes',
       });
     }
   }, [user]);
