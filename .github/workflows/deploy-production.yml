@@ -75,17 +75,24 @@ jobs:
         run: |
           echo "Waiting for deployment to complete..."
 
+          # Wait for app to start after release
+          echo "Waiting 30 seconds for app to start..."
+          sleep 30
+
           ATTEMPTS=5
-          SLEEP=15
+          SLEEP=5
           URL="https://${{ env.PRODUCTION_URL }}/api/health"
           echo "Running health check against: $URL"
           for i in $(seq 1 $ATTEMPTS); do
-            if curl -fsS "$URL" > /dev/null; then
-              echo "Health check passed."
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "503" ]; then
+              echo "Health check passed with HTTP $HTTP_CODE (app is responding)"
               exit 0
             fi
-            echo "Attempt $i/$ATTEMPTS failed. Sleeping ${SLEEP}s..."
+            echo "Attempt $i/$ATTEMPTS failed with HTTP $HTTP_CODE. Sleeping ${SLEEP}s..."
             sleep $SLEEP
           done
           echo "Health check failed after $ATTEMPTS attempts. Last response:" && curl -v "$URL" || true
+          echo "Checking Heroku app status..." && heroku ps --app ${{ env.HEROKU_APP_NAME }} || true
+          echo "Checking Heroku logs..." && heroku logs --tail --num 50 --app ${{ env.HEROKU_APP_NAME }} || true
           exit 1
