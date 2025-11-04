@@ -1,4 +1,4 @@
-name: Deploy Staging to Production
+name: Deploy to Production
 
 on:
   push:
@@ -17,9 +17,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # For PRs, use the source branch. For pushes, use the current branch
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
-          # Fetch full history for git operations
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -37,62 +34,67 @@ jobs:
       - name: Run tests
         run: yarn test --watchAll=false --coverage
 
-      - name: Build application
-        run: yarn build
+      # Remove build step - let Heroku handle it
 
       - name: Install Heroku CLI
         run: |
           curl https://cli-assets.heroku.com/install.sh | sh
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Authenticate Heroku
+
+      - name: Verify Heroku Authentication
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku auth:whoami
+
+      - name: Set Heroku Stack
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: heroku stack:set heroku-24 --app ${{ env.HEROKU_APP_NAME }}
+
+      - name: Deploy to Heroku
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          heroku auth:token >/dev/null 2>&1 || true
-          heroku auth:whoami || heroku auth:token >/dev/null 2>&1
-
-      - name: Ensure Heroku app stack
-        run: |
-          heroku stack:set heroku-24 --app ${{ env.HEROKU_APP_NAME }}
-
-      - name: Add Heroku git remote
-        run: |
-          heroku git:remote --app ${{ env.HEROKU_APP_NAME }} || true
-
-      - name: Push to Heroku (git) and release
-        env:
-          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: |
-          # Push current HEAD to Heroku main
           git push https://heroku:${HEROKU_API_KEY}@git.heroku.com/${{ env.HEROKU_APP_NAME }}.git HEAD:main --force
 
       - name: Run Database Migrations
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          # Run migrations on the deployed app
           heroku run "cd server && yarn migrate" --app ${{ env.HEROKU_APP_NAME }}
+          if [ $? -ne 0 ]; then
+            echo "❌ Migration failed"
+            exit 1
+          fi
 
-      - name: Health check
+      - name: Health Check
         run: |
-          echo "Waiting for deployment to complete..."
-
-          # Wait for app to start after release
-          echo "Waiting 30 seconds for app to start..."
+          URL="https://${{ env.PRODUCTION_URL }}/api/health"
+          echo "Waiting 30s for dyno to start..."
           sleep 30
 
           ATTEMPTS=5
-          SLEEP=5
-          URL="https://${{ env.PRODUCTION_URL }}/api/health"
-          echo "Running health check against: $URL"
+          SLEEP=30
+
           for i in $(seq 1 $ATTEMPTS); do
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
-            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "503" ]; then
-              echo "Health check passed with HTTP $HTTP_CODE (app is responding)"
+            echo "Health check attempt $i/$ATTEMPTS..."
+            if curl -fsS "$URL" > /dev/null; then
+              echo "✅ Health check passed!"
               exit 0
             fi
-            echo "Attempt $i/$ATTEMPTS failed with HTTP $HTTP_CODE. Sleeping ${SLEEP}s..."
-            sleep $SLEEP
+            if [ $i -lt $ATTEMPTS ]; then
+              echo "Sleeping ${SLEEP}s..."
+              sleep $SLEEP
+            fi
           done
-          echo "Health check failed after $ATTEMPTS attempts. Last response:" && curl -v "$URL" || true
-          echo "Checking Heroku app status..." && heroku ps --app ${{ env.HEROKU_APP_NAME }} || true
-          echo "Checking Heroku logs..." && heroku logs --tail --num 50 --app ${{ env.HEROKU_APP_NAME }} || true
+
+          echo "❌ Health check failed after $ATTEMPTS attempts"
+          curl -v "$URL" || true
           exit 1
+
+      - name: Rollback on Failure
+        if: failure()
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        run: |
+          echo "🔄 Rolling back to previous release..."
+          heroku releases:rollback --app ${{ env.HEROKU_APP_NAME }}
