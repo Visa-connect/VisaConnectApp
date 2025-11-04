@@ -128,19 +128,6 @@ const BackgroundScreen: React.FC = () => {
     }
   }, [user, navigate]);
 
-  // Function to map nationality back to country name
-  const getCountryNameFromNationality = (nationality: string): string => {
-    const country = countries.find((c) => {
-      // Check if it matches the country name
-      if (c.name.common === nationality) return true;
-      // Check if it matches the nationality/demonym
-      if (c.demonyms?.eng?.m === nationality) return true;
-      if (c.demonyms?.eng?.f === nationality) return true;
-      return false;
-    });
-    return country ? country.name.common : nationality;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -148,25 +135,14 @@ const BackgroundScreen: React.FC = () => {
     try {
       if (!user?.uid) throw new Error('User not authenticated');
 
-      // Map nationality back to country name for storage
-      const countryName = getCountryNameFromNationality(form.nationality);
-
       // Update user profile with background information
+      console.log('FORM DATA', form);
       const updateData = {
-        nationality: countryName,
         languages: form.languages,
         other_us_jobs: form.workHistory ? [form.workHistory] : [],
         relationship_status: form.relationshipStatus,
-        // Map stayInUS to a more appropriate field or store in profile_answers
-        profile_answers: {
-          background_identity: {
-            nationality: form.nationality, // Keep original input for display
-            languages: form.languages,
-            workHistory: form.workHistory,
-            relationshipStatus: form.relationshipStatus,
-            stayInUS: form.stayInUS,
-          },
-        },
+        nationality: form.nationality, // Keep original input for display
+        // stay_in_us: form.stayInUS,
       };
 
       await apiPatch('/api/user/profile', updateData);

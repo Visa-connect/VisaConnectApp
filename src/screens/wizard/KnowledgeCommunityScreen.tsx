@@ -54,16 +54,9 @@ const KnowledgeCommunityScreen: React.FC = () => {
 
       // Update user profile with knowledge & community information
       const updateData = {
-        mentorship_interest: form.mentorshipInterest === 'yes',
+        mentorship_interest: form.mentorshipInterest === 'yes' ? true : false,
         job_boards: form.jobBoards,
         visa_advice: form.visaAdvice,
-        profile_answers: {
-          knowledge_community: {
-            mentorshipInterest: form.mentorshipInterest,
-            jobBoards: form.jobBoards,
-            visaAdvice: form.visaAdvice,
-          },
-        },
       };
 
       await apiPatch('/api/user/profile', updateData);

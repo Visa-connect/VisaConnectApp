@@ -67,14 +67,6 @@ const TravelExplorationScreen: React.FC = () => {
         favorite_place: form.favoritePlace.address,
         travel_tips: form.travelTips,
         willing_to_guide: form.willingToGuide === 'yes',
-        profile_answers: {
-          travel_exploration: {
-            roadTrips: form.roadTrips,
-            favoritePlace: form.favoritePlace.address,
-            travelTips: form.travelTips,
-            willingToGuide: form.willingToGuide,
-          },
-        },
       };
 
       await apiPatch('/api/user/profile', updateData);
