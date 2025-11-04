@@ -141,7 +141,7 @@ const BackgroundScreen: React.FC = () => {
         other_us_jobs: form.workHistory ? [form.workHistory] : [],
         relationship_status: form.relationshipStatus,
         nationality: form.nationality, // Keep original input for display
-        // stay_in_us: form.stayInUS,
+        stay_in_us: form.stayInUS === 'yes',
       };
 
       await apiPatch('/api/user/profile', updateData);

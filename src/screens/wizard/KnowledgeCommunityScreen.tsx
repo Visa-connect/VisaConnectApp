@@ -54,7 +54,7 @@ const KnowledgeCommunityScreen: React.FC = () => {
 
       // Update user profile with knowledge & community information
       const updateData = {
-        mentorship_interest: form.mentorshipInterest === 'yes' ? true : false,
+        mentorship_interest: form.mentorshipInterest === 'yes',
         job_boards: form.jobBoards,
         visa_advice: form.visaAdvice,
       };
