@@ -142,20 +142,37 @@ if (process.env.NODE_ENV !== 'development') {
     );
 
     // Serve React app for all other routes LAST (after static files)
+    // This catch-all route handles client-side routing
     app.get('*', (req: Request, res: Response) => {
-      const indexPath = path.join(buildPath, 'index.html');
+      // Skip API routes (should never reach here, but safety check)
+      if (req.path.startsWith('/api/')) {
+        res.status(404).json({ error: 'API endpoint not found' });
+        return;
+      }
+
+      const indexPath = path.resolve(buildPath, 'index.html');
       if (fs.existsSync(indexPath)) {
-        console.log('Serving index.html from:', indexPath);
+        // Only log for root route to reduce log noise
+        if (req.path === '/' || req.path === '') {
+          console.log('Serving index.html from:', indexPath);
+        }
         // Add no-cache headers for HTML files
         res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
-        res.sendFile(indexPath);
+        res.sendFile(indexPath, (err) => {
+          if (err) {
+            console.error('Error sending index.html:', err);
+            if (!res.headersSent) {
+              res.status(500).json({ error: 'Failed to serve frontend' });
+            }
+          }
+        });
       } else {
         console.warn('⚠️  index.html not found at:', indexPath);
-        res
-          .status(404)
-          .json({ error: 'Frontend not built. Please run: npm run build' });
+        res.status(404).json({
+          error: 'Frontend not built. Please run: npm run build',
+        });
       }
     });
   }
