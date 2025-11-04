@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 import admin from 'firebase-admin';
@@ -107,35 +108,57 @@ registerApiRoutes(app);
 if (process.env.NODE_ENV !== 'development') {
   // Serve static files from the React app build FIRST
   const buildPath = path.join(__dirname, '../../build');
+
   console.log('Serving static files from:', buildPath);
 
-  // Add cache-busting headers for static assets
-  app.use(
-    express.static(buildPath, {
-      setHeaders: (res, path) => {
-        if (path.endsWith('.js') || path.endsWith('.css')) {
-          // Cache static assets for 1 year with cache busting
-          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        } else if (path.endsWith('.html')) {
-          // Don't cache HTML files
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-          res.setHeader('Pragma', 'no-cache');
-          res.setHeader('Expires', '0');
-        }
-      },
-    })
-  );
+  // Check if build directory exists
+  if (!fs.existsSync(buildPath)) {
+    console.warn('⚠️  Build directory not found at:', buildPath);
+    console.warn(
+      '⚠️  Static file serving disabled. API endpoints will still work.'
+    );
+  } else {
+    // Add cache-busting headers for static assets
+    app.use(
+      express.static(buildPath, {
+        setHeaders: (res, path) => {
+          if (path.endsWith('.js') || path.endsWith('.css')) {
+            // Cache static assets for 1 year with cache busting
+            res.setHeader(
+              'Cache-Control',
+              'public, max-age=31536000, immutable'
+            );
+          } else if (path.endsWith('.html')) {
+            // Don't cache HTML files
+            res.setHeader(
+              'Cache-Control',
+              'no-cache, no-store, must-revalidate'
+            );
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+          }
+        },
+      })
+    );
 
-  // Serve React app for all other routes LAST (after static files)
-  app.get('*', (req: Request, res: Response) => {
-    const indexPath = path.join(buildPath, 'index.html');
-    console.log('Serving index.html from:', indexPath);
-    // Add no-cache headers for HTML files
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.sendFile(indexPath);
-  });
+    // Serve React app for all other routes LAST (after static files)
+    app.get('*', (req: Request, res: Response) => {
+      const indexPath = path.join(buildPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        console.log('Serving index.html from:', indexPath);
+        // Add no-cache headers for HTML files
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+        res.sendFile(indexPath);
+      } else {
+        console.warn('⚠️  index.html not found at:', indexPath);
+        res
+          .status(404)
+          .json({ error: 'Frontend not built. Please run: npm run build' });
+      }
+    });
+  }
 } else {
   console.log('Development mode: Static file serving disabled');
 }
