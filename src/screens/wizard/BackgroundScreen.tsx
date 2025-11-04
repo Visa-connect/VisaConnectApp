@@ -106,6 +106,17 @@ const BackgroundScreen: React.FC = () => {
     return value; // Fallback to original value if no conversion possible
   };
 
+  // Helper function to convert boolean value to 'yes' | 'no' with default
+  const getStayInUSValue = (
+    value: boolean | undefined,
+    defaultValue: 'yes' | 'no' = 'yes'
+  ): 'yes' | 'no' => {
+    if (value === undefined) {
+      return defaultValue;
+    }
+    return value ? 'yes' : 'no';
+  };
+
   // Pre-populate form with existing user data
   useEffect(() => {
     if (user) {
@@ -116,12 +127,7 @@ const BackgroundScreen: React.FC = () => {
         languages: user.languages || [],
         workHistory: user.other_us_jobs?.join(', ') || '',
         relationshipStatus: user.relationship_status || '',
-        stayInUS:
-          user.stay_in_us !== undefined
-            ? user.stay_in_us
-              ? 'yes'
-              : 'no'
-            : 'yes',
+        stayInUS: getStayInUSValue(user.stay_in_us),
       });
     }
   }, [user]);
