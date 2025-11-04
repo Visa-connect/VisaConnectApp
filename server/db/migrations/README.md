@@ -13,11 +13,19 @@ We use a **simple, lightweight migration system** that:
 
 ## File Naming Convention
 
-Migration files should be named with a number prefix to ensure proper ordering:
+Migration files should be named with a **date-time prefix** to ensure proper ordering:
 
-- `001_description.sql`
-- `002_another_change.sql`
-- `003_final_update.sql`
+**Format**: `YYYYMMDDHHMMSS_description.sql`
+
+- `20250101000000_initial_schema.sql`
+- `20250101000001_add_business_submission_fields.sql`
+- `20250101000002_another_change.sql`
+
+The date-time format ensures:
+
+- **Automatic ordering** - migrations run in chronological order
+- **No conflicts** - each migration has a unique timestamp
+- **Clear history** - easy to see when migrations were created
 
 ## Running Migrations
 
@@ -46,11 +54,36 @@ heroku run "cd server && npm run migrate"
 
 ## Creating New Migrations
 
+### Option 1: Use the Helper Script (Recommended)
+
+```bash
+# From the server directory
+node scripts/create-migration.js "description_of_migration"
+```
+
+This will create a new migration file with the current timestamp:
+
+- `20250103143025_description_of_migration.sql`
+
+### Option 2: Manual Creation
+
 1. Create a new `.sql` file in this directory
-2. Use the naming convention: `XXX_description.sql`
+2. Use the naming convention: `YYYYMMDDHHMMSS_description.sql`
+   - Use current date/time: `date +%Y%m%d%H%M%S` (e.g., `20241203143025`)
+   - Add a descriptive name: `20241203143025_add_new_feature.sql`
 3. Write your SQL changes
 4. Test locally with `npm run migrate:dry-run`
 5. Commit and deploy
+
+**Example:**
+
+```bash
+# Get current timestamp
+TIMESTAMP=$(date +%Y%m%d%H%M%S)
+
+# Create migration file
+touch server/db/migrations/${TIMESTAMP}_add_new_column.sql
+```
 
 ## Migration Best Practices
 
@@ -63,7 +96,7 @@ heroku run "cd server && npm run migrate"
 ## Example Migration
 
 ```sql
--- 001_add_business_submission_fields.sql
+-- 20250101000001_add_business_submission_fields.sql
 -- Add fields needed for business submission functionality
 
 -- Add new columns to businesses table
