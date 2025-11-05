@@ -127,7 +127,7 @@ export class AdminAuthServiceSimple {
       if (!isAdmin) {
         throw new AppError(
           'Access denied. Admin privileges required.',
-          ErrorCode.MEETUP_ACCESS_DENIED,
+          ErrorCode.UNAUTHORIZED,
           403
         );
       }
@@ -236,7 +236,7 @@ export class AdminAuthServiceSimple {
       if (!decodedToken.admin || decodedToken.role !== 'admin') {
         throw new AppError(
           'Admin privileges required',
-          ErrorCode.MEETUP_ACCESS_DENIED,
+          ErrorCode.UNAUTHORIZED,
           403
         );
       }
