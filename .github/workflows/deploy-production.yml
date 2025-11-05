@@ -7,7 +7,7 @@ on:
 
 env:
   HEROKU_APP_NAME: visa-connect
-  PRODUCTION_URL: visaconnectus.com
+  PRODUCTION_URL: www.visaconnectus.com
 
 jobs:
   deploy-production:
