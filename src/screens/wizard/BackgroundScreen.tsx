@@ -106,6 +106,17 @@ const BackgroundScreen: React.FC = () => {
     return value; // Fallback to original value if no conversion possible
   };
 
+  // Helper function to convert boolean value to 'yes' | 'no' with default
+  const getStayInUSValue = (
+    value: boolean | undefined,
+    defaultValue: 'yes' | 'no' = 'yes'
+  ): 'yes' | 'no' => {
+    if (value === undefined) {
+      return defaultValue;
+    }
+    return value ? 'yes' : 'no';
+  };
+
   // Pre-populate form with existing user data
   useEffect(() => {
     if (user) {
@@ -116,7 +127,7 @@ const BackgroundScreen: React.FC = () => {
         languages: user.languages || [],
         workHistory: user.other_us_jobs?.join(', ') || '',
         relationshipStatus: user.relationship_status || '',
-        stayInUS: 'yes', // Default value, could be stored in profile_answers
+        stayInUS: getStayInUSValue(user.stay_in_us),
       });
     }
   }, [user]);
@@ -128,19 +139,6 @@ const BackgroundScreen: React.FC = () => {
     }
   }, [user, navigate]);
 
-  // Function to map nationality back to country name
-  const getCountryNameFromNationality = (nationality: string): string => {
-    const country = countries.find((c) => {
-      // Check if it matches the country name
-      if (c.name.common === nationality) return true;
-      // Check if it matches the nationality/demonym
-      if (c.demonyms?.eng?.m === nationality) return true;
-      if (c.demonyms?.eng?.f === nationality) return true;
-      return false;
-    });
-    return country ? country.name.common : nationality;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -148,25 +146,13 @@ const BackgroundScreen: React.FC = () => {
     try {
       if (!user?.uid) throw new Error('User not authenticated');
 
-      // Map nationality back to country name for storage
-      const countryName = getCountryNameFromNationality(form.nationality);
-
       // Update user profile with background information
       const updateData = {
-        nationality: countryName,
         languages: form.languages,
         other_us_jobs: form.workHistory ? [form.workHistory] : [],
         relationship_status: form.relationshipStatus,
-        // Map stayInUS to a more appropriate field or store in profile_answers
-        profile_answers: {
-          background_identity: {
-            nationality: form.nationality, // Keep original input for display
-            languages: form.languages,
-            workHistory: form.workHistory,
-            relationshipStatus: form.relationshipStatus,
-            stayInUS: form.stayInUS,
-          },
-        },
+        nationality: form.nationality, // Keep original input for display
+        stay_in_us: form.stayInUS === 'yes',
       };
 
       await apiPatch('/api/user/profile', updateData);

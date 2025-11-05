@@ -63,6 +63,7 @@ export interface User {
   resume_filename?: string;
   resume_public_id?: string;
   timezone?: string;
+  stay_in_us?: boolean;
 }
 
 // Authentication response interfaces

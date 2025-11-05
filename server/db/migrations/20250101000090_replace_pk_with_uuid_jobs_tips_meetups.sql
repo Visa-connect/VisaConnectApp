@@ -18,6 +18,69 @@
 -- Ensure pgcrypto extension is enabled
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Helper function to safely rename a column and optionally set NOT NULL
+-- This function is idempotent and can be called multiple times safely
+-- Note: CREATE FUNCTION must run outside a transaction, so it's done before BEGIN
+CREATE OR REPLACE FUNCTION safe_rename_column(
+    p_table_name TEXT,
+    p_old_column_name TEXT,
+    p_new_column_name TEXT,
+    p_set_not_null BOOLEAN DEFAULT TRUE
+) RETURNS VOID AS $$
+BEGIN
+    -- Only rename if old column exists and new column doesn't exist
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = p_table_name AND column_name = p_old_column_name
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = p_table_name AND column_name = p_new_column_name
+    ) THEN
+        EXECUTE format('ALTER TABLE %I RENAME COLUMN %I TO %I', 
+            p_table_name, p_old_column_name, p_new_column_name);
+    END IF;
+    
+    -- Set NOT NULL if requested and column exists
+    IF p_set_not_null AND EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = p_table_name AND column_name = p_new_column_name
+    ) THEN
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I SET NOT NULL', 
+            p_table_name, p_new_column_name);
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Helper function to safely add a primary key constraint
+-- This function is idempotent and can be called multiple times safely
+-- Note: CREATE FUNCTION must run outside a transaction, so it's done before BEGIN
+CREATE OR REPLACE FUNCTION safe_add_primary_key(
+    p_table_name TEXT,
+    p_column_name TEXT,
+    p_constraint_name TEXT DEFAULT NULL
+) RETURNS VOID AS $$
+DECLARE
+    v_constraint_name TEXT;
+BEGIN
+    -- Use provided constraint name or generate default (table_name_pkey)
+    IF p_constraint_name IS NULL THEN
+        v_constraint_name := p_table_name || '_pkey';
+    ELSE
+        v_constraint_name := p_constraint_name;
+    END IF;
+    
+    -- Only add primary key if it doesn't already exist
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = v_constraint_name 
+        AND conrelid = p_table_name::regclass
+    ) THEN
+        EXECUTE format('ALTER TABLE %I ADD PRIMARY KEY (%I)', 
+            p_table_name, p_column_name);
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 BEGIN;
 
 -- ============================================================================
@@ -25,18 +88,19 @@ BEGIN;
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE meetups ADD COLUMN id_new UUID;
+ALTER TABLE meetups ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE meetups SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE meetups ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE meetups DROP CONSTRAINT IF EXISTS meetups_id_new_unique CASCADE;
 ALTER TABLE meetups ADD CONSTRAINT meetups_id_new_unique UNIQUE (id_new);
 
 -- Add temporary UUID columns to child tables
-ALTER TABLE meetup_interests ADD COLUMN meetup_id_new UUID;
-ALTER TABLE meetup_reports ADD COLUMN meetup_id_new UUID;
+ALTER TABLE meetup_interests ADD COLUMN IF NOT EXISTS meetup_id_new UUID;
+ALTER TABLE meetup_reports ADD COLUMN IF NOT EXISTS meetup_id_new UUID;
 
 -- Update foreign key references in child tables using the new UUID column
 UPDATE meetup_interests mi
@@ -53,12 +117,10 @@ ALTER TABLE meetup_reports DROP CONSTRAINT IF EXISTS meetup_reports_meetup_id_fk
 
 -- Drop old columns and rename new ones
 ALTER TABLE meetup_interests DROP COLUMN IF EXISTS meetup_id;
-ALTER TABLE meetup_interests RENAME COLUMN meetup_id_new TO meetup_id;
-ALTER TABLE meetup_interests ALTER COLUMN meetup_id SET NOT NULL;
+SELECT safe_rename_column('meetup_interests', 'meetup_id_new', 'meetup_id');
 
 ALTER TABLE meetup_reports DROP COLUMN IF EXISTS meetup_id;
-ALTER TABLE meetup_reports RENAME COLUMN meetup_id_new TO meetup_id;
-ALTER TABLE meetup_reports ALTER COLUMN meetup_id SET NOT NULL;
+SELECT safe_rename_column('meetup_reports', 'meetup_id_new', 'meetup_id');
 
 -- Update reports table for meetups (while old integer id still exists)
 -- Note: reports.target_id is VARCHAR(255), so we need to cast the integer id to text for comparison
@@ -70,14 +132,17 @@ WHERE r.target_type = 'meetup' AND r.target_id ~ '^[0-9]+$'
 -- Drop old primary key and rename new column
 ALTER TABLE meetups DROP CONSTRAINT IF EXISTS meetups_pkey;
 ALTER TABLE meetups DROP COLUMN IF EXISTS id;
-ALTER TABLE meetups RENAME COLUMN id_new TO id;
-ALTER TABLE meetups ADD PRIMARY KEY (id);
+SELECT safe_rename_column('meetups', 'id_new', 'id', FALSE);
+-- Add primary key using helper function
+SELECT safe_add_primary_key('meetups', 'id');
 
 -- Recreate foreign key constraints with UUIDs
+ALTER TABLE meetup_interests DROP CONSTRAINT IF EXISTS meetup_interests_meetup_id_fkey;
 ALTER TABLE meetup_interests 
   ADD CONSTRAINT meetup_interests_meetup_id_fkey 
   FOREIGN KEY (meetup_id) REFERENCES meetups(id) ON DELETE CASCADE;
 
+ALTER TABLE meetup_reports DROP CONSTRAINT IF EXISTS meetup_reports_meetup_id_fkey;
 ALTER TABLE meetup_reports 
   ADD CONSTRAINT meetup_reports_meetup_id_fkey 
   FOREIGN KEY (meetup_id) REFERENCES meetups(id) ON DELETE CASCADE;
@@ -87,19 +152,20 @@ ALTER TABLE meetup_reports
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE tips_trips_advice ADD COLUMN id_new UUID;
+ALTER TABLE tips_trips_advice ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE tips_trips_advice SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE tips_trips_advice ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE tips_trips_advice DROP CONSTRAINT IF EXISTS tips_trips_advice_id_new_unique CASCADE;
 ALTER TABLE tips_trips_advice ADD CONSTRAINT tips_trips_advice_id_new_unique UNIQUE (id_new);
 
 -- Add temporary UUID columns to child tables
-ALTER TABLE tips_trips_advice_photos ADD COLUMN post_id_new UUID;
-ALTER TABLE tips_trips_advice_comments ADD COLUMN post_id_new UUID;
-ALTER TABLE tips_trips_advice_likes ADD COLUMN post_id_new UUID;
+ALTER TABLE tips_trips_advice_photos ADD COLUMN IF NOT EXISTS post_id_new UUID;
+ALTER TABLE tips_trips_advice_comments ADD COLUMN IF NOT EXISTS post_id_new UUID;
+ALTER TABLE tips_trips_advice_likes ADD COLUMN IF NOT EXISTS post_id_new UUID;
 
 -- Update foreign key references in child tables
 UPDATE tips_trips_advice_photos ttap
@@ -121,32 +187,33 @@ ALTER TABLE tips_trips_advice_likes DROP CONSTRAINT IF EXISTS tips_trips_advice_
 
 -- Drop old columns and rename new ones
 ALTER TABLE tips_trips_advice_photos DROP COLUMN IF EXISTS post_id;
-ALTER TABLE tips_trips_advice_photos RENAME COLUMN post_id_new TO post_id;
-ALTER TABLE tips_trips_advice_photos ALTER COLUMN post_id SET NOT NULL;
+SELECT safe_rename_column('tips_trips_advice_photos', 'post_id_new', 'post_id');
 
 ALTER TABLE tips_trips_advice_comments DROP COLUMN IF EXISTS post_id;
-ALTER TABLE tips_trips_advice_comments RENAME COLUMN post_id_new TO post_id;
-ALTER TABLE tips_trips_advice_comments ALTER COLUMN post_id SET NOT NULL;
+SELECT safe_rename_column('tips_trips_advice_comments', 'post_id_new', 'post_id');
 
 ALTER TABLE tips_trips_advice_likes DROP COLUMN IF EXISTS post_id;
-ALTER TABLE tips_trips_advice_likes RENAME COLUMN post_id_new TO post_id;
-ALTER TABLE tips_trips_advice_likes ALTER COLUMN post_id SET NOT NULL;
+SELECT safe_rename_column('tips_trips_advice_likes', 'post_id_new', 'post_id');
 
 -- Drop old primary key and rename new column
 ALTER TABLE tips_trips_advice DROP CONSTRAINT IF EXISTS tips_trips_advice_pkey;
 ALTER TABLE tips_trips_advice DROP COLUMN IF EXISTS id;
-ALTER TABLE tips_trips_advice RENAME COLUMN id_new TO id;
-ALTER TABLE tips_trips_advice ADD PRIMARY KEY (id);
+SELECT safe_rename_column('tips_trips_advice', 'id_new', 'id', FALSE);
+-- Add primary key using helper function
+SELECT safe_add_primary_key('tips_trips_advice', 'id');
 
 -- Recreate foreign key constraints with UUIDs
+ALTER TABLE tips_trips_advice_photos DROP CONSTRAINT IF EXISTS tips_trips_advice_photos_post_id_fkey;
 ALTER TABLE tips_trips_advice_photos 
   ADD CONSTRAINT tips_trips_advice_photos_post_id_fkey 
   FOREIGN KEY (post_id) REFERENCES tips_trips_advice(id) ON DELETE CASCADE;
 
+ALTER TABLE tips_trips_advice_comments DROP CONSTRAINT IF EXISTS tips_trips_advice_comments_post_id_fkey;
 ALTER TABLE tips_trips_advice_comments 
   ADD CONSTRAINT tips_trips_advice_comments_post_id_fkey 
   FOREIGN KEY (post_id) REFERENCES tips_trips_advice(id) ON DELETE CASCADE;
 
+ALTER TABLE tips_trips_advice_likes DROP CONSTRAINT IF EXISTS tips_trips_advice_likes_post_id_fkey;
 ALTER TABLE tips_trips_advice_likes 
   ADD CONSTRAINT tips_trips_advice_likes_post_id_fkey 
   FOREIGN KEY (post_id) REFERENCES tips_trips_advice(id) ON DELETE CASCADE;
@@ -156,17 +223,18 @@ ALTER TABLE tips_trips_advice_likes
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE jobs ADD COLUMN id_new UUID;
+ALTER TABLE jobs ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE jobs SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE jobs ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_id_new_unique CASCADE;
 ALTER TABLE jobs ADD CONSTRAINT jobs_id_new_unique UNIQUE (id_new);
 
 -- Add temporary UUID column to child table
-ALTER TABLE job_applications ADD COLUMN job_id_new UUID;
+ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS job_id_new UUID;
 
 -- Update foreign key references in child tables
 UPDATE job_applications ja
@@ -185,16 +253,17 @@ WHERE r.target_type = 'job' AND r.target_id ~ '^[0-9]+$'
 
 -- Drop old column and rename new one
 ALTER TABLE job_applications DROP COLUMN IF EXISTS job_id;
-ALTER TABLE job_applications RENAME COLUMN job_id_new TO job_id;
-ALTER TABLE job_applications ALTER COLUMN job_id SET NOT NULL;
+SELECT safe_rename_column('job_applications', 'job_id_new', 'job_id');
 
 -- Drop old primary key and rename new column
 ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_pkey;
 ALTER TABLE jobs DROP COLUMN IF EXISTS id;
-ALTER TABLE jobs RENAME COLUMN id_new TO id;
-ALTER TABLE jobs ADD PRIMARY KEY (id);
+SELECT safe_rename_column('jobs', 'id_new', 'id', FALSE);
+-- Add primary key using helper function
+SELECT safe_add_primary_key('jobs', 'id');
 
 -- Recreate foreign key constraints with UUIDs
+ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_job_id_fkey;
 ALTER TABLE job_applications 
   ADD CONSTRAINT job_applications_job_id_fkey 
   FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE;
@@ -204,20 +273,22 @@ ALTER TABLE job_applications
 -- ============================================================================
 
 -- Add new UUID column
-ALTER TABLE job_applications ADD COLUMN id_new UUID;
+ALTER TABLE job_applications ADD COLUMN IF NOT EXISTS id_new UUID;
 
 -- Generate UUIDs for existing rows
 UPDATE job_applications SET id_new = gen_random_uuid() WHERE id_new IS NULL;
 
 -- Make it NOT NULL and add unique constraint
 ALTER TABLE job_applications ALTER COLUMN id_new SET NOT NULL;
+ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_id_new_unique CASCADE;
 ALTER TABLE job_applications ADD CONSTRAINT job_applications_id_new_unique UNIQUE (id_new);
 
 -- Drop old primary key and rename new column
 ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_pkey;
 ALTER TABLE job_applications DROP COLUMN IF EXISTS id;
-ALTER TABLE job_applications RENAME COLUMN id_new TO id;
-ALTER TABLE job_applications ADD PRIMARY KEY (id);
+SELECT safe_rename_column('job_applications', 'id_new', 'id', FALSE);
+-- Add primary key using helper function
+SELECT safe_add_primary_key('job_applications', 'id');
 
 -- ============================================================================
 -- STEP 5: UPDATE INDEXES AND CONSTRAINTS

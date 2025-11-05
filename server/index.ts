@@ -66,6 +66,58 @@ pool
 app.use(express.json()); // For parsing JSON bodies
 app.use(cors()); // Enable CORS for all routes
 
+// Content Security Policy - Allow necessary resources
+// Note: 'unsafe-inline' is currently required for React apps built with Create React App
+// as React uses inline scripts during hydration and Webpack may generate inline scripts.
+// This weakens protection against XSS attacks. Future improvement: migrate to a custom build setup
+// (e.g., Vite or custom Webpack config) to implement nonces or hashes for inline scripts and styles,
+// allowing us to remove 'unsafe-inline' and significantly improve security posture.
+// TODO: Implement nonce-based or hash-based CSP [CSP Security Enhancement]
+// Options:
+//   1. Migrate to Vite (recommended): Vite supports CSP nonces out of the box via @vitejs/plugin-react
+//   2. Use react-app-rewired: Customize CRA build to inject nonces into inline scripts/styles
+//   3. Use @craco/craco: Alternative to react-app-rewired for customizing CRA
+//   4. Manual hash-based CSP: Extract inline script/style hashes and add them to CSP policy
+// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP for CSP best practices
+app.use((req: Request, res: Response, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    // Construct WebSocket URL from APP_URL environment variable
+    let wsUrl = '';
+    if (process.env.APP_URL) {
+      try {
+        const appUrl = new URL(process.env.APP_URL);
+        // Convert http/https to ws/wss
+        const wsProtocol = appUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${wsProtocol}//${appUrl.host}`;
+      } catch (error) {
+        console.warn(
+          '⚠️  Invalid APP_URL format, WebSocket CSP directive will be omitted:',
+          error
+        );
+      }
+    }
+
+    // Build CSP policy with dynamic WebSocket URL
+    const cspPolicy =
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline'; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "font-src 'self' data:; " +
+      "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; " +
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com" +
+      (wsUrl ? ` ${wsUrl}` : '') +
+      '; ' +
+      "manifest-src 'self'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "frame-ancestors 'none'; " +
+      "object-src 'none';";
+
+    res.setHeader('Content-Security-Policy', cspPolicy);
+  }
+  next();
+});
+
 // Health check endpoint
 app.get('/api/health', async (req: Request, res: Response) => {
   try {
@@ -104,11 +156,11 @@ app.get('/api/health', async (req: Request, res: Response) => {
 // Register API routes
 registerApiRoutes(app);
 
-// Only serve static files in production
-if (process.env.NODE_ENV !== 'development') {
-  // Serve static files from the React app build FIRST
-  const buildPath = path.join(__dirname, '../../build');
+// Serve static files and handle root route
+const buildPath = path.join(__dirname, '../../build');
 
+if (process.env.NODE_ENV !== 'development') {
+  // Production: Serve static files from build directory
   console.log('Serving static files from:', buildPath);
 
   // Check if build directory exists
@@ -117,18 +169,29 @@ if (process.env.NODE_ENV !== 'development') {
     console.warn(
       '⚠️  Static file serving disabled. API endpoints will still work.'
     );
+
+    // Still provide a catch-all for root route
+    app.get('*', (req: Request, res: Response) => {
+      if (req.path.startsWith('/api/')) {
+        res.status(404).json({ error: 'API endpoint not found' });
+        return;
+      }
+      res.status(404).json({
+        error: 'Frontend not built. Please run: npm run build',
+      });
+    });
   } else {
     // Add cache-busting headers for static assets
     app.use(
       express.static(buildPath, {
-        setHeaders: (res, path) => {
-          if (path.endsWith('.js') || path.endsWith('.css')) {
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
             // Cache static assets for 1 year with cache busting
             res.setHeader(
               'Cache-Control',
               'public, max-age=31536000, immutable'
             );
-          } else if (path.endsWith('.html')) {
+          } else if (filePath.endsWith('.html')) {
             // Don't cache HTML files
             res.setHeader(
               'Cache-Control',
@@ -177,7 +240,9 @@ if (process.env.NODE_ENV !== 'development') {
     });
   }
 } else {
-  console.log('Development mode: Static file serving disabled');
+  // Development mode: Frontend is served by React dev server on port 3000
+  // API requests are proxied from frontend to this server on port 8080
+  // No root route handler - users should access frontend on port 3000
 }
 
 const server = app.listen(PORT, () => {

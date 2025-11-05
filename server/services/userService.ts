@@ -196,6 +196,7 @@ class UserService {
       'has_car',
       'offers_rides',
       'relationship_status',
+      'stay_in_us',
       'road_trips',
       'favorite_place',
       'travel_tips',

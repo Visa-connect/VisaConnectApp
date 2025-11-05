@@ -57,13 +57,6 @@ const KnowledgeCommunityScreen: React.FC = () => {
         mentorship_interest: form.mentorshipInterest === 'yes',
         job_boards: form.jobBoards,
         visa_advice: form.visaAdvice,
-        profile_answers: {
-          knowledge_community: {
-            mentorshipInterest: form.mentorshipInterest,
-            jobBoards: form.jobBoards,
-            visaAdvice: form.visaAdvice,
-          },
-        },
       };
 
       await apiPatch('/api/user/profile', updateData);
