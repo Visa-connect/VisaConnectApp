@@ -1,8 +1,3 @@
-// TODO: Achieve 100% test coverage for wizard screens
-// - Fix LocationInput component interactions
-// - Add tests for all form interactions and edge cases
-// - Ensure all user flows are covered
-
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';

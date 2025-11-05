@@ -56,3 +56,16 @@
   - Consider implications: permanent recognition vs. ability to correct mistakes
   - If removal is disabled, update `ThumbsUpButton` component to remove the removal functionality
   - This affects user experience and the integrity of the "has helped" badge system
+
+### Testing Improvements
+
+- **Wizard Screens Test Coverage**: Achieve 100% test coverage for wizard screens
+  - Fix HeadlessUI Combobox interactions in tests:
+    - BackgroundScreen: nationality and languages selection
+    - LifestyleScreen: hobbies, outings, and job boards selection
+    - KnowledgeCommunityScreen: job boards selection
+  - Fix LocationInput component interactions in TravelExplorationScreen tests
+  - Add tests for all form interactions and edge cases
+  - Ensure all user flows are covered
+  - Properly mock HeadlessUI components for testing multi-select functionality
+  - Consider using a dedicated testing utility or enhanced mocking strategy for HeadlessUI components

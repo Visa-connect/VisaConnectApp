@@ -1,8 +1,3 @@
-// TODO: Achieve 100% test coverage for wizard screens
-// - Fix HeadlessUI Combobox interactions (hobbies, outings, job boards)
-// - Add tests for all form interactions and edge cases
-// - Ensure all user flows are covered
-
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -237,7 +232,6 @@ describe('LifestyleScreen', () => {
     });
   });
 
-  // TODO: Achieve 100% test coverage for wizard screens
   // TODO: Fix hobbies selection test - HeadlessUI Combobox interaction needs proper mocking
   describe.skip('Hobbies selection', () => {
     it('should allow adding custom hobbies via Enter key', async () => {
