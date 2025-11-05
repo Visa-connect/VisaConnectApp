@@ -72,7 +72,7 @@ app.use(cors()); // Enable CORS for all routes
 // This weakens protection against XSS attacks. Future improvement: migrate to a custom build setup
 // (e.g., Vite or custom Webpack config) to implement nonces or hashes for inline scripts and styles,
 // allowing us to remove 'unsafe-inline' and significantly improve security posture.
-// TODO: Implement nonce-based or hash-based CSP (GitHub issue: #XXX - CSP Security Enhancement)
+// TODO: Implement nonce-based or hash-based CSP [CSP Security Enhancement]
 // Options:
 //   1. Migrate to Vite (recommended): Vite supports CSP nonces out of the box via @vitejs/plugin-react
 //   2. Use react-app-rewired: Customize CRA build to inject nonces into inline scripts/styles
