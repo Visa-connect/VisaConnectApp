@@ -128,7 +128,7 @@ export class AdminAuthServiceSimple {
         throw new AppError(
           'Access denied. Admin privileges required.',
           ErrorCode.UNAUTHORIZED,
-          403
+          401
         );
       }
 
@@ -237,7 +237,7 @@ export class AdminAuthServiceSimple {
         throw new AppError(
           'Admin privileges required',
           ErrorCode.UNAUTHORIZED,
-          403
+          401
         );
       }
 
@@ -260,8 +260,8 @@ export class AdminAuthServiceSimple {
 
       throw new AppError(
         'Invalid or expired token',
-        ErrorCode.UNAUTHORIZED,
-        401
+        ErrorCode.INVALID_TOKEN,
+        419
       );
     }
   }
