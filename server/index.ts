@@ -67,22 +67,25 @@ app.use(express.json()); // For parsing JSON bodies
 app.use(cors()); // Enable CORS for all routes
 
 // Content Security Policy - Allow necessary resources
-// Note: 'unsafe-inline' is required for React apps built with Create React App
+// Note: 'unsafe-inline' is currently required for React apps built with Create React App
 // as React uses inline scripts during hydration and Webpack may generate inline scripts.
-// Consider migrating to a custom build setup to use nonces/hashes for better security.
+// This weakens protection against XSS attacks. Future improvement: migrate to a custom build setup
+// (e.g., Vite or custom Webpack config) to implement nonces or hashes for inline scripts and styles,
 app.use((req: Request, res: Response, next) => {
-  // Only set CSP in production to avoid conflicts with React dev server
   if (process.env.NODE_ENV === 'production') {
     res.setHeader(
       'Content-Security-Policy',
       "default-src 'self'; " +
         "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline' data:; " +
+        "style-src 'self' 'unsafe-inline'; " +
         "font-src 'self' data:; " +
-        "img-src 'self' data: https: blob:; " +
-        "connect-src 'self' https://identitytoolkit.googleapis.com https://www.googleapis.com wss: ws:; " +
+        "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; " +
+        "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com wss://your-production-domain.com; " +
         "manifest-src 'self'; " +
-        "frame-ancestors 'none';"
+        "base-uri 'self'; " +
+        "form-action 'self'; " +
+        "frame-ancestors 'none'; " +
+        "object-src 'none';"
     );
   }
   next();
