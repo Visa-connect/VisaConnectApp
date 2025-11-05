@@ -71,6 +71,14 @@ app.use(cors()); // Enable CORS for all routes
 // as React uses inline scripts during hydration and Webpack may generate inline scripts.
 // This weakens protection against XSS attacks. Future improvement: migrate to a custom build setup
 // (e.g., Vite or custom Webpack config) to implement nonces or hashes for inline scripts and styles,
+// allowing us to remove 'unsafe-inline' and significantly improve security posture.
+// TODO: Implement nonce-based or hash-based CSP (GitHub issue: #XXX - CSP Security Enhancement)
+// Options:
+//   1. Migrate to Vite (recommended): Vite supports CSP nonces out of the box via @vitejs/plugin-react
+//   2. Use react-app-rewired: Customize CRA build to inject nonces into inline scripts/styles
+//   3. Use @craco/craco: Alternative to react-app-rewired for customizing CRA
+//   4. Manual hash-based CSP: Extract inline script/style hashes and add them to CSP policy
+// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP for CSP best practices
 app.use((req: Request, res: Response, next) => {
   if (process.env.NODE_ENV === 'production') {
     res.setHeader(
