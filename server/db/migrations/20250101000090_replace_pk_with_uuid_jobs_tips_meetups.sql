@@ -18,6 +18,39 @@
 -- Ensure pgcrypto extension is enabled
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Helper function to safely rename a column and optionally set NOT NULL
+-- This function is idempotent and can be called multiple times safely
+-- Note: CREATE FUNCTION must run outside a transaction, so it's done before BEGIN
+CREATE OR REPLACE FUNCTION safe_rename_column(
+    p_table_name TEXT,
+    p_old_column_name TEXT,
+    p_new_column_name TEXT,
+    p_set_not_null BOOLEAN DEFAULT TRUE
+) RETURNS VOID AS $$
+BEGIN
+    -- Only rename if old column exists and new column doesn't exist
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = p_table_name AND column_name = p_old_column_name
+    ) AND NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = p_table_name AND column_name = p_new_column_name
+    ) THEN
+        EXECUTE format('ALTER TABLE %I RENAME COLUMN %I TO %I', 
+            p_table_name, p_old_column_name, p_new_column_name);
+    END IF;
+    
+    -- Set NOT NULL if requested and column exists
+    IF p_set_not_null AND EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = p_table_name AND column_name = p_new_column_name
+    ) THEN
+        EXECUTE format('ALTER TABLE %I ALTER COLUMN %I SET NOT NULL', 
+            p_table_name, p_new_column_name);
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 BEGIN;
 
 -- ============================================================================
@@ -54,30 +87,10 @@ ALTER TABLE meetup_reports DROP CONSTRAINT IF EXISTS meetup_reports_meetup_id_fk
 
 -- Drop old columns and rename new ones
 ALTER TABLE meetup_interests DROP COLUMN IF EXISTS meetup_id;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_interests' AND column_name = 'meetup_id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_interests' AND column_name = 'meetup_id')
-    THEN
-        ALTER TABLE meetup_interests RENAME COLUMN meetup_id_new TO meetup_id;
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_interests' AND column_name = 'meetup_id') THEN
-        ALTER TABLE meetup_interests ALTER COLUMN meetup_id SET NOT NULL;
-    END IF;
-END $$;
+SELECT safe_rename_column('meetup_interests', 'meetup_id_new', 'meetup_id');
 
 ALTER TABLE meetup_reports DROP COLUMN IF EXISTS meetup_id;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_reports' AND column_name = 'meetup_id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_reports' AND column_name = 'meetup_id')
-    THEN
-        ALTER TABLE meetup_reports RENAME COLUMN meetup_id_new TO meetup_id;
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetup_reports' AND column_name = 'meetup_id') THEN
-        ALTER TABLE meetup_reports ALTER COLUMN meetup_id SET NOT NULL;
-    END IF;
-END $$;
+SELECT safe_rename_column('meetup_reports', 'meetup_id_new', 'meetup_id');
 
 -- Update reports table for meetups (while old integer id still exists)
 -- Note: reports.target_id is VARCHAR(255), so we need to cast the integer id to text for comparison
@@ -89,15 +102,7 @@ WHERE r.target_type = 'meetup' AND r.target_id ~ '^[0-9]+$'
 -- Drop old primary key and rename new column
 ALTER TABLE meetups DROP CONSTRAINT IF EXISTS meetups_pkey;
 ALTER TABLE meetups DROP COLUMN IF EXISTS id;
--- Only rename if id_new column exists and id doesn't exist
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetups' AND column_name = 'id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'meetups' AND column_name = 'id')
-    THEN
-        ALTER TABLE meetups RENAME COLUMN id_new TO id;
-    END IF;
-END $$;
+SELECT safe_rename_column('meetups', 'id_new', 'id', FALSE);
 -- Only add primary key if it doesn't already exist
 DO $$
 BEGIN
@@ -161,56 +166,18 @@ ALTER TABLE tips_trips_advice_likes DROP CONSTRAINT IF EXISTS tips_trips_advice_
 
 -- Drop old columns and rename new ones
 ALTER TABLE tips_trips_advice_photos DROP COLUMN IF EXISTS post_id;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_photos' AND column_name = 'post_id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_photos' AND column_name = 'post_id')
-    THEN
-        ALTER TABLE tips_trips_advice_photos RENAME COLUMN post_id_new TO post_id;
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_photos' AND column_name = 'post_id') THEN
-        ALTER TABLE tips_trips_advice_photos ALTER COLUMN post_id SET NOT NULL;
-    END IF;
-END $$;
+SELECT safe_rename_column('tips_trips_advice_photos', 'post_id_new', 'post_id');
 
 ALTER TABLE tips_trips_advice_comments DROP COLUMN IF EXISTS post_id;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_comments' AND column_name = 'post_id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_comments' AND column_name = 'post_id')
-    THEN
-        ALTER TABLE tips_trips_advice_comments RENAME COLUMN post_id_new TO post_id;
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_comments' AND column_name = 'post_id') THEN
-        ALTER TABLE tips_trips_advice_comments ALTER COLUMN post_id SET NOT NULL;
-    END IF;
-END $$;
+SELECT safe_rename_column('tips_trips_advice_comments', 'post_id_new', 'post_id');
 
 ALTER TABLE tips_trips_advice_likes DROP COLUMN IF EXISTS post_id;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_likes' AND column_name = 'post_id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_likes' AND column_name = 'post_id')
-    THEN
-        ALTER TABLE tips_trips_advice_likes RENAME COLUMN post_id_new TO post_id;
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice_likes' AND column_name = 'post_id') THEN
-        ALTER TABLE tips_trips_advice_likes ALTER COLUMN post_id SET NOT NULL;
-    END IF;
-END $$;
+SELECT safe_rename_column('tips_trips_advice_likes', 'post_id_new', 'post_id');
 
 -- Drop old primary key and rename new column
 ALTER TABLE tips_trips_advice DROP CONSTRAINT IF EXISTS tips_trips_advice_pkey;
 ALTER TABLE tips_trips_advice DROP COLUMN IF EXISTS id;
--- Only rename if id_new column exists and id doesn't exist
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice' AND column_name = 'id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'tips_trips_advice' AND column_name = 'id')
-    THEN
-        ALTER TABLE tips_trips_advice RENAME COLUMN id_new TO id;
-    END IF;
-END $$;
+SELECT safe_rename_column('tips_trips_advice', 'id_new', 'id', FALSE);
 -- Only add primary key if it doesn't already exist
 DO $$
 BEGIN
@@ -274,30 +241,12 @@ WHERE r.target_type = 'job' AND r.target_id ~ '^[0-9]+$'
 
 -- Drop old column and rename new one
 ALTER TABLE job_applications DROP COLUMN IF EXISTS job_id;
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'job_id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'job_id')
-    THEN
-        ALTER TABLE job_applications RENAME COLUMN job_id_new TO job_id;
-    END IF;
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'job_id') THEN
-        ALTER TABLE job_applications ALTER COLUMN job_id SET NOT NULL;
-    END IF;
-END $$;
+SELECT safe_rename_column('job_applications', 'job_id_new', 'job_id');
 
 -- Drop old primary key and rename new column
 ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_pkey;
 ALTER TABLE jobs DROP COLUMN IF EXISTS id;
--- Only rename if id_new column exists and id doesn't exist
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'id')
-    THEN
-        ALTER TABLE jobs RENAME COLUMN id_new TO id;
-    END IF;
-END $$;
+SELECT safe_rename_column('jobs', 'id_new', 'id', FALSE);
 -- Only add primary key if it doesn't already exist
 DO $$
 BEGIN
@@ -334,15 +283,7 @@ ALTER TABLE job_applications ADD CONSTRAINT job_applications_id_new_unique UNIQU
 -- Drop old primary key and rename new column
 ALTER TABLE job_applications DROP CONSTRAINT IF EXISTS job_applications_pkey;
 ALTER TABLE job_applications DROP COLUMN IF EXISTS id;
--- Only rename if id_new column exists and id doesn't exist
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'id_new')
-       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'job_applications' AND column_name = 'id')
-    THEN
-        ALTER TABLE job_applications RENAME COLUMN id_new TO id;
-    END IF;
-END $$;
+SELECT safe_rename_column('job_applications', 'id_new', 'id', FALSE);
 -- Only add primary key if it doesn't already exist
 DO $$
 BEGIN
