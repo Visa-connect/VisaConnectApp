@@ -4,7 +4,7 @@
 
 -- Add column for stay_in_us (boolean: true = yes, false = no)
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS stay_in_us BOOLEAN;
+ADD COLUMN IF NOT EXISTS stay_in_us BOOLEAN DEFAULT TRUE;
 
 -- Add index for performance
 CREATE INDEX IF NOT EXISTS idx_users_stay_in_us ON users(stay_in_us);
