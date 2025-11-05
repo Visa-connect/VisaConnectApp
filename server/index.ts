@@ -81,20 +81,39 @@ app.use(cors()); // Enable CORS for all routes
 // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP for CSP best practices
 app.use((req: Request, res: Response, next) => {
   if (process.env.NODE_ENV === 'production') {
-    res.setHeader(
-      'Content-Security-Policy',
+    // Construct WebSocket URL from APP_URL environment variable
+    let wsUrl = '';
+    if (process.env.APP_URL) {
+      try {
+        const appUrl = new URL(process.env.APP_URL);
+        // Convert http/https to ws/wss
+        const wsProtocol = appUrl.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsUrl = `${wsProtocol}//${appUrl.host}`;
+      } catch (error) {
+        console.warn(
+          '⚠️  Invalid APP_URL format, WebSocket CSP directive will be omitted:',
+          error
+        );
+      }
+    }
+
+    // Build CSP policy with dynamic WebSocket URL
+    const cspPolicy =
       "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
-        "style-src 'self' 'unsafe-inline'; " +
-        "font-src 'self' data:; " +
-        "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; " +
-        "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com wss://your-production-domain.com; " +
-        "manifest-src 'self'; " +
-        "base-uri 'self'; " +
-        "form-action 'self'; " +
-        "frame-ancestors 'none'; " +
-        "object-src 'none';"
-    );
+      "script-src 'self' 'unsafe-inline'; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "font-src 'self' data:; " +
+      "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com; " +
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com" +
+      (wsUrl ? ` ${wsUrl}` : '') +
+      '; ' +
+      "manifest-src 'self'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "frame-ancestors 'none'; " +
+      "object-src 'none';";
+
+    res.setHeader('Content-Security-Policy', cspPolicy);
   }
   next();
 });
