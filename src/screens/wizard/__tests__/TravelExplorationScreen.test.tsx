@@ -41,11 +41,12 @@ jest.mock('../../../components/LocationInput', () => ({
   ),
 }));
 
-const mockNavigate = jest.fn();
-const mockUpdateUser = jest.fn();
-const mockApiPatch = api.apiPatch as jest.MockedFunction<typeof api.apiPatch>;
-
 describe('TravelExplorationScreen', () => {
+  // Mock functions declared at describe level to prevent test interdependencies
+  const mockNavigate = jest.fn();
+  const mockUpdateUser = jest.fn();
+  let mockApiPatch: jest.MockedFunction<typeof api.apiPatch>;
+
   const mockUser = {
     uid: 'test-uid',
     email: 'test@example.com',
@@ -61,7 +62,13 @@ describe('TravelExplorationScreen', () => {
   };
 
   beforeEach(() => {
+    // Reset all mocks before each test to prevent interdependencies
     jest.clearAllMocks();
+
+    // Re-initialize mock functions to ensure clean state
+    mockApiPatch = api.apiPatch as jest.MockedFunction<typeof api.apiPatch>;
+
+    // Setup mock return values
     (require('react-router-dom').useNavigate as jest.Mock).mockReturnValue(
       mockNavigate
     );
