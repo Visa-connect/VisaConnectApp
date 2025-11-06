@@ -104,7 +104,7 @@ app.use((req: Request, res: Response, next) => {
       "style-src 'self' 'unsafe-inline'; " +
       "font-src 'self' data:; " +
       "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://lh3.googleusercontent.com; " +
-      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com" +
+      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://nominatim.openstreetmap.org" +
       (wsUrl ? ` ${wsUrl}` : '') +
       '; ' +
       "manifest-src 'self'; " +
