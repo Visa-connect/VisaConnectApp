@@ -1,6 +1,6 @@
 # Server Scripts
 
-This directory contains utility scripts for database maintenance and data migration.
+This directory contains utility scripts for database maintenance, data migration, and admin user management.
 
 ## Conversation Consolidation Script
 
@@ -87,3 +87,20 @@ The conversation consolidation logic in the application is handled by:
 - `server/services/chatService.ts` - `getOrCreateConversation()` method
 - `server/api/chat.ts` - `/api/chat/conversations` endpoint
 - `src/components/ChatList.tsx` - Frontend conversation display
+
+---
+
+## Admin User Management Scripts
+
+For detailed documentation on admin user management scripts, see:
+
+**[📘 Admin User Management Guide](../../docs/ADMIN.md)**
+
+This guide covers:
+
+- `make-admin.js` - Grant admin privileges to existing users
+- `createAdminUser.js` - Create new admin users
+- `setAdminClaims.js` - Manage admin claims (set/remove/list)
+- `updateAdminUsers.js` - Update database admin column
+
+Includes usage instructions for both local development and production/staging environments.

@@ -45,8 +45,8 @@ export const authenticateAdmin = async (
     if (!decodedToken.admin || decodedToken.role !== 'admin') {
       throw new AppError(
         'Admin privileges required',
-        ErrorCode.MEETUP_ACCESS_DENIED,
-        403
+        ErrorCode.UNAUTHORIZED,
+        401
       );
     }
 
