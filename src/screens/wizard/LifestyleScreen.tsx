@@ -69,7 +69,7 @@ const LifestyleScreen: React.FC = () => {
 
   // Sync stateQuery with form.favoriteState
   useEffect(() => {
-    setStateQuery(form.favoriteState);
+    setStateQuery(form.favoriteState || '');
   }, [form.favoriteState]);
 
   // Sync outingsQuery with form.outings (for display purposes)
@@ -370,7 +370,7 @@ const LifestyleScreen: React.FC = () => {
                   >
                     <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-xl bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-10">
                       {US_STATES.filter((state) =>
-                        state.toLowerCase().includes(stateQuery.toLowerCase())
+                        state.toLowerCase().includes((stateQuery || '').toLowerCase())
                       ).map((state) => (
                         <Combobox.Option
                           key={state}
