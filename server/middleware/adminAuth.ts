@@ -46,7 +46,7 @@ export const authenticateAdmin = async (
       throw new AppError(
         'Admin privileges required',
         ErrorCode.UNAUTHORIZED,
-        403
+        401
       );
     }
 
