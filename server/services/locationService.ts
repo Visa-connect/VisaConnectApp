@@ -83,7 +83,7 @@ class LocationCache {
 }
 
 // Create a singleton cache instance
-const searchCache = new LocationCache(5 * 60 * 1000); // 5 minutes TTL
+const searchCache = new LocationCache();
 
 /**
  * Search for locations using Nominatim API
