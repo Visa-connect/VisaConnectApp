@@ -1,11 +1,10 @@
 import React, { useState, Fragment, useEffect } from 'react';
 import Button from '../../components/Button';
-import AutoComplete from '../../components/AutoComplete';
+import LocationInput from '../../components/LocationInput';
 import { useNavigate } from 'react-router-dom';
 import { Listbox, Transition, Combobox } from '@headlessui/react';
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid';
 import countries from 'world-countries';
-import { US_CITIES } from '../../data/usCities';
 import { apiPatch } from '../../api';
 import { useUserStore } from '../../stores/userStore';
 
@@ -427,13 +426,12 @@ const BackgroundScreen: React.FC = () => {
               </Combobox>
             </div>
 
-            <AutoComplete
+            <LocationInput
               label="Where else have you worked in the USA?"
               value={form.workHistory}
-              onChange={(value: string) =>
-                setForm({ ...form, workHistory: value })
+              onChange={(location) =>
+                setForm({ ...form, workHistory: location.address })
               }
-              options={US_CITIES.map((city) => city.fullName)}
               placeholder="Enter city and state where you worked"
             />
 
