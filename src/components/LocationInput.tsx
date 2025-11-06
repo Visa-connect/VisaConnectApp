@@ -81,6 +81,11 @@ const LocationInput: React.FC<LocationInputProps> = ({
           address.county;
         const state = address.state;
         if (city && state) {
+          // Avoid duplication: if placeName is the same as city, just use city, state
+          if (placeName.toLowerCase() === city.toLowerCase()) {
+            return `${city}, ${state}`;
+          }
+          // Otherwise, use place name + city, state (e.g., "Central Park, New York, NY")
           return `${placeName}, ${city}, ${state}`;
         }
       }
@@ -93,6 +98,10 @@ const LocationInput: React.FC<LocationInputProps> = ({
         const city = parts[parts.length - 3].trim(); // Third to last part is usually city
         if (city && state && state.length <= 3) {
           // State abbreviations are usually 2-3 chars
+          // Avoid duplication: if placeName is the same as city, just use city, state
+          if (placeName.toLowerCase() === city.toLowerCase()) {
+            return `${city}, ${state}`;
+          }
           return `${placeName}, ${city}, ${state}`;
         }
       }
@@ -117,7 +126,11 @@ const LocationInput: React.FC<LocationInputProps> = ({
             part === part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
         ) {
           const city = parts[i - 1]?.trim();
-          if (city && city !== placeName) {
+          if (city) {
+            // Avoid duplication: if placeName is the same as city, just use city, state
+            if (placeName.toLowerCase() === city.toLowerCase()) {
+              return `${city}, ${part}`;
+            }
             return `${placeName}, ${city}, ${part}`;
           }
         }
