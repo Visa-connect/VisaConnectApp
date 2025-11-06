@@ -261,7 +261,7 @@ export class AdminAuthServiceSimple {
       throw new AppError(
         'Invalid or expired token',
         ErrorCode.INVALID_TOKEN,
-        419
+        401
       );
     }
   }
