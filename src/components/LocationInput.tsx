@@ -7,8 +7,8 @@ import {
 } from '../types/location';
 import { MapPinIcon } from '@heroicons/react/24/outline';
 
-// Nominatim API base URL
-const NOMINATIM_BASE_URL = 'https://nominatim.openstreetmap.org';
+// Backend API base URL for location services
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 const LocationInput: React.FC<LocationInputProps> = ({
   value,
@@ -214,7 +214,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     [formatSearchDisplayName]
   );
 
-  // Search locations using Nominatim
+  // Search locations using backend API (which uses Nominatim with caching)
   const searchLocations = useCallback(
     async (query: string): Promise<NominatimSearchResult[]> => {
       if (query.length < 3) return [];
@@ -222,17 +222,17 @@ const LocationInput: React.FC<LocationInputProps> = ({
       try {
         const params = new URLSearchParams({
           q: query,
-          format: 'json',
-          limit: '10',
-          addressdetails: '1',
-          extratags: '0', // Disable extra tags to reduce clutter
-          namedetails: '0', // Disable name details to reduce clutter
-          countrycodes: 'us', // Limit to USA only
         });
 
-        const response = await fetch(`${NOMINATIM_BASE_URL}/search?${params}`, {
+        // Use backend API endpoint instead of direct Nominatim call
+        const apiUrl = API_BASE_URL
+          ? `${API_BASE_URL}/api/location/search`
+          : '/api/location/search';
+
+        const response = await fetch(`${apiUrl}?${params}`, {
+          method: 'GET',
           headers: {
-            'User-Agent': 'VisaConnect/1.0 (support@visaconnect.app)', // Required by Nominatim
+            'Content-Type': 'application/json',
           },
         });
 
@@ -240,27 +240,12 @@ const LocationInput: React.FC<LocationInputProps> = ({
           throw new Error('Search request failed');
         }
 
-        const results: NominatimSearchResult[] = await response.json();
-        return results.filter((result) => {
-          // Ensure we have a display name and the result is in the USA
-          if (!result.display_name) return false;
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Search request failed');
+        }
 
-          // Check if the address indicates it's in the USA
-          const address = result.address;
-          if (address) {
-            return (
-              address.country === 'United States' ||
-              address.country === 'USA' ||
-              address.country === 'US' ||
-              result.display_name.includes('United States') ||
-              result.display_name.includes(', USA') ||
-              result.display_name.includes(', US')
-            );
-          }
-
-          // If no address details, include it (countrycodes should have filtered it)
-          return true;
-        });
+        return data.data || [];
       } catch (error) {
         console.error('Error searching locations:', error);
         return [];
@@ -269,7 +254,7 @@ const LocationInput: React.FC<LocationInputProps> = ({
     []
   );
 
-  // Reverse geocode coordinates to get address
+  // Reverse geocode coordinates to get address using backend API
   const reverseGeocode = useCallback(
     async (
       lat: number,
@@ -278,50 +263,31 @@ const LocationInput: React.FC<LocationInputProps> = ({
       try {
         const params = new URLSearchParams({
           lat: lat.toString(),
-          lon: lng.toString(),
-          format: 'json',
-          addressdetails: '1',
-          extratags: '0', // Disable extra tags to reduce clutter
-          namedetails: '0', // Disable name details to reduce clutter
-          countrycodes: 'us', // Limit to USA only
+          lng: lng.toString(),
         });
 
-        const response = await fetch(
-          `${NOMINATIM_BASE_URL}/reverse?${params}`,
-          {
-            headers: {
-              'User-Agent': 'VisaConnect/1.0 (support@visaconnect.app)',
-            },
-          }
-        );
+        // Use backend API endpoint instead of direct Nominatim call
+        const apiUrl = API_BASE_URL
+          ? `${API_BASE_URL}/api/location/reverse`
+          : '/api/location/reverse';
+
+        const response = await fetch(`${apiUrl}?${params}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
         if (!response.ok) {
           throw new Error('Reverse geocoding request failed');
         }
 
-        const result: NominatimReverseResult = await response.json();
-
-        // Verify the result is in the USA
-        const address = result.address;
-        if (address) {
-          const isUSA =
-            address.country === 'United States' ||
-            address.country === 'USA' ||
-            address.country === 'US' ||
-            result.display_name.includes('United States') ||
-            result.display_name.includes(', USA') ||
-            result.display_name.includes(', US');
-
-          if (!isUSA) {
-            console.warn(
-              'Reverse geocoding result is not in USA:',
-              result.display_name
-            );
-            return null;
-          }
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Reverse geocoding request failed');
         }
 
-        return result;
+        return data.data || null;
       } catch (error) {
         console.error('Error reverse geocoding:', error);
         return null;
