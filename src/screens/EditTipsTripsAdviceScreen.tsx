@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeftIcon,
@@ -47,6 +47,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
   const [newPhotos, setNewPhotos] = useState<NewPhotoItem[]>([]);
   const [compressing, setCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState(0);
+  const previewUrlsRef = useRef<string[]>([]);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -113,11 +114,15 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
         }
       );
 
-      const photoItems = compressionResults.map((result) => ({
-        file: result.file,
-        preview: URL.createObjectURL(result.file),
-        compression: result,
-      }));
+      const photoItems = compressionResults.map((result) => {
+        const previewUrl = URL.createObjectURL(result.file);
+        previewUrlsRef.current.push(previewUrl);
+        return {
+          file: result.file,
+          preview: previewUrl,
+          compression: result,
+        };
+      });
 
       setNewPhotos((prev) => [...prev, ...photoItems]);
     } catch (err) {
@@ -140,11 +145,21 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
   const removeNewPhoto = (index: number) => {
     setNewPhotos((prev) => {
       const updated = [...prev];
-      URL.revokeObjectURL(updated[index].preview);
+      const previewUrl = updated[index].preview;
+      URL.revokeObjectURL(previewUrl);
+      previewUrlsRef.current = previewUrlsRef.current.filter(
+        (url) => url !== previewUrl
+      );
       updated.splice(index, 1);
       return updated;
     });
   };
+  useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach((url: string) => URL.revokeObjectURL(url));
+      previewUrlsRef.current = [];
+    };
+  }, []);
 
   const hasExistingPhotoChanges = useMemo(() => {
     const currentIds = existingPhotos.map((photo) => photo.id).sort();
