@@ -18,6 +18,17 @@ const defaultHeaders = () => {
   };
 };
 
+const authorizationHeader = (): Record<string, string> => {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
 // Helper function to handle token refresh and retry requests
 const handleTokenRefresh = async (
   originalRequest: () => Promise<Response>
@@ -104,6 +115,28 @@ export async function apiPost<T>(url: string, body: any): Promise<T> {
   return jsonData;
 }
 
+export async function apiPostFormData<T>(
+  url: string,
+  formData: FormData
+): Promise<T> {
+  const makeRequest = async (): Promise<Response> => {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'POST',
+      headers: authorizationHeader(),
+      body: formData,
+    });
+    if (!res.ok) {
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
+      throw error;
+    }
+    return res;
+  };
+
+  const res = await handleTokenRefresh(makeRequest);
+  return res.json();
+}
+
 // Public POST for registration/login (no auth required)
 export async function apiPostPublic<T>(url: string, body: any): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${url}`, {
@@ -148,6 +181,28 @@ export async function apiPut<T>(url: string, body: any): Promise<T> {
       method: 'PUT',
       headers: defaultHeaders(),
       body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
+      throw error;
+    }
+    return res;
+  };
+
+  const res = await handleTokenRefresh(makeRequest);
+  return res.json();
+}
+
+export async function apiPutFormData<T>(
+  url: string,
+  formData: FormData
+): Promise<T> {
+  const makeRequest = async (): Promise<Response> => {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'PUT',
+      headers: authorizationHeader(),
+      body: formData,
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;

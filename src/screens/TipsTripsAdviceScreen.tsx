@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/Button';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
 import {
   tipsTripsAdviceService,
   TipsTripsAdvicePost,
@@ -52,70 +53,6 @@ const TipsTripsAdviceScreen: React.FC = () => {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
-
-  const handleTripsClick = async (postId: string) => {
-    if (!user) {
-      // Redirect to login if user is not authenticated
-      navigate('/login');
-      return;
-    }
-
-    // Find the post to get the creator information
-    const post = posts.find((p) => p.id === postId);
-    if (!post) {
-      console.error('Post not found:', postId);
-      return;
-    }
-
-    // Don't allow chatting with yourself
-    if (post.creator_id === user.uid) {
-      return;
-    }
-
-    try {
-      // Create or get existing conversation with the post creator
-      const token = useUserStore.getState().getToken();
-      const response = await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          participantIds: [user.uid, post.creator_id],
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          // Navigate directly to the specific conversation
-          navigate(`/chat/${result.data.id}`, {
-            state: {
-              otherUserId: post.creator_id,
-              otherUserName:
-                `${post.creator.first_name || ''} ${
-                  post.creator.last_name || ''
-                }`.trim() || 'User',
-              otherUserPhoto: post.creator.profile_photo_url || null,
-            },
-          });
-        } else {
-          console.error('Failed to create conversation:', result.message);
-          // Fallback: navigate to general chat
-          navigate('/chat');
-        }
-      } else {
-        console.error('Failed to create conversation');
-        // Fallback: navigate to general chat
-        navigate('/chat');
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      // Fallback: navigate to general chat
-      navigate('/chat');
-    }
-  };
 
   const handlePostClick = (postId: string) => {
     navigate(`/tips-trips-advice/${postId}`);
@@ -171,16 +108,18 @@ const TipsTripsAdviceScreen: React.FC = () => {
           Tips, Trips & Advice
         </h1>
 
-        {/* Create Post Button */}
-        {/* <div className="mb-6">
-          <Button
-            variant="primary"
-            onClick={() => navigate('/post-tips-trips-advice')}
-            className="w-full py-4 text-lg font-medium"
-          >
-            Share a Tip, Trip, or Advice
-          </Button>
-        </div> */}
+        {user && (
+          <div className="mb-6 flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => navigate('/post-tips-trips-advice')}
+              className="inline-flex items-center"
+            >
+              <PencilSquareIcon className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
 
         {/* Filter Tabs */}
         <div className="mb-8">
@@ -216,13 +155,14 @@ const TipsTripsAdviceScreen: React.FC = () => {
                   ? 'Be the first to share a tip, trip, or advice!'
                   : `No ${selectedFilter}s have been shared yet.`}
               </p>
-              {/* Temporarily hidden - only admins can create posts in initial phase */}
-              {/* <Button
-                onClick={() => navigate('/post-tips-trips-advice')}
-                className="bg-blue-600 text-white"
-              >
-                Create First Post
-              </Button> */}
+              {user && (
+                <Button
+                  onClick={() => navigate('/post-tips-trips-advice')}
+                  className="bg-blue-600 text-white"
+                >
+                  Create First Post
+                </Button>
+              )}
             </div>
           ) : (
             posts.map((post) => (
@@ -271,52 +211,64 @@ const TipsTripsAdviceScreen: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Post Content */}
-                <button
+                <div
+                  onClick={() => handlePostClick(post.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handlePostClick(post.id);
+                    }
+                  }}
+                >
+                  {/* Post Content */}
+                  {/* <button
                   onClick={() => handlePostClick(post.id)}
                   className="text-xl text-blue-600 mb-3 hover:text-blue-800 transition-colors text-left"
-                >
+                > */}
                   <div className="px-6 py-4 font-bold">
                     {post.title}
                     <p className="text-gray-700 leading-relaxed mb-4 font-normal">
                       {post.description}
                     </p>
                   </div>
-                </button>
+                  {/* </button> */}
 
-                {/* Post Image */}
-                {post.photos && post.photos.length > 0 && (
-                  <div className="relative flex items-center justify-center bg-gray-100">
-                    <button
+                  {/* Post Image */}
+                  {post.photos && post.photos.length > 0 && (
+                    <div className="relative flex items-center justify-center bg-white-100">
+                      {/* <button
                       onClick={() => handlePostClick(post.id)}
                       className="w-full"
-                    >
+                    > */}
                       <img
                         src={post.photos[0].photo_url}
                         alt={post.title}
-                        className="w-full h-64 object-contain object-center"
+                        className="w-full h-64 md:h-96 object-contain object-center"
                       />
-                    </button>
-                  </div>
-                )}
+                      {/* </button> */}
+                    </div>
+                  )}
 
-                {/* Action Button */}
-                <div className="px-6 py-4 flex justify-center">
+                  {/* Action Button */}
+                  {/* <div className="px-6 py-4 flex justify-center">
                   <Button
                     onClick={() => handleTripsClick(post.id)}
                     className="w-full sm:w-1/2  bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
                   >
                     Chat
                   </Button>
-                </div>
+                </div> */}
 
-                {/* Stats - removed for now */}
-                {/* <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+                  {/* Stats - removed for now */}
+                  {/* <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
                   <div className="flex items-center space-x-4">
                     <span>{post.likes_count} likes</span>
                     <span>{post.comments_count} comments</span>
                   </div>
                 </div> */}
+                </div>
               </div>
             ))
           )}
