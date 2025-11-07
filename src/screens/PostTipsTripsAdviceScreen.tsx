@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeftIcon,
@@ -34,6 +34,7 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [compressing, setCompressing] = useState(false);
   const [compressionProgress, setCompressionProgress] = useState(0);
+  const previewUrlsRef = useRef<string[]>([]);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -70,11 +71,15 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
         }
       );
 
-      const newPhotos = compressionResults.map((result) => ({
-        file: result.file,
-        preview: URL.createObjectURL(result.file),
-        compression: result,
-      }));
+      const newPhotos = compressionResults.map((result) => {
+        const previewUrl = URL.createObjectURL(result.file);
+        previewUrlsRef.current.push(previewUrl);
+        return {
+          file: result.file,
+          preview: previewUrl,
+          compression: result,
+        };
+      });
 
       setPhotos((prev) => [...prev, ...newPhotos]);
     } catch (err) {
@@ -89,7 +94,11 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
   const removePhoto = (index: number) => {
     setPhotos((prev) => {
       const newPhotos = [...prev];
-      URL.revokeObjectURL(newPhotos[index].preview);
+      const previewUrl = newPhotos[index].preview;
+      URL.revokeObjectURL(previewUrl);
+      previewUrlsRef.current = previewUrlsRef.current.filter(
+        (url) => url !== previewUrl
+      );
       newPhotos.splice(index, 1);
       return newPhotos;
     });
@@ -131,6 +140,13 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
   const handleBack = () => {
     navigate('/tips-trips-advice');
   };
+
+  useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrlsRef.current = [];
+    };
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto">

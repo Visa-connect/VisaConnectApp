@@ -154,13 +154,16 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
           {/* Post Images */}
           {post.photos && post.photos.length > 0 && (
             <div className="px-6 pb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="flex flex-wrap justify-center gap-4">
                 {post.photos.map((photo, index) => (
-                  <div key={photo.id} className="relative">
+                  <div
+                    key={photo.id}
+                    className="relative max-w-xs w-full flex justify-center"
+                  >
                     <img
                       src={photo.photo_url}
                       alt={`${post.title} - ${index + 1}`}
-                      className="w-full h-64 object-cover rounded-lg"
+                      className="w-full h-64 object-contain rounded-lg bg-gray-50"
                     />
                   </div>
                 ))}

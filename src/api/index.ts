@@ -35,26 +35,27 @@ const handleTokenRefresh = async (
 ): Promise<Response> => {
   const MAX_RETRIES = 2;
   const BASE_DELAY = 1000; // 1 second
+  const userStore = useUserStore.getState();
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // First attempt with current token
+      // Attempt request with current token
       return await originalRequest();
     } catch (error: unknown) {
       const apiError = error as ApiError;
 
-      // Check if it's a 401 error (unauthorized)
       if (apiError.status === 401) {
-        console.log(
-          'Token expired, but refresh is disabled - redirecting to sign in'
-        );
+        const refreshed = await userStore.ensureValidToken();
+        if (refreshed && attempt < MAX_RETRIES) {
+          // Token refreshed successfully - retry the request
+          continue;
+        }
 
-        // Token refresh is disabled, user needs to re-authenticate
-        useUserStore.getState().clearUser();
+        // Refresh failed or max retries reached - clear auth state
+        userStore.clearUser();
         throw new Error('Authentication expired. Please sign in again.');
       }
 
-      // Check if it's a timeout error (408) and retry
       if (apiError.status === 408 && attempt < MAX_RETRIES) {
         console.warn(
           `Request timeout (attempt ${attempt}/${MAX_RETRIES}), retrying...`
@@ -64,12 +65,10 @@ const handleTokenRefresh = async (
         continue;
       }
 
-      // Re-throw non-retryable errors
       throw error;
     }
   }
 
-  // This should never be reached, but just in case
   throw new Error('Request failed after multiple retry attempts');
 };
 

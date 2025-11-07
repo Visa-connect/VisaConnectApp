@@ -115,6 +115,7 @@ const TipsTripsAdviceScreen: React.FC = () => {
               size="sm"
               onClick={() => navigate('/post-tips-trips-advice')}
               className="inline-flex items-center"
+              aria-label="Create new post"
             >
               <PencilSquareIcon className="h-5 w-5" />
             </Button>
@@ -221,53 +222,26 @@ const TipsTripsAdviceScreen: React.FC = () => {
                       handlePostClick(post.id);
                     }
                   }}
+                  className="cursor-pointer"
                 >
                   {/* Post Content */}
-                  {/* <button
-                  onClick={() => handlePostClick(post.id)}
-                  className="text-xl text-blue-600 mb-3 hover:text-blue-800 transition-colors text-left"
-                > */}
                   <div className="px-6 py-4 font-bold">
                     {post.title}
                     <p className="text-gray-700 leading-relaxed mb-4 font-normal">
                       {post.description}
                     </p>
                   </div>
-                  {/* </button> */}
 
                   {/* Post Image */}
                   {post.photos && post.photos.length > 0 && (
-                    <div className="relative flex items-center justify-center bg-white-100">
-                      {/* <button
-                      onClick={() => handlePostClick(post.id)}
-                      className="w-full"
-                    > */}
+                    <div className="relative flex items-center justify-center bg-white">
                       <img
                         src={post.photos[0].photo_url}
                         alt={post.title}
                         className="w-full h-64 md:h-96 object-contain object-center"
                       />
-                      {/* </button> */}
                     </div>
                   )}
-
-                  {/* Action Button */}
-                  {/* <div className="px-6 py-4 flex justify-center">
-                  <Button
-                    onClick={() => handleTripsClick(post.id)}
-                    className="w-full sm:w-1/2  bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition-colors"
-                  >
-                    Chat
-                  </Button>
-                </div> */}
-
-                  {/* Stats - removed for now */}
-                  {/* <div className="px-6 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center space-x-4">
-                    <span>{post.likes_count} likes</span>
-                    <span>{post.comments_count} comments</span>
-                  </div>
-                </div> */}
                 </div>
               </div>
             ))

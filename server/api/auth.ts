@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import admin from 'firebase-admin';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
@@ -39,59 +40,86 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Refresh token endpoint
-router.post(
-  '/refresh-token',
-  isAuthenticated,
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const userId = req.user?.uid;
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not authenticated',
-        });
-      }
-
-      // Use the new refreshToken method from authService
-      const result = await authService.refreshToken(userId);
-
-      res.json({
-        success: result.success,
-        token: result.token,
-        user: result.user,
-        message: result.message,
-      });
-    } catch (error: any) {
-      console.error('Token refresh error:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-
-      if (
-        error.name === 'AbortError' ||
-        error.message === 'Token exchange timeout'
-      ) {
-        console.log('Request was aborted due to timeout');
-        return res.status(408).json({
-          success: false,
-          message: 'Token refresh timed out. Please try again.',
-        });
-      }
-
-      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
-        console.log('Network timeout or connection reset');
-        return res.status(408).json({
-          success: false,
-          message: 'Network timeout. Please try again.',
-        });
-      }
-
-      res.status(500).json({
+router.post('/refresh-token', async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
         success: false,
-        message: error.message || 'Token refresh failed',
+        message: 'No token provided',
       });
     }
+
+    const token = authHeader.split(' ')[1];
+    let decodedToken: admin.auth.DecodedIdToken | undefined;
+
+    try {
+      decodedToken = await admin.auth().verifyIdToken(token);
+    } catch (error: any) {
+      if (error?.code === 'auth/id-token-expired' && error?.claims) {
+        decodedToken = error.claims as admin.auth.DecodedIdToken;
+      } else {
+        throw error;
+      }
+    }
+
+    const userId =
+      decodedToken?.uid ||
+      (decodedToken as any)?.user_id ||
+      (decodedToken as any)?.sub;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated',
+      });
+    }
+
+    const result = await authService.refreshToken(userId);
+
+    res.json({
+      success: result.success,
+      token: result.token,
+      user: result.user,
+      message: result.message,
+    });
+  } catch (error: any) {
+    console.error('Token refresh error:', error);
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+
+    if (
+      error.name === 'AbortError' ||
+      error.message === 'Token exchange timeout'
+    ) {
+      console.log('Request was aborted due to timeout');
+      return res.status(408).json({
+        success: false,
+        message: 'Token refresh timed out. Please try again.',
+      });
+    }
+
+    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+      console.log('Network timeout or connection reset');
+      return res.status(408).json({
+        success: false,
+        message: 'Network timeout. Please try again.',
+      });
+    }
+
+    if (error.code === 'auth/id-token-expired') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired. Please sign in again.',
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Token refresh failed',
+    });
   }
-);
+});
 
 // Verify email
 router.post(

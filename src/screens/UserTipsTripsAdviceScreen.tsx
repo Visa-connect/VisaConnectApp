@@ -61,6 +61,7 @@ const UserTipsTripsAdviceScreen: React.FC = () => {
               size="sm"
               onClick={handleCreatePost}
               className="inline-flex items-center gap-2"
+              aria-label="Create new post"
             >
               <PencilSquareIcon className="h-5 w-5" />
             </Button>
@@ -109,7 +110,7 @@ const UserTipsTripsAdviceScreen: React.FC = () => {
               <div key={post.id}>
                 <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                   {post.photos && post.photos.length > 0 && (
-                    <div className="relative bg-white-100">
+                    <div className="relative bg-white">
                       <img
                         src={post.photos[0].photo_url}
                         alt={post.title}
