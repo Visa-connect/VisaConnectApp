@@ -124,6 +124,10 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
       };
 
       await tipsTripsAdviceService.createPost(postData);
+
+      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+      previewUrlsRef.current = [];
+
       navigate('/tips-trips-advice');
     } catch (err) {
       console.error('Error creating post:', err);

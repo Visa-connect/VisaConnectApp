@@ -154,10 +154,15 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       return updated;
     });
   };
+
+  const cleanupPreviewUrls = () => {
+    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    previewUrlsRef.current = [];
+  };
+
   useEffect(() => {
     return () => {
-      previewUrlsRef.current.forEach((url: string) => URL.revokeObjectURL(url));
-      previewUrlsRef.current = [];
+      cleanupPreviewUrls();
     };
   }, []);
 
@@ -204,6 +209,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       }
 
       await tipsTripsAdviceService.updatePost(postId, updatePayload);
+      cleanupPreviewUrls();
       navigate(`/tips-trips-advice/${postId}`);
     } catch (err) {
       console.error('Error updating post:', err);
@@ -218,6 +224,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
   };
 
   const handleBack = () => {
+    cleanupPreviewUrls();
     if (postId) {
       navigate(`/tips-trips-advice/${postId}`);
     } else {

@@ -34,7 +34,7 @@ const SignInScreen: React.FC = () => {
   const navigate = useNavigate();
 
   // Zustand store
-  const { setUser, setToken } = useUserStore();
+  const { setUser, setToken, setRefreshToken } = useUserStore();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -73,6 +73,7 @@ const SignInScreen: React.FC = () => {
       if (loginResponse.success) {
         // Store the Firebase ID token (always present on successful login)
         setToken(loginResponse.token);
+        setRefreshToken(loginResponse.refreshToken);
 
         // Convert API response to store format
         const userData = userToUserData(loginResponse.user);
@@ -82,6 +83,9 @@ const SignInScreen: React.FC = () => {
         localStorage.setItem('user', JSON.stringify(userData));
         if (loginResponse.token) {
           localStorage.setItem('token', loginResponse.token);
+        }
+        if (loginResponse.refreshToken) {
+          localStorage.setItem('refreshToken', loginResponse.refreshToken);
         }
 
         // Navigate to dashboard

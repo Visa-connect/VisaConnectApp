@@ -219,6 +219,7 @@ const TipsTripsAdviceScreen: React.FC = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
                       e.preventDefault();
+                      e.stopPropagation();
                       handlePostClick(post.id);
                     }
                   }}

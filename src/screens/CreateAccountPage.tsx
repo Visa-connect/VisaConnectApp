@@ -53,7 +53,7 @@ const CreateAccountPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [customVisaType, setCustomVisaType] = useState('');
   const navigate = useNavigate();
-  const { setUser, setToken } = useUserStore();
+  const { setUser, setToken, setRefreshToken } = useUserStore();
 
   const validateStep1 = () => {
     const newErrors: { [key: string]: string } = {};
@@ -155,7 +155,14 @@ const CreateAccountPage: React.FC = () => {
         userData.employer = form.employer;
 
         // Update both user store and localStorage
-        setToken(response.token);
+        if (response.token) {
+          setToken(response.token);
+          localStorage.setItem('token', response.token);
+        }
+        if (response.refreshToken) {
+          setRefreshToken(response.refreshToken);
+          localStorage.setItem('refreshToken', response.refreshToken);
+        }
         setUser(userData); // This updates the user store and sets isAuthenticated to true
       }
 
