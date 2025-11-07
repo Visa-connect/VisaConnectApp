@@ -112,21 +112,21 @@ function App() {
           }
         />
         <Route
-          path="/tips-trips-advice/:postId"
-          element={
-            <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <TipsTripsAdviceDetailScreen />
-              </AuthenticatedLayout>
-            </AuthenticatedRoute>
-          }
-        />
-        <Route
           path="/tips-trips-advice/posted"
           element={
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <UserTipsTripsAdviceScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/tips-trips-advice/:postId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <TipsTripsAdviceDetailScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
