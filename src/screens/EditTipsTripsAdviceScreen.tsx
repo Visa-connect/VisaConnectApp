@@ -202,7 +202,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
         updatePayload.photos = newPhotos.map((photo) => photo.file);
       }
 
-      if (existingPhotos.length > 0 && hasExistingPhotoChanges) {
+      if (hasExistingPhotoChanges) {
         updatePayload.existingPhotoIds = existingPhotos.map(
           (photo) => photo.id
         );
