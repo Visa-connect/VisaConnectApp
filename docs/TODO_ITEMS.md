@@ -10,6 +10,7 @@
 ### Chat Functionality Improvements
 
 - **Chat Scroll Behavior & Header Fixes**: Improve chat interface user experience
+
   - Fix smooth scroll behavior in Chat component to properly scroll to bottom
   - Ensure chat header remains fixed/sticky while scrolling through messages
   - Prevent scrollIntoView from affecting parent containers
@@ -40,6 +41,14 @@
   - Add logger config with JSON output and env-based log levels (dev/prod)
   - Migrate `server/api/applications.ts` and other server files to use logger
   - Optionally add HTTP request logging middleware
+
+### Retry Strategy Improvements
+
+- **Token & Request Retry Restructure**: Revisit retry logic (401 refresh, 408 backoff, network errors)
+  - Ensure shared refresh promises can’t stall retries or exhaust attempt counters
+  - Introduce clearer exponential backoff utilities and centralized error handling
+  - Add metrics/logging hooks to monitor retry frequency and failure reasons
+  - Document expected behavior for simultaneous failures and cancellation scenarios
 
 ### ID Strategy Consistency
 
