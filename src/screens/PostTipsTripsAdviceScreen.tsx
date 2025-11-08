@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeftIcon,
@@ -10,17 +10,11 @@ import {
   tipsTripsAdviceService,
   CreateTipsTripsAdviceRequest,
 } from '../api/tipsTripsAdviceService';
+import { formatFileSize } from '../utils/imageCompression';
 import {
-  compressImages,
-  formatFileSize,
-  CompressionResult,
-} from '../utils/imageCompression';
-
-interface PhotoItem {
-  file: File;
-  preview: string;
-  compression?: CompressionResult;
-}
+  useImageCompression,
+  CompressedPhoto,
+} from '../hooks/useImageCompression';
 
 const PostTipsTripsAdviceScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -31,15 +25,14 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
     description: '',
     post_type: 'tip' as 'tip' | 'trip' | 'advice',
   });
-  const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [compressing, setCompressing] = useState(false);
-  const [compressionProgress, setCompressionProgress] = useState(0);
-  const previewUrlsRef = useRef<string[]>([]);
-
-  const cleanupPreviewUrls = () => {
-    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-    previewUrlsRef.current = [];
-  };
+  const [photos, setPhotos] = useState<CompressedPhoto[]>([]);
+  const {
+    compressFiles,
+    compressing,
+    compressionProgress,
+    previewUrlsRef,
+    cleanupPreviewUrls,
+  } = useImageCompression();
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -59,40 +52,11 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
     if (files.length === 0) return;
 
     try {
-      setCompressing(true);
-      setCompressionProgress(0);
-
-      const compressionResults = await compressImages(
-        files,
-        {
-          maxWidth: 1920,
-          maxHeight: 1080,
-          quality: 0.85,
-          format: 'jpeg',
-          maxSizeKB: 2048,
-        },
-        (completed, total) => {
-          setCompressionProgress(Math.round((completed / total) * 100));
-        }
-      );
-
-      const newPhotos = compressionResults.map((result) => {
-        const previewUrl = URL.createObjectURL(result.file);
-        previewUrlsRef.current.push(previewUrl);
-        return {
-          file: result.file,
-          preview: previewUrl,
-          compression: result,
-        };
-      });
-
+      const newPhotos = await compressFiles(files);
       setPhotos((prev) => [...prev, ...newPhotos]);
     } catch (err) {
       console.error('Error compressing images:', err);
       setError('Failed to compress images. Please try again.');
-    } finally {
-      setCompressing(false);
-      setCompressionProgress(0);
     }
   };
 
@@ -154,7 +118,7 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
     return () => {
       cleanupPreviewUrls();
     };
-  }, []);
+  }, [cleanupPreviewUrls]);
 
   return (
     <div className="max-w-4xl mx-auto">
