@@ -36,6 +36,11 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
   const [compressionProgress, setCompressionProgress] = useState(0);
   const previewUrlsRef = useRef<string[]>([]);
 
+  const cleanupPreviewUrls = () => {
+    previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    previewUrlsRef.current = [];
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -125,8 +130,7 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
 
       const postId = await tipsTripsAdviceService.createPost(postData);
 
-      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-      previewUrlsRef.current = [];
+      cleanupPreviewUrls();
 
       navigate(`/tips-trips-advice/${postId}`);
     } catch (err) {
@@ -142,13 +146,13 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
   };
 
   const handleBack = () => {
+    cleanupPreviewUrls();
     navigate('/tips-trips-advice');
   };
 
   useEffect(() => {
     return () => {
-      previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
-      previewUrlsRef.current = [];
+      cleanupPreviewUrls();
     };
   }, []);
 
