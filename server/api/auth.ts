@@ -4,6 +4,11 @@ import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
 
+type FirebaseDecodedToken = admin.auth.DecodedIdToken & {
+  user_id?: string;
+  sub?: string;
+};
+
 const router = express.Router();
 
 // Extend Request to include user added by isAuthenticated middleware
@@ -40,86 +45,89 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Refresh token endpoint
-router.post('/refresh-token', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        success: false,
-        message: 'No token provided',
-      });
-    }
-
-    const token = authHeader.split(' ')[1];
-    let decodedToken: admin.auth.DecodedIdToken | undefined;
-
+router.post(
+  '/refresh-token',
+  async (req: AuthenticatedRequest, res: Response) => {
     try {
-      decodedToken = await admin.auth().verifyIdToken(token);
-    } catch (error: any) {
-      if (error?.code === 'auth/id-token-expired' && error?.claims) {
-        decodedToken = error.claims as admin.auth.DecodedIdToken;
-      } else {
-        throw error;
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: 'No token provided',
+        });
       }
-    }
 
-    const userId =
-      decodedToken?.uid ||
-      (decodedToken as any)?.user_id ||
-      (decodedToken as any)?.sub;
+      const token = authHeader.split(' ')[1];
+      let decodedToken: FirebaseDecodedToken | undefined;
 
-    if (!userId) {
-      return res.status(401).json({
+      try {
+        decodedToken = (await admin
+          .auth()
+          .verifyIdToken(token)) as FirebaseDecodedToken;
+      } catch (error: any) {
+        if (error?.code === 'auth/id-token-expired' && error?.claims) {
+          decodedToken = error.claims as FirebaseDecodedToken;
+        } else {
+          throw error;
+        }
+      }
+
+      const userId =
+        decodedToken?.uid || decodedToken?.user_id || decodedToken?.sub;
+
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: 'User not authenticated',
+        });
+      }
+
+      const result = await authService.refreshToken(userId);
+
+      res.json({
+        success: result.success,
+        token: result.token,
+        user: result.user,
+        message: result.message,
+      });
+    } catch (error: any) {
+      console.error('Token refresh error:', error);
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+
+      if (
+        error.name === 'AbortError' ||
+        error.message === 'Token exchange timeout'
+      ) {
+        console.log('Request was aborted due to timeout');
+        return res.status(408).json({
+          success: false,
+          message: 'Token refresh timed out. Please try again.',
+        });
+      }
+
+      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+        console.log('Network timeout or connection reset');
+        return res.status(408).json({
+          success: false,
+          message: 'Network timeout. Please try again.',
+        });
+      }
+
+      if (error.code === 'auth/id-token-expired') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token expired. Please sign in again.',
+        });
+      }
+
+      res.status(500).json({
         success: false,
-        message: 'User not authenticated',
+        message: error.message || 'Token refresh failed',
       });
     }
-
-    const result = await authService.refreshToken(userId);
-
-    res.json({
-      success: result.success,
-      token: result.token,
-      user: result.user,
-      message: result.message,
-    });
-  } catch (error: any) {
-    console.error('Token refresh error:', error);
-    console.error('Error name:', error.name);
-    console.error('Error message:', error.message);
-
-    if (
-      error.name === 'AbortError' ||
-      error.message === 'Token exchange timeout'
-    ) {
-      console.log('Request was aborted due to timeout');
-      return res.status(408).json({
-        success: false,
-        message: 'Token refresh timed out. Please try again.',
-      });
-    }
-
-    if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
-      console.log('Network timeout or connection reset');
-      return res.status(408).json({
-        success: false,
-        message: 'Network timeout. Please try again.',
-      });
-    }
-
-    if (error.code === 'auth/id-token-expired') {
-      return res.status(401).json({
-        success: false,
-        message: 'Token expired. Please sign in again.',
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Token refresh failed',
-    });
   }
-});
+);
 
 // Verify email
 router.post(
