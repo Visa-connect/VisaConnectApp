@@ -29,6 +29,20 @@ const authorizationHeader = (): Record<string, string> => {
   return headers;
 };
 
+let refreshPromise: Promise<boolean> | null = null;
+
+const waitForTokenRefresh = async (
+  store: ReturnType<typeof useUserStore.getState>
+): Promise<boolean> => {
+  if (!refreshPromise) {
+    refreshPromise = store.ensureValidToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+};
+
 // Helper function to handle token refresh and retry requests
 const handleTokenRefresh = async (
   originalRequest: () => Promise<Response>
@@ -45,9 +59,10 @@ const handleTokenRefresh = async (
       const apiError = error as ApiError;
 
       if (apiError.status === 401) {
-        const refreshed = await userStore.ensureValidToken();
-        if (refreshed && attempt < MAX_RETRIES) {
-          // Token refreshed successfully - retry the request
+        const refreshed = await waitForTokenRefresh(userStore);
+        if (refreshed) {
+          // Do not count this attempt since we refreshed the token
+          attempt--;
           continue;
         }
 
