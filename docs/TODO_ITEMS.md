@@ -41,6 +41,13 @@
   - Migrate `server/api/applications.ts` and other server files to use logger
   - Optionally add HTTP request logging middleware
 
+### ID Strategy Consistency
+
+- **Centralize UUID Generation**: Create a shared ID generation utility and update services to use it
+  - Ensure all server modules rely on a single helper (e.g., `generateId()`) instead of importing `uuid` directly
+  - Document why UUIDs are generated server-side rather than using database auto-increment (pre-persist references, fan-out writes)
+  - Confirm UUID version alignment across services and update tests/migrations if the strategy changes
+
 ### Chat Thumbs-Up System Improvements
 
 - **Consistent Naming Convention**: Standardize naming for chat-related IDs across the system
