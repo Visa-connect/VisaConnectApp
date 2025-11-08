@@ -118,7 +118,6 @@ const TipsTripsAdviceScreen: React.FC = () => {
               aria-label="Create new tips, trips, or advice post"
             >
               <PencilSquareIcon className="h-5 w-5" />
-              <span>Create New Post</span>
             </Button>
           </div>
         )}
