@@ -123,12 +123,12 @@ const PostTipsTripsAdviceScreen: React.FC = () => {
         photos: photos.map((photo) => photo.file),
       };
 
-      await tipsTripsAdviceService.createPost(postData);
+      const postId = await tipsTripsAdviceService.createPost(postData);
 
       previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
       previewUrlsRef.current = [];
 
-      navigate('/tips-trips-advice');
+      navigate(`/tips-trips-advice/${postId}`);
     } catch (err) {
       console.error('Error creating post:', err);
       setError(
