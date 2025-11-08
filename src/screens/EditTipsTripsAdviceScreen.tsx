@@ -134,12 +134,14 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
   }, [cleanupPreviewUrls]);
 
   const hasExistingPhotoChanges = useMemo(() => {
-    const currentIds = existingPhotos.map((photo) => photo.id).sort();
-    const initialIds = [...initialPhotoIds].sort();
-    if (currentIds.length !== initialIds.length) {
+    const sortedCurrentIds = [...existingPhotos.map((photo) => photo.id)].sort(
+      (a, b) => a - b
+    );
+    const sortedInitialIds = [...initialPhotoIds].sort((a, b) => a - b);
+    if (sortedCurrentIds.length !== sortedInitialIds.length) {
       return true;
     }
-    return currentIds.some((id, idx) => id !== initialIds[idx]);
+    return sortedCurrentIds.some((id, idx) => id !== sortedInitialIds[idx]);
   }, [existingPhotos, initialPhotoIds]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -226,6 +228,7 @@ const EditTipsTripsAdviceScreen: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center mb-4">
           <button
+            type="button"
             onClick={handleBack}
             className="mr-4 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
