@@ -114,10 +114,11 @@ const TipsTripsAdviceScreen: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => navigate('/post-tips-trips-advice')}
-              className="inline-flex items-center"
-              aria-label="Create new post"
+              className="inline-flex items-center gap-2"
+              aria-label="Create new tips, trips, or advice post"
             >
               <PencilSquareIcon className="h-5 w-5" />
+              <span>Create New Post</span>
             </Button>
           </div>
         )}
@@ -217,9 +218,11 @@ const TipsTripsAdviceScreen: React.FC = () => {
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
+                    if (e.key === 'Enter') {
                       e.preventDefault();
                       e.stopPropagation();
+                      handlePostClick(post.id);
+                    } else if (e.key === ' ') {
                       handlePostClick(post.id);
                     }
                   }}
