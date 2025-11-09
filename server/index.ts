@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions } from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { WebSocketService } from './services/websocketService';
@@ -64,7 +64,31 @@ pool
 
 // Middleware setup
 app.use(express.json()); // For parsing JSON bodies
-app.use(cors()); // Enable CORS for all routes
+
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  process.env.APP_URL,
+].filter((value): value is string => Boolean(value));
+
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (defaultAllowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`Origin ${origin} not allowed by CORS`));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Content Security Policy - Allow necessary resources
 // Note: 'unsafe-inline' is currently required for React apps built with Create React App
