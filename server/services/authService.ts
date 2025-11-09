@@ -4,6 +4,7 @@ import { userService } from './userService';
 import { User } from './userService';
 import { config } from '../config/env';
 import { emailService } from './emailService';
+import { RefreshTokenError } from '../errors/AuthErrors';
 
 export interface AuthResponse {
   success: boolean;
@@ -316,9 +317,7 @@ export class AuthService {
   }
 
   // Refresh user token
-  async refreshToken(
-    refreshToken: string
-  ): Promise<{
+  async refreshToken(refreshToken: string): Promise<{
     success: boolean;
     token: string;
     refreshToken: string;
@@ -343,7 +342,7 @@ export class AuthService {
       if (!refreshResponse.ok) {
         const errorText = await refreshResponse.text();
         console.error('Token refresh exchange failed:', errorText);
-        throw new Error('Token refresh failed');
+        throw new RefreshTokenError('Token refresh failed');
       }
 
       const refreshData = (await refreshResponse.json()) as {
@@ -357,12 +356,12 @@ export class AuthService {
       const userId = refreshData.user_id;
 
       if (!newIdToken || !newRefreshToken || !userId) {
-        throw new Error('Token refresh failed');
+        throw new RefreshTokenError('Token refresh failed');
       }
 
       const userProfile = await userService.getUserById(userId);
       if (!userProfile) {
-        throw new Error('User not found');
+        throw new RefreshTokenError('User not found');
       }
 
       return {
@@ -372,9 +371,15 @@ export class AuthService {
         user: userProfile,
         message: 'Token refreshed successfully',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Token refresh error:', error);
-      throw new Error('Failed to refresh token');
+
+      if (error instanceof RefreshTokenError) {
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : undefined;
+      throw new RefreshTokenError(message);
     }
   }
 

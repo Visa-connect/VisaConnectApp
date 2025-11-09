@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
+import { RefreshTokenError } from '../errors/AuthErrors';
 
 const router = express.Router();
 
@@ -130,11 +131,11 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Token refresh error:', error);
 
-    if (error.message === 'Failed to refresh token') {
+    if (error instanceof RefreshTokenError) {
       clearRefreshTokenCookie(res);
       return res.status(401).json({
         success: false,
-        message: 'Token refresh failed. Please sign in again.',
+        message: error.message || 'Token refresh failed. Please sign in again.',
       });
     }
 

@@ -2,6 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import authRouter from '../../api/auth';
 import { authService } from '../../services/authService';
+import { RefreshTokenError } from '../../errors/AuthErrors';
 
 jest.mock('../../services/authService');
 
@@ -63,7 +64,7 @@ describe('POST /api/auth/refresh-token', () => {
     const app = setupApp();
 
     (authService.refreshToken as jest.Mock).mockRejectedValue(
-      new Error('Failed to refresh token')
+      new RefreshTokenError('Failed to refresh token')
     );
 
     const response = await request(app)
@@ -72,7 +73,7 @@ describe('POST /api/auth/refresh-token', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.success).toBe(false);
-    expect(response.body.message).toMatch(/please sign in again/i);
+    expect(response.body.message).toMatch('Failed to refresh token');
 
     const clearedCookie = response.get('Set-Cookie')?.[0];
     expect(clearedCookie).toBeDefined();
