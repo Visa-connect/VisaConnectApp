@@ -55,6 +55,8 @@
 - [ ] T036 Automate monthly security scan workflow in `.github/workflows/speckit-security.yml`
 - [ ] T037 Capture SpecKit usage metrics in `docs/runtime-specprompt.md#metrics` and dashboard config
 - [ ] T038 Implement template drift watchdog script `specs/scripts/template-drift-check.ts` with weekly log
+- [ ] T039 Audit backend service validation rules and structured logging to ensure all API inputs, especially refresh-token flows, provide actionable diagnostics.
+- [ ] T040 Audit client-side validation and logging for authentication flows so UI surfaces meaningful errors and network retries are traceable.
 
 ## Dependencies & Execution Order
 

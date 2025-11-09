@@ -112,6 +112,18 @@ server/
    **Success Criteria**: Manual review checklist passes; automated tests confirm cookie flow; spec prompt references correct pattern.  
    **Risks**: Regression in legacy flows; mitigate with integration tests (Phase 1).
 
+### Cross-Cutting Validation & Logging Alignment
+
+- **Task**: Verify service and client validation/logging coverage  
+  **Category**: Production Readiness Audit  
+  **Priority**: High  
+  **Effort**: Small  
+  **Dependencies**: Phase 0 completion  
+  **Impact**: Infrastructure  
+  **Description**: Review Express services and client-side API wrappers to confirm input validation paths emit structured logs and actionable error messages, mirroring tasks T039–T040.  
+  **Success Criteria**: All authentication and refresh flows produce consistent validation errors in logs; client UI reflects failures with user-friendly messaging.  
+  **Risks**: Logging noise—document filters and thresholds to avoid alert fatigue.
+
 ### Phase 1 – Performance & Scale Enablement
 
 5. **Task**: Build reusable spec section generators  
