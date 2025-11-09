@@ -32,7 +32,7 @@ jobs:
         run: yarn lint
 
       - name: Run server & client tests
-        run: yarn test:ci --watchAll=false
+        run: yarn test:ci
 
       # Remove build step - let Heroku handle it
 
