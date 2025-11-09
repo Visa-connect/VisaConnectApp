@@ -74,7 +74,15 @@ const defaultAllowedOrigins = [
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     if (!origin) {
-      callback(null, true);
+      if (process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+        return;
+      }
+      callback(
+        new Error(
+          'Requests without an Origin header are not allowed in production'
+        )
+      );
       return;
     }
 

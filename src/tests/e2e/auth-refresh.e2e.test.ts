@@ -2,6 +2,32 @@ import { apiPost } from '../../api';
 import { useUserStore, UserData } from '../../stores/userStore';
 import { tokenRefreshService } from '../../utils/tokenRefresh';
 
+type HeadersInitType = HeadersInit | undefined;
+
+const getAuthorizationHeader = (
+  headers: HeadersInitType
+): string | undefined => {
+  if (!headers) {
+    return undefined;
+  }
+
+  if (headers instanceof Headers) {
+    return (
+      headers.get('Authorization') ?? headers.get('authorization') ?? undefined
+    );
+  }
+
+  if (Array.isArray(headers)) {
+    const match = headers.find(
+      ([key]) => key.toLowerCase() === 'authorization'
+    );
+    return match?.[1];
+  }
+
+  const record = headers as Record<string, string> | undefined;
+  return record?.Authorization ?? record?.authorization;
+};
+
 describe('Auth Refresh E2E', () => {
   const originalFetch = global.fetch;
 
@@ -77,17 +103,7 @@ describe('Auth Refresh E2E', () => {
 
     const secondCall = fetchMock.mock.calls[1];
     const requestInit = secondCall?.[1] as RequestInit | undefined;
-    const headers = requestInit?.headers;
-
-    const authorizationHeader =
-      headers instanceof Headers
-        ? headers.get('Authorization') ?? headers.get('authorization')
-        : Array.isArray(headers)
-        ? headers.find(([key]) => key.toLowerCase() === 'authorization')?.[1]
-        : headers
-        ? (headers as Record<string, string>)['Authorization'] ??
-          (headers as Record<string, string>)['authorization']
-        : undefined;
+    const authorizationHeader = getAuthorizationHeader(requestInit?.headers);
 
     expect(authorizationHeader).toBe('Bearer new-token');
     expect(requestInit?.credentials).toBe('include');

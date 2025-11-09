@@ -26,7 +26,15 @@ function parseCookies(
     if (!rawKey) {
       return acc;
     }
-    acc[decodeURIComponent(rawKey)] = decodeURIComponent(rawValue.join('='));
+
+    try {
+      const key = decodeURIComponent(rawKey);
+      const value = decodeURIComponent(rawValue.join('='));
+      acc[key] = value;
+    } catch (error) {
+      console.warn('Failed to decode cookie part:', part, error);
+    }
+
     return acc;
   }, {});
 }
