@@ -31,8 +31,11 @@ jobs:
       - name: Run linting
         run: yarn lint
 
-      - name: Run tests
-        run: yarn test --watchAll=false --coverage
+      - name: Run server tests
+        run: yarn test:server --watchAll=false --coverage
+
+      - name: Run client tests
+        run: yarn test:client --watchAll=false --coverage
 
       # Remove build step - let Heroku handle it
 

@@ -4,7 +4,8 @@ echo "🔍 Running lint..."
 yarn lint || exit 1
 
 echo "🧪 Running tests..."
-yarn test:ci || exit 1
+yarn test:server --watchAll=false --coverage || exit 1
+yarn test:client --watchAll=false --coverage || exit 1
 
 echo "🏗️  Running build..."
 yarn build || exit 1
