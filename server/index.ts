@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
-import cors, { CorsOptions } from 'cors';
+import cors, { CorsOptions, CorsOptionsDelegate } from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { WebSocketService } from './services/websocketService';
@@ -71,32 +71,35 @@ const defaultAllowedOrigins = [
   process.env.APP_URL,
 ].filter((value): value is string => Boolean(value));
 
-const corsOptions: CorsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) {
-      if (process.env.NODE_ENV === 'development') {
-        callback(null, true);
-        return;
-      }
-      callback(
-        new Error(
-          'Requests without an Origin header are not allowed in production'
-        )
-      );
+const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
+  const originHeader = req.headers['origin'];
+  const origin = Array.isArray(originHeader) ? originHeader[0] : originHeader;
+  const method = (req.method || '').toUpperCase();
+  const isReadOnlyRequest = method === 'GET' || method === 'HEAD';
+
+  if (!origin) {
+    if (process.env.NODE_ENV !== 'production' || isReadOnlyRequest) {
+      callback(null, { origin: true, credentials: true } as CorsOptions);
       return;
     }
 
-    if (defaultAllowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
-    }
-  },
-  credentials: true,
+    callback(
+      new Error(
+        'Requests without an Origin header are not allowed in production'
+      )
+    );
+    return;
+  }
+
+  if (origin && defaultAllowedOrigins.includes(origin)) {
+    callback(null, { origin: true, credentials: true } as CorsOptions);
+  } else {
+    callback(new Error(`Origin ${origin} not allowed by CORS`));
+  }
 };
 
-app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+app.use(cors(corsOptionsDelegate));
+app.options('*', cors(corsOptionsDelegate));
 
 // Content Security Policy - Allow necessary resources
 // Note: 'unsafe-inline' is currently required for React apps built with Create React App
