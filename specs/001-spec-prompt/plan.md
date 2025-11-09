@@ -102,9 +102,19 @@ server/
    **Success Criteria**: Log entries stored in repo (e.g., `specs/logs/`) or CI artifacts with rotation guidance.  
    **Risks**: Potential noise; manage with pruning script.
 
+4. **Task**: Verify refresh token HTTP-only cookie enforcement  
+   **Category**: Security vulnerabilities and authentication hardening  
+   **Priority**: Critical  
+   **Effort**: Medium  
+   **Dependencies**: Tasks 1–3  
+   **Impact**: Infrastructure  
+   **Description**: Audit backend `server/api/auth.ts` and client `src/api/index.ts` to ensure refresh tokens rely exclusively on secure httpOnly cookies (no localStorage fallback) and document verification steps.  
+   **Success Criteria**: Manual review checklist passes; automated tests confirm cookie flow; spec prompt references correct pattern.  
+   **Risks**: Regression in legacy flows; mitigate with integration tests (Phase 1).
+
 ### Phase 1 – Performance & Scale Enablement
 
-4. **Task**: Build reusable spec section generators  
+5. **Task**: Build reusable spec section generators  
    **Category**: Code Quality & Technical Debt  
    **Priority**: High  
    **Effort**: Large  
@@ -114,59 +124,59 @@ server/
    **Success Criteria**: Shared modules cover ≥90% section content; updates propagate across specs via single source.  
    **Risks**: Over-abstraction; ensure unit tests guard behaviour.
 
-5. **Task**: Introduce automated regression harness  
+6. **Task**: Introduce automated regression harness  
    **Category**: Testing Implementation  
    **Priority**: High  
    **Effort**: Medium  
-   **Dependencies**: Task 4  
+   **Dependencies**: Task 5  
    **Impact**: Developer experience  
    **Description**: Snapshot representative feature inputs and verify generated specs/tables for consistency; integrate with CI.  
    **Success Criteria**: Jest suite catching mismatched sections; CI failure on drift.  
    **Risks**: Snapshot brittleness → apply targeted serializers.
 
-6. **Task**: Build CLI integration test workflow  
+7. **Task**: Build CLI integration test workflow  
    **Category**: Testing Implementation  
    **Priority**: High  
    **Effort**: Medium  
-   **Dependencies**: Tasks 4–5  
+   **Dependencies**: Tasks 5–6  
    **Impact**: Infrastructure  
    **Description**: Create a scripted integration test that exercises SpecKit commands end-to-end inside CI (mock git repo, run `specify`, `clarify`, `plan`) and asserts artifacts match expectations.  
    **Success Criteria**: CI job fails if integration script detects missing sections or checklist divergence.  
    **Risks**: Longer CI duration; mitigate with caching of template assets.
 
-7. **Task**: Implement end-to-end smoke scenario  
+8. **Task**: Implement end-to-end smoke scenario  
    **Category**: Testing Implementation  
    **Priority**: High  
    **Effort**: Medium  
-   **Dependencies**: Task 6  
+   **Dependencies**: Task 7  
    **Impact**: User-facing  
    **Description**: Automate a smoke test that starts from a seed feature request and confirms resulting spec, plan, and tasks satisfy governance gates and validation logs cleanly.  
    **Success Criteria**: Smoke run produces green checklist without manual edits; failures clearly surface actionable diff.  
    **Risks**: Flaky due to filesystem timing; employ retries and deterministic fixtures.
 
-8. **Task**: Optimize runtime and memory usage  
+9. **Task**: Optimize runtime and memory usage  
    **Category**: Performance Optimization  
    **Priority**: Medium  
    **Effort**: Medium  
-   **Dependencies**: Task 4  
+   **Dependencies**: Task 5  
    **Impact**: Infrastructure  
    **Description**: Profile prompt execution to ensure sub-10s generation, introduce caching for repeated constitution lookups, and parallelize optional analyses.  
    **Success Criteria**: Benchmark script demonstrates <10s runtime and <200MB memory footprint.  
    **Risks**: Premature optimization; limit scope to measured hotspots.
 
-9. **Task**: Extend prompt with accessibility & UX polish checklist  
-   **Category**: Accessibility Compliance / User Experience Polish  
-   **Priority**: Medium  
-   **Effort**: Small  
-   **Dependencies**: Task 4  
-   **Impact**: User-facing  
-   **Description**: Auto-insert accessibility and UX audit bullets tailored to VisaConnect, ensuring specs highlight mobile breakpoints, focus states, and copy consistency.  
-   **Success Criteria**: Generated specs include WCAG tasks without manual edits; governance reviewers sign off.  
-   **Risks**: Checklist goes stale; tie to constitution versioning.
+10. **Task**: Extend prompt with accessibility & UX polish checklist  
+    **Category**: Accessibility Compliance / User Experience Polish  
+    **Priority**: Medium  
+    **Effort**: Small  
+    **Dependencies**: Task 5  
+    **Impact**: User-facing  
+    **Description**: Auto-insert accessibility and UX audit bullets tailored to VisaConnect, ensuring specs highlight mobile breakpoints, focus states, and copy consistency.  
+    **Success Criteria**: Generated specs include WCAG tasks without manual edits; governance reviewers sign off.  
+    **Risks**: Checklist goes stale; tie to constitution versioning.
 
 ### Phase 2 – Governance & Operational Excellence
 
-10. **Task**: Document prompt operations runbook  
+11. **Task**: Document prompt operations runbook  
     **Category**: Documentation / Deployment & DevOps  
     **Priority**: Medium  
     **Effort**: Medium  
@@ -176,7 +186,7 @@ server/
     **Success Criteria**: `docs/runtime-specprompt.md` published; onboarding feedback positive.  
     **Risks**: Runbook may lag; schedule quarterly review.
 
-11. **Task**: Implement monitoring dashboards & alerts  
+12. **Task**: Implement monitoring dashboards & alerts  
     **Category**: Monitoring & Observability  
     **Priority**: Medium  
     **Effort**: Medium  
@@ -186,61 +196,61 @@ server/
     **Success Criteria**: Dashboard live with alert rules; drill-down identifies failing inputs.  
     **Risks**: Alert fatigue; calibrate thresholds with historical data.
 
-12. **Task**: Harden CI pipeline for SpecKit suites  
+13. **Task**: Harden CI pipeline for SpecKit suites  
     **Category**: Deployment & DevOps  
     **Priority**: Medium  
     **Effort**: Medium  
-    **Dependencies**: Tasks 6–7  
+    **Dependencies**: Tasks 7–8  
     **Impact**: Infrastructure  
     **Description**: Add dedicated CI stage running integration and e2e suites with artifact uploads for failures, ensuring isolation from unit tests.  
     **Success Criteria**: CI job fails with actionable artifacts when tests regress; stage duration <10 minutes.  
     **Risks**: Longer pipelines; optimize with caching.
 
-13. **Task**: Perform quarterly governance audit dry-run  
+14. **Task**: Perform quarterly governance audit dry-run  
     **Category**: Compliance & Legal / Scalability Preparation  
     **Priority**: Medium  
     **Effort**: Small  
-    **Dependencies**: Tasks 10–12  
+    **Dependencies**: Tasks 11–13  
     **Impact**: Infrastructure  
     **Description**: Simulate compliance review using generated specs to confirm production readiness coverage (privacy, data retention, international considerations).  
     **Success Criteria**: Audit results logged with zero critical findings; follow-up tasks created for any gaps.  
     **Risks**: Time-consuming; align with quarterly planning cycle.
 
-14. **Task**: Maintain SpecKit release checklist  
+15. **Task**: Maintain SpecKit release checklist  
     **Category**: Documentation / Deployment & DevOps  
     **Priority**: Medium  
     **Effort**: Small  
-    **Dependencies**: Task 10  
+    **Dependencies**: Task 11  
     **Impact**: Developer experience  
     **Description**: Create and version a release checklist covering constitution updates, template diffs, log pruning, and doc refresh prior to publishing.  
     **Success Criteria**: Checklist stored in `docs/checklists/speckit-release.md`; referenced before each release.  
     **Risks**: Checklist drift; tie updates to audit cycle.
 
-15. **Task**: Schedule security scan hook  
+16. **Task**: Schedule security scan hook  
     **Category**: Security vulnerabilities and authentication hardening  
     **Priority**: Medium  
     **Effort**: Small  
-    **Dependencies**: Task 12  
+    **Dependencies**: Task 13  
     **Impact**: Infrastructure  
     **Description**: Automate monthly `npm audit --production` (or Snyk) for `.specify` dependencies and log findings in `specs/logs/security-check-YYYY-MM.md`.  
     **Success Criteria**: Scheduled workflow runs monthly; critical issues trigger tickets.  
     **Risks**: False positives; document triage policy.
 
-16. **Task**: Track SpecKit usage metrics  
+17. **Task**: Track SpecKit usage metrics  
     **Category**: Monitoring & Observability  
     **Priority**: Low  
     **Effort**: Medium  
-    **Dependencies**: Task 11  
+    **Dependencies**: Task 12  
     **Impact**: Infrastructure  
     **Description**: Capture CLI run frequency, runtime, and failure counts in a dashboard to monitor cost/performance trends.  
     **Success Criteria**: Dashboard displays weekly usage with anomaly alerts.  
     **Risks**: Over-monitoring; limit metrics to actionable signals.
 
-17. **Task**: Watch for template drift  
+18. **Task**: Watch for template drift  
     **Category**: Production Readiness Audit  
     **Priority**: Medium  
     **Effort**: Small  
-    **Dependencies**: Tasks 4–5  
+    **Dependencies**: Tasks 5–6  
     **Impact**: Developer experience  
     **Description**: Create automation that diffs generated specs against base templates weekly, flagging manual edits that could cause drift.  
     **Success Criteria**: Weekly report in `specs/logs/template-drift-YYYY-WW.md`; action items tracked.  
