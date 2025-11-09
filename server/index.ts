@@ -74,7 +74,7 @@ const defaultAllowedOrigins = [
 const corsOptions: CorsOptions = {
   origin: (origin, callback) => {
     if (!origin) {
-      if (process.env.NODE_ENV !== 'production') {
+      if (process.env.NODE_ENV === 'development') {
         callback(null, true);
         return;
       }
