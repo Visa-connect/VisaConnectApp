@@ -124,7 +124,27 @@ server/
    **Success Criteria**: Jest suite catching mismatched sections; CI failure on drift.  
    **Risks**: Snapshot brittleness → apply targeted serializers.
 
-6. **Task**: Optimize runtime and memory usage  
+6. **Task**: Build CLI integration test workflow  
+   **Category**: Testing Implementation  
+   **Priority**: High  
+   **Effort**: Medium  
+   **Dependencies**: Tasks 4–5  
+   **Impact**: Infrastructure  
+   **Description**: Create a scripted integration test that exercises SpecKit commands end-to-end inside CI (mock git repo, run `specify`, `clarify`, `plan`) and asserts artifacts match expectations.  
+   **Success Criteria**: CI job fails if integration script detects missing sections or checklist divergence.  
+   **Risks**: Longer CI duration; mitigate with caching of template assets.
+
+7. **Task**: Implement end-to-end smoke scenario  
+   **Category**: Testing Implementation  
+   **Priority**: High  
+   **Effort**: Medium  
+   **Dependencies**: Task 6  
+   **Impact**: User-facing  
+   **Description**: Automate a smoke test that starts from a seed feature request and confirms resulting spec, plan, and tasks satisfy governance gates and validation logs cleanly.  
+   **Success Criteria**: Smoke run produces green checklist without manual edits; failures clearly surface actionable diff.  
+   **Risks**: Flaky due to filesystem timing; employ retries and deterministic fixtures.
+
+8. **Task**: Optimize runtime and memory usage  
    **Category**: Performance Optimization  
    **Priority**: Medium  
    **Effort**: Medium  
@@ -134,7 +154,7 @@ server/
    **Success Criteria**: Benchmark script demonstrates <10s runtime and <200MB memory footprint.  
    **Risks**: Premature optimization; limit scope to measured hotspots.
 
-7. **Task**: Extend prompt with accessibility & UX polish checklist  
+9. **Task**: Extend prompt with accessibility & UX polish checklist  
    **Category**: Accessibility Compliance / User Experience Polish  
    **Priority**: Medium  
    **Effort**: Small  
@@ -146,47 +166,97 @@ server/
 
 ### Phase 2 – Governance & Operational Excellence
 
-8. **Task**: Document prompt operations runbook  
-   **Category**: Documentation / Deployment & DevOps  
-   **Priority**: Medium  
-   **Effort**: Medium  
-   **Dependencies**: Phase 1 completion  
-   **Impact**: Developer experience  
-   **Description**: Create runbook covering setup, troubleshooting, and escalation (e.g., failing spec generations, updating constitution references).  
-   **Success Criteria**: `docs/runtime-specprompt.md` published; onboarding feedback positive.  
-   **Risks**: Runbook may lag; schedule quarterly review.
+10. **Task**: Document prompt operations runbook  
+    **Category**: Documentation / Deployment & DevOps  
+    **Priority**: Medium  
+    **Effort**: Medium  
+    **Dependencies**: Phase 1 completion  
+    **Impact**: Developer experience  
+    **Description**: Create runbook covering setup, troubleshooting, escalation (e.g., failing spec generations, updating constitution references), plus failure playbooks for limiter hits and integration test regressions.  
+    **Success Criteria**: `docs/runtime-specprompt.md` published; onboarding feedback positive.  
+    **Risks**: Runbook may lag; schedule quarterly review.
 
-9. **Task**: Implement monitoring dashboards & alerts  
-   **Category**: Monitoring & Observability  
-   **Priority**: Medium  
-   **Effort**: Medium  
-   **Dependencies**: Task 3  
-   **Impact**: Infrastructure  
-   **Description**: Integrate spec generation metrics into existing monitoring stack (Sentry/Logfire dashboards) with alert thresholds for failure spikes.  
-   **Success Criteria**: Dashboard live with alert rules; drill-down identifies failing inputs.  
-   **Risks**: Alert fatigue; calibrate thresholds with historical data.
+11. **Task**: Implement monitoring dashboards & alerts  
+    **Category**: Monitoring & Observability  
+    **Priority**: Medium  
+    **Effort**: Medium  
+    **Dependencies**: Task 3  
+    **Impact**: Infrastructure  
+    **Description**: Integrate spec generation metrics into existing monitoring stack (Sentry/Logfire dashboards) with alert thresholds for failure spikes and runtime anomalies.  
+    **Success Criteria**: Dashboard live with alert rules; drill-down identifies failing inputs.  
+    **Risks**: Alert fatigue; calibrate thresholds with historical data.
 
-10. **Task**: Perform quarterly governance audit dry-run  
-   **Category**: Compliance & Legal / Scalability Preparation  
-   **Priority**: Medium  
-   **Effort**: Small  
-   **Dependencies**: Tasks 8–9  
-   **Impact**: Infrastructure  
-   **Description**: Simulate compliance review using generated specs to confirm production readiness coverage (privacy, data retention, international considerations).  
-   **Success Criteria**: Audit results logged with zero critical findings; follow-up tasks created for any gaps.  
-   **Risks**: Time-consuming; align with quarterly planning cycle.
+12. **Task**: Harden CI pipeline for SpecKit suites  
+    **Category**: Deployment & DevOps  
+    **Priority**: Medium  
+    **Effort**: Medium  
+    **Dependencies**: Tasks 6–7  
+    **Impact**: Infrastructure  
+    **Description**: Add dedicated CI stage running integration and e2e suites with artifact uploads for failures, ensuring isolation from unit tests.  
+    **Success Criteria**: CI job fails with actionable artifacts when tests regress; stage duration <10 minutes.  
+    **Risks**: Longer pipelines; optimize with caching.
+
+13. **Task**: Perform quarterly governance audit dry-run  
+    **Category**: Compliance & Legal / Scalability Preparation  
+    **Priority**: Medium  
+    **Effort**: Small  
+    **Dependencies**: Tasks 10–12  
+    **Impact**: Infrastructure  
+    **Description**: Simulate compliance review using generated specs to confirm production readiness coverage (privacy, data retention, international considerations).  
+    **Success Criteria**: Audit results logged with zero critical findings; follow-up tasks created for any gaps.  
+    **Risks**: Time-consuming; align with quarterly planning cycle.
+
+14. **Task**: Maintain SpecKit release checklist  
+    **Category**: Documentation / Deployment & DevOps  
+    **Priority**: Medium  
+    **Effort**: Small  
+    **Dependencies**: Task 10  
+    **Impact**: Developer experience  
+    **Description**: Create and version a release checklist covering constitution updates, template diffs, log pruning, and doc refresh prior to publishing.  
+    **Success Criteria**: Checklist stored in `docs/checklists/speckit-release.md`; referenced before each release.  
+    **Risks**: Checklist drift; tie updates to audit cycle.
+
+15. **Task**: Schedule security scan hook  
+    **Category**: Security vulnerabilities and authentication hardening  
+    **Priority**: Medium  
+    **Effort**: Small  
+    **Dependencies**: Task 12  
+    **Impact**: Infrastructure  
+    **Description**: Automate monthly `npm audit --production` (or Snyk) for `.specify` dependencies and log findings in `specs/logs/security-check-YYYY-MM.md`.  
+    **Success Criteria**: Scheduled workflow runs monthly; critical issues trigger tickets.  
+    **Risks**: False positives; document triage policy.
+
+16. **Task**: Track SpecKit usage metrics  
+    **Category**: Monitoring & Observability  
+    **Priority**: Low  
+    **Effort**: Medium  
+    **Dependencies**: Task 11  
+    **Impact**: Infrastructure  
+    **Description**: Capture CLI run frequency, runtime, and failure counts in a dashboard to monitor cost/performance trends.  
+    **Success Criteria**: Dashboard displays weekly usage with anomaly alerts.  
+    **Risks**: Over-monitoring; limit metrics to actionable signals.
+
+17. **Task**: Watch for template drift  
+    **Category**: Production Readiness Audit  
+    **Priority**: Medium  
+    **Effort**: Small  
+    **Dependencies**: Tasks 4–5  
+    **Impact**: Developer experience  
+    **Description**: Create automation that diffs generated specs against base templates weekly, flagging manual edits that could cause drift.  
+    **Success Criteria**: Weekly report in `specs/logs/template-drift-YYYY-WW.md`; action items tracked.  
+    **Risks**: Noise from intentional overrides; include allowlist.
 
 ## Quick Wins
 
-1. **Automate empty-input guardrails** (Critical, Small) – add validation to SpecKit command wrapper.  
-2. **Inject constitution reference links** (High, Small) – ensure each generated spec links to relevant governance section.  
-3. **Add accessibility reminder snippet** (Medium, Small) – template addition requiring minimal effort.  
-4. **Normalize terminology glossary** (Medium, Small) – include canonical VisaConnect glossary in specs.  
+1. **Automate empty-input guardrails** (Critical, Small) – add validation to SpecKit command wrapper.
+2. **Inject constitution reference links** (High, Small) – ensure each generated spec links to relevant governance section.
+3. **Add accessibility reminder snippet** (Medium, Small) – template addition requiring minimal effort.
+4. **Normalize terminology glossary** (Medium, Small) – include canonical VisaConnect glossary in specs.
 5. **Document snapshot update workflow** (Medium, Small) – README entry preventing CI failures.
 
 ## Risk Assessment
 
-- **Governance Drift**: Constitution updates could desync prompt defaults → Mitigate with version tagging and automated diff alerts.  
-- **Snapshot Fragility**: Regression tests may fail on benign wording tweaks → Use targeted serializers and reviewer guidelines.  
-- **Operational Overhead**: Logging and monitoring increase repo noise → Introduce rotation/pruning scripts and CI checks.  
+- **Governance Drift**: Constitution updates could desync prompt defaults → Mitigate with version tagging and automated diff alerts.
+- **Snapshot Fragility**: Regression tests may fail on benign wording tweaks → Use targeted serializers and reviewer guidelines.
+- **Operational Overhead**: Logging and monitoring increase repo noise → Introduce rotation/pruning scripts and CI checks.
 - **Underestimation of Performance Needs**: If spec usage scales beyond projections, caching may become insufficient → Plan outlines future Redis integration as stretch goal.
