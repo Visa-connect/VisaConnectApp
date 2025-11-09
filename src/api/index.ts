@@ -10,17 +10,24 @@ export const getToken = () => {
   return useUserStore.getState().getToken();
 };
 
-const defaultHeaders = () => {
-  const token = getToken();
-  return {
+const buildJsonHeaders = (withAuth: boolean): Record<string, string> => {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
   };
+
+  if (withAuth) {
+    const token = getToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  return headers;
 };
 
 const authorizationHeader = (): Record<string, string> => {
-  const token = getToken();
   const headers: Record<string, string> = {};
+  const token = getToken();
 
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -95,7 +102,8 @@ const publicHeaders = () => ({
 export async function apiGet<T>(url: string): Promise<T> {
   const makeRequest = async (): Promise<Response> => {
     const res = await fetch(`${API_BASE_URL}${url}`, {
-      headers: defaultHeaders(),
+      headers: buildJsonHeaders(true),
+      credentials: 'include',
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;
@@ -109,12 +117,26 @@ export async function apiGet<T>(url: string): Promise<T> {
   return res.json();
 }
 
-export async function apiPost<T>(url: string, body: any): Promise<T> {
+interface ApiPostOptions {
+  skipAuth?: boolean;
+  headers?: Record<string, string>;
+}
+
+export async function apiPost<T>(
+  url: string,
+  body: any,
+  options: ApiPostOptions = {}
+): Promise<T> {
   const makeRequest = async (): Promise<Response> => {
+    const { skipAuth = false, headers = {} } = options;
     const res = await fetch(`${API_BASE_URL}${url}`, {
       method: 'POST',
-      headers: defaultHeaders(),
+      headers: {
+        ...buildJsonHeaders(!skipAuth),
+        ...headers,
+      },
       body: JSON.stringify(body),
+      credentials: 'include',
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;
@@ -138,6 +160,7 @@ export async function apiPostFormData<T>(
       method: 'POST',
       headers: authorizationHeader(),
       body: formData,
+      credentials: 'include',
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;
@@ -157,6 +180,7 @@ export async function apiPostPublic<T>(url: string, body: any): Promise<T> {
     method: 'POST',
     headers: publicHeaders(),
     body: JSON.stringify(body),
+    credentials: 'include',
   });
   if (!res.ok) {
     const errorText = await res.text();
@@ -174,7 +198,8 @@ export async function apiPatch<T>(url: string, body: any): Promise<T> {
   const makeRequest = async (): Promise<Response> => {
     const res = await fetch(`${API_BASE_URL}${url}`, {
       method: 'PATCH',
-      headers: defaultHeaders(),
+      headers: buildJsonHeaders(true),
+      credentials: 'include',
       body: JSON.stringify(body),
     });
     if (!res.ok) {
@@ -193,7 +218,8 @@ export async function apiPut<T>(url: string, body: any): Promise<T> {
   const makeRequest = async (): Promise<Response> => {
     const res = await fetch(`${API_BASE_URL}${url}`, {
       method: 'PUT',
-      headers: defaultHeaders(),
+      headers: buildJsonHeaders(true),
+      credentials: 'include',
       body: JSON.stringify(body),
     });
     if (!res.ok) {
@@ -217,6 +243,7 @@ export async function apiPutFormData<T>(
       method: 'PUT',
       headers: authorizationHeader(),
       body: formData,
+      credentials: 'include',
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;
@@ -234,7 +261,8 @@ export async function apiDelete<T>(url: string): Promise<T> {
   const makeRequest = async (): Promise<Response> => {
     const res = await fetch(`${API_BASE_URL}${url}`, {
       method: 'DELETE',
-      headers: defaultHeaders(),
+      headers: buildJsonHeaders(true),
+      credentials: 'include',
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;

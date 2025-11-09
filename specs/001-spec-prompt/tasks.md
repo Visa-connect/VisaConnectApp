@@ -13,8 +13,8 @@
 - [ ] T006 Wire validation into SpecKit feature script `.specify/scripts/bash/create-new-feature.sh`
 - [ ] T007 Establish JSON logging helper `.specify/scripts/lib/promptLogger.ts`
 - [ ] T008 Integrate logging helper into `.specify/scripts/bash/create-new-feature.sh`
-- [ ] T009 Audit refresh token flow to ensure secure httpOnly cookies in `server/api/auth.ts`
-- [ ] T010 Update API client refresh handling in `src/api/index.ts` to rely on cookie-based flow and remove localStorage fallback
+- [x] T009 Audit refresh token flow to ensure secure httpOnly cookies in `server/api/auth.ts`
+- [x] T010 Update API client refresh handling in `src/api/index.ts` to rely on cookie-based flow and remove localStorage fallback
 
 ## Phase 3 – User Story 1: Generate Comprehensive Spec Draft (Priority: P1)
 

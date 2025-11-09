@@ -1,13 +1,7 @@
 import express, { Request, Response } from 'express';
-import admin from 'firebase-admin';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
-
-type FirebaseDecodedToken = admin.auth.DecodedIdToken & {
-  user_id?: string;
-  sub?: string;
-};
 
 const router = express.Router();
 
@@ -16,11 +10,64 @@ interface AuthenticatedRequest extends Request {
   user?: any;
 }
 
+const REFRESH_TOKEN_COOKIE = 'vc_refresh_token';
+const isProduction = process.env.NODE_ENV === 'production';
+
+function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+  if (!cookieHeader) {
+    return {};
+  }
+
+  return cookieHeader.split(';').reduce<Record<string, string>>((acc, part) => {
+    const [rawKey, ...rawValue] = part.trim().split('=');
+    if (!rawKey) {
+      return acc;
+    }
+    acc[decodeURIComponent(rawKey)] = decodeURIComponent(rawValue.join('='));
+    return acc;
+  }, {});
+}
+
+function getRefreshTokenFromRequest(req: Request): string | undefined {
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies[REFRESH_TOKEN_COOKIE];
+}
+
+function setRefreshTokenCookie(res: Response, token: string) {
+  res.cookie(REFRESH_TOKEN_COOKIE, token, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/api/auth/refresh-token',
+  });
+}
+
+function clearRefreshTokenCookie(res: Response) {
+  res.cookie(REFRESH_TOKEN_COOKIE, '', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'strict' : 'lax',
+    expires: new Date(0),
+    path: '/api/auth/refresh-token',
+  });
+}
+
 // Register a new user
 router.post('/register', async (req: Request, res: Response) => {
   try {
     const result = await authService.registerUser(req.body);
-    res.json(result);
+
+    if (result.refreshToken) {
+      setRefreshTokenCookie(res, result.refreshToken);
+    }
+
+    res.json({
+      success: result.success,
+      message: result.message,
+      user: result.user,
+      token: result.token,
+    });
   } catch (error: any) {
     console.error('Registration error:', error);
     res.status(400).json({
@@ -34,7 +81,19 @@ router.post('/register', async (req: Request, res: Response) => {
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const result = await authService.loginUser(req.body);
-    res.json(result);
+
+    if (!result.refreshToken) {
+      console.warn('Login succeeded without refresh token.');
+    } else {
+      setRefreshTokenCookie(res, result.refreshToken);
+    }
+
+    res.json({
+      success: result.success,
+      message: result.message,
+      user: result.user,
+      token: result.token,
+    });
   } catch (error: any) {
     console.error('Login error:', error);
     res.status(401).json({
@@ -45,89 +104,44 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Refresh token endpoint
-router.post(
-  '/refresh-token',
-  async (req: AuthenticatedRequest, res: Response) => {
-    try {
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-          success: false,
-          message: 'No token provided',
-        });
-      }
+router.post('/refresh-token', async (req: Request, res: Response) => {
+  try {
+    const refreshToken = getRefreshTokenFromRequest(req);
 
-      const token = authHeader.split(' ')[1];
-      let decodedToken: FirebaseDecodedToken | undefined;
-
-      try {
-        decodedToken = (await admin
-          .auth()
-          .verifyIdToken(token)) as FirebaseDecodedToken;
-      } catch (error: any) {
-        if (error?.code === 'auth/id-token-expired' && error?.claims) {
-          decodedToken = error.claims as FirebaseDecodedToken;
-        } else {
-          throw error;
-        }
-      }
-
-      const userId =
-        decodedToken?.uid || decodedToken?.user_id || decodedToken?.sub;
-
-      if (!userId) {
-        return res.status(401).json({
-          success: false,
-          message: 'User not authenticated',
-        });
-      }
-
-      const result = await authService.refreshToken(userId);
-
-      res.json({
-        success: result.success,
-        token: result.token,
-        user: result.user,
-        message: result.message,
-      });
-    } catch (error: any) {
-      console.error('Token refresh error:', error);
-      console.error('Error name:', error.name);
-      console.error('Error message:', error.message);
-
-      if (
-        error.name === 'AbortError' ||
-        error.message === 'Token exchange timeout'
-      ) {
-        console.log('Request was aborted due to timeout');
-        return res.status(408).json({
-          success: false,
-          message: 'Token refresh timed out. Please try again.',
-        });
-      }
-
-      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
-        console.log('Network timeout or connection reset');
-        return res.status(408).json({
-          success: false,
-          message: 'Network timeout. Please try again.',
-        });
-      }
-
-      if (error.code === 'auth/id-token-expired') {
-        return res.status(401).json({
-          success: false,
-          message: 'Token expired. Please sign in again.',
-        });
-      }
-
-      res.status(500).json({
+    if (!refreshToken) {
+      return res.status(401).json({
         success: false,
-        message: error.message || 'Token refresh failed',
+        message: 'Refresh token cookie missing',
       });
     }
+
+    const result = await authService.refreshToken(refreshToken);
+
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    res.json({
+      success: result.success,
+      token: result.token,
+      user: result.user,
+      message: result.message,
+    });
+  } catch (error: any) {
+    console.error('Token refresh error:', error);
+
+    if (error.message === 'Failed to refresh token') {
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({
+        success: false,
+        message: 'Token refresh failed. Please sign in again.',
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Token refresh failed',
+    });
   }
-);
+});
 
 // Verify email
 router.post(

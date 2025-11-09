@@ -37,7 +37,11 @@ describe('TokenRefreshService', () => {
 
       const newToken = await tokenRefreshService.manualRefresh();
       expect(newToken).toBe('new-token');
-      expect(apiPost).toHaveBeenCalledWith('/api/auth/refresh-token', {});
+      expect(apiPost).toHaveBeenCalledWith(
+        '/api/auth/refresh-token',
+        {},
+        { skipAuth: true }
+      );
     });
 
     it('should handle refresh failures', async () => {
