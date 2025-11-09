@@ -32,7 +32,10 @@ function parseCookies(
       const value = decodeURIComponent(rawValue.join('='));
       acc[key] = value;
     } catch (error) {
-      console.warn('Failed to decode cookie part:', part, error);
+      console.warn(`Failed to decode cookie "${rawKey}"`, error);
+      if (rawKey === REFRESH_TOKEN_COOKIE) {
+        throw new RefreshTokenError('Malformed refresh token cookie');
+      }
     }
 
     return acc;
@@ -140,17 +143,6 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
     console.error('Token refresh error:', error);
 
     if (error instanceof RefreshTokenError) {
-      clearRefreshTokenCookie(res);
-      return res.status(401).json({
-        success: false,
-        message: error.message || 'Token refresh failed. Please sign in again.',
-      });
-    }
-
-    if (
-      typeof error.message === 'string' &&
-      error.message.toLowerCase().includes('refresh token')
-    ) {
       clearRefreshTokenCookie(res);
       return res.status(401).json({
         success: false,
