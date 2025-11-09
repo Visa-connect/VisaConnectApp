@@ -1,4 +1,5 @@
 import pool from '../db/config';
+import { v4 as uuidv4 } from 'uuid';
 import {
   TipsTripsAdvice,
   TipsTripsAdvicePhoto,
@@ -45,15 +46,20 @@ export class TipsTripsAdviceService {
       try {
         await client.query('BEGIN');
 
-        // Insert the main post
-        const postResult = await client.query(
-          `INSERT INTO tips_trips_advice (title, description, creator_id, post_type)
-           VALUES ($1, $2, $3, $4)
-           RETURNING id`,
-          [postData.title, postData.description, creatorId, postData.post_type]
-        );
+        const postId = uuidv4();
 
-        const postId = postResult.rows[0].id as string;
+        // Insert the main post
+        await client.query(
+          `INSERT INTO tips_trips_advice (id, title, description, creator_id, post_type)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [
+            postId,
+            postData.title,
+            postData.description,
+            creatorId,
+            postData.post_type,
+          ]
+        );
 
         // Insert photos if provided
         if (postData.photos && postData.photos.length > 0) {

@@ -7,6 +7,7 @@ import { US_CITIES } from '../data/usCities';
 import { apiPostPublic } from '../api';
 import logo from '../assets/images/logo.png';
 import { useUserStore } from '../stores/userStore';
+import type { UserData } from '../stores/userStore';
 import { visaTypes } from '../utils/visaTypes';
 import {
   isValidEmail,
@@ -146,7 +147,7 @@ const CreateAccountPage: React.FC = () => {
 
       if (response.user) {
         // Convert API response to store format and merge with form data
-        const userData = userToUserData(response.user);
+        const userData: UserData = userToUserData(response.user);
         // Add form-specific data that might not be in the API response
         userData.visa_type =
           form.visa_type === 'other' ? customVisaType : form.visa_type;
@@ -155,7 +156,9 @@ const CreateAccountPage: React.FC = () => {
         userData.employer = form.employer;
 
         // Update both user store and localStorage
-        setToken(response.token);
+        if (response.token) {
+          setToken(response.token);
+        }
         setUser(userData); // This updates the user store and sets isAuthenticated to true
       }
 

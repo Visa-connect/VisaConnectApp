@@ -1,7 +1,13 @@
 import express, { Request, Response } from 'express';
+import admin from 'firebase-admin';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
+
+type FirebaseDecodedToken = admin.auth.DecodedIdToken & {
+  user_id?: string;
+  sub?: string;
+};
 
 const router = express.Router();
 
@@ -41,10 +47,34 @@ router.post('/login', async (req: Request, res: Response) => {
 // Refresh token endpoint
 router.post(
   '/refresh-token',
-  isAuthenticated,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const userId = req.user?.uid;
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({
+          success: false,
+          message: 'No token provided',
+        });
+      }
+
+      const token = authHeader.split(' ')[1];
+      let decodedToken: FirebaseDecodedToken | undefined;
+
+      try {
+        decodedToken = (await admin
+          .auth()
+          .verifyIdToken(token)) as FirebaseDecodedToken;
+      } catch (error: any) {
+        if (error?.code === 'auth/id-token-expired' && error?.claims) {
+          decodedToken = error.claims as FirebaseDecodedToken;
+        } else {
+          throw error;
+        }
+      }
+
+      const userId =
+        decodedToken?.uid || decodedToken?.user_id || decodedToken?.sub;
+
       if (!userId) {
         return res.status(401).json({
           success: false,
@@ -52,7 +82,6 @@ router.post(
         });
       }
 
-      // Use the new refreshToken method from authService
       const result = await authService.refreshToken(userId);
 
       res.json({
@@ -82,6 +111,13 @@ router.post(
         return res.status(408).json({
           success: false,
           message: 'Network timeout. Please try again.',
+        });
+      }
+
+      if (error.code === 'auth/id-token-expired') {
+        return res.status(401).json({
+          success: false,
+          message: 'Token expired. Please sign in again.',
         });
       }
 

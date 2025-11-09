@@ -14,7 +14,7 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const base =
     size === 'sm'
-      ? 'px-4 py-1 rounded-lg font-semibold text-sm w-auto min-w-[80px] focus:outline-none transition'
+      ? 'px-4 py-1 rounded-lg font-semibold text-sm w-auto min-w-[40px] focus:outline-none transition'
       : 'w-full py-3 rounded-xl font-semibold text-lg focus:outline-none transition';
   const variants = {
     primary: 'bg-sky-400 text-white hover:bg-sky-500',

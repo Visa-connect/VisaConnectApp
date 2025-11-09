@@ -1,4 +1,10 @@
-import { apiGet, apiPost, apiPut, apiDelete } from './index';
+import {
+  apiGet,
+  apiPost,
+  apiDelete,
+  apiPostFormData,
+  apiPutFormData,
+} from './index';
 
 // Types for Tips, Trips, and Advice
 export interface TipsTripsAdvicePost {
@@ -36,22 +42,15 @@ export interface CreateTipsTripsAdviceRequest {
   title: string;
   description: string;
   post_type: 'tip' | 'trip' | 'advice';
-  photos?: {
-    photo_url: string;
-    photo_public_id: string;
-    display_order?: number;
-  }[];
+  photos?: File[];
 }
 
 export interface UpdateTipsTripsAdviceRequest {
   title?: string;
   description?: string;
   post_type?: 'tip' | 'trip' | 'advice';
-  photos?: {
-    photo_url: string;
-    photo_public_id: string;
-    display_order?: number;
-  }[];
+  photos?: File[];
+  existingPhotoIds?: number[];
 }
 
 export interface SearchTipsTripsAdviceRequest {
@@ -109,9 +108,20 @@ export interface LikeResponse {
 class TipsTripsAdviceService {
   // Create a new post
   async createPost(postData: CreateTipsTripsAdviceRequest): Promise<string> {
-    const response: CreateTipsTripsAdviceResponse = await apiPost(
+    const formData = new FormData();
+    formData.append('title', postData.title);
+    formData.append('description', postData.description);
+    formData.append('post_type', postData.post_type);
+
+    if (postData.photos && postData.photos.length > 0) {
+      postData.photos.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+    }
+
+    const response: CreateTipsTripsAdviceResponse = await apiPostFormData(
       '/api/tips-trips-advice',
-      postData
+      formData
     );
     return response.data.postId;
   }
@@ -157,7 +167,29 @@ class TipsTripsAdviceService {
     postId: string,
     updateData: UpdateTipsTripsAdviceRequest
   ): Promise<void> {
-    await apiPut(`/api/tips-trips-advice/${postId}`, updateData);
+    const formData = new FormData();
+
+    if (updateData.title !== undefined) {
+      formData.append('title', updateData.title);
+    }
+    if (updateData.description !== undefined) {
+      formData.append('description', updateData.description);
+    }
+    if (updateData.post_type !== undefined) {
+      formData.append('post_type', updateData.post_type);
+    }
+    if (updateData.photos && updateData.photos.length > 0) {
+      updateData.photos.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+    }
+    if (updateData.existingPhotoIds) {
+      updateData.existingPhotoIds.forEach((id) =>
+        formData.append('existingPhotoIds', id.toString())
+      );
+    }
+
+    await apiPutFormData(`/api/tips-trips-advice/${postId}`, formData);
   }
 
   // Delete a post

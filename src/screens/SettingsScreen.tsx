@@ -18,6 +18,7 @@ import {
   ArrowLeftOnRectangleIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  LightBulbIcon,
 } from '@heroicons/react/24/outline';
 
 const SettingsScreen: React.FC = () => {
@@ -221,6 +222,11 @@ const SettingsScreen: React.FC = () => {
       onClick: () => navigate('/background'),
     },
     {
+      label: 'Trips, Tips & Advice posted',
+      icon: LightBulbIcon,
+      onClick: () => navigate('/tips-trips-advice/posted'),
+    },
+    {
       label: 'Jobs applied to',
       icon: BriefcaseIcon,
       onClick: () => navigate('/jobs-applied'),
@@ -311,6 +317,8 @@ const SettingsScreen: React.FC = () => {
               {menuItemsPreferences.map((item, idx) => {
                 const isPreferences = item.label === 'Preferences';
                 const isMeetupsPosted = item.label === 'Meetups posted';
+                const isTipsTripsAdvicePosted =
+                  item.label === 'Trips, Tips & Advice posted';
                 const isMeetupsInterested =
                   item.label === "Meetups I'm interested in";
                 const isJobsApplied = item.label === 'Jobs applied to';
@@ -320,6 +328,7 @@ const SettingsScreen: React.FC = () => {
                   isPreferences ||
                   isMeetupsPosted ||
                   isMeetupsInterested ||
+                  isTipsTripsAdvicePosted ||
                   isJobsApplied ||
                   isJobsPosted;
 

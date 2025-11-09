@@ -33,6 +33,8 @@ import ConnectScreen from './screens/ConnectScreen';
 import ChatScreen from './screens/ChatScreen';
 import TipsTripsAdviceScreen from './screens/TipsTripsAdviceScreen';
 import TipsTripsAdviceDetailScreen from './screens/TipsTripsAdviceDetailScreen';
+import EditTipsTripsAdviceScreen from './screens/EditTipsTripsAdviceScreen';
+import UserTipsTripsAdviceScreen from './screens/UserTipsTripsAdviceScreen';
 import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
 import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
 import AdminLayout from './components/AdminLayout';
@@ -43,8 +45,9 @@ import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
 import BusinessListScreen from './screens/admin/BusinessListScreen';
 import BusinessDetailScreen from './screens/admin/BusinessDetailScreen';
 import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
-import PostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
-import EditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
+import PostTipsTripsAdviceScreen from './screens/PostTipsTripsAdviceScreen';
+import AdminPostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
+import AdminEditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
 import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
 import UsersListScreen from './screens/admin/UsersListScreen';
 import EmployersListScreen from './screens/admin/EmployersListScreen';
@@ -99,11 +102,41 @@ function App() {
           }
         />
         <Route
+          path="/post-tips-trips-advice"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <PostTipsTripsAdviceScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/tips-trips-advice/posted"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <UserTipsTripsAdviceScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
           path="/tips-trips-advice/:postId"
           element={
             <AuthenticatedRoute>
               <AuthenticatedLayout>
                 <TipsTripsAdviceDetailScreen />
+              </AuthenticatedLayout>
+            </AuthenticatedRoute>
+          }
+        />
+        <Route
+          path="/edit-tips-trips-advice/:postId"
+          element={
+            <AuthenticatedRoute>
+              <AuthenticatedLayout>
+                <EditTipsTripsAdviceScreen />
               </AuthenticatedLayout>
             </AuthenticatedRoute>
           }
@@ -431,7 +464,7 @@ function App() {
             <AdminProvider>
               <AdminRoute>
                 <AdminLayout>
-                  <PostTipsTripsAdviceScreen />
+                  <AdminPostTipsTripsAdviceScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>
@@ -443,7 +476,7 @@ function App() {
             <AdminProvider>
               <AdminRoute>
                 <AdminLayout>
-                  <EditTipsTripsAdviceScreen />
+                  <AdminEditTipsTripsAdviceScreen />
                 </AdminLayout>
               </AdminRoute>
             </AdminProvider>

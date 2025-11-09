@@ -18,32 +18,59 @@ const defaultHeaders = () => {
   };
 };
 
+const authorizationHeader = (): Record<string, string> => {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+};
+
+let refreshPromise: Promise<boolean> | null = null;
+
+const waitForTokenRefresh = async (
+  store: ReturnType<typeof useUserStore.getState>
+): Promise<boolean> => {
+  if (!refreshPromise) {
+    refreshPromise = store.ensureValidToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+
+  return refreshPromise;
+};
+
 // Helper function to handle token refresh and retry requests
 const handleTokenRefresh = async (
   originalRequest: () => Promise<Response>
 ): Promise<Response> => {
   const MAX_RETRIES = 2;
   const BASE_DELAY = 1000; // 1 second
+  const userStore = useUserStore.getState();
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // First attempt with current token
+      // Attempt request with current token
       return await originalRequest();
     } catch (error: unknown) {
       const apiError = error as ApiError;
 
-      // Check if it's a 401 error (unauthorized)
       if (apiError.status === 401) {
-        console.log(
-          'Token expired, but refresh is disabled - redirecting to sign in'
-        );
+        const refreshed = await waitForTokenRefresh(userStore);
+        if (refreshed) {
+          // Do not count this attempt since we refreshed the token
+          attempt--;
+          continue;
+        }
 
-        // Token refresh is disabled, user needs to re-authenticate
-        useUserStore.getState().clearUser();
+        // Refresh failed or max retries reached - clear auth state
+        userStore.clearUser();
         throw new Error('Authentication expired. Please sign in again.');
       }
 
-      // Check if it's a timeout error (408) and retry
       if (apiError.status === 408 && attempt < MAX_RETRIES) {
         console.warn(
           `Request timeout (attempt ${attempt}/${MAX_RETRIES}), retrying...`
@@ -53,12 +80,10 @@ const handleTokenRefresh = async (
         continue;
       }
 
-      // Re-throw non-retryable errors
       throw error;
     }
   }
 
-  // This should never be reached, but just in case
   throw new Error('Request failed after multiple retry attempts');
 };
 
@@ -102,6 +127,28 @@ export async function apiPost<T>(url: string, body: any): Promise<T> {
   const res = await handleTokenRefresh(makeRequest);
   const jsonData = await res.json();
   return jsonData;
+}
+
+export async function apiPostFormData<T>(
+  url: string,
+  formData: FormData
+): Promise<T> {
+  const makeRequest = async (): Promise<Response> => {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'POST',
+      headers: authorizationHeader(),
+      body: formData,
+    });
+    if (!res.ok) {
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
+      throw error;
+    }
+    return res;
+  };
+
+  const res = await handleTokenRefresh(makeRequest);
+  return res.json();
 }
 
 // Public POST for registration/login (no auth required)
@@ -148,6 +195,28 @@ export async function apiPut<T>(url: string, body: any): Promise<T> {
       method: 'PUT',
       headers: defaultHeaders(),
       body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const error = new Error(await res.text()) as ApiError;
+      error.status = res.status;
+      throw error;
+    }
+    return res;
+  };
+
+  const res = await handleTokenRefresh(makeRequest);
+  return res.json();
+}
+
+export async function apiPutFormData<T>(
+  url: string,
+  formData: FormData
+): Promise<T> {
+  const makeRequest = async (): Promise<Response> => {
+    const res = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'PUT',
+      headers: authorizationHeader(),
+      body: formData,
     });
     if (!res.ok) {
       const error = new Error(await res.text()) as ApiError;

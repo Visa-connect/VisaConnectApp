@@ -78,11 +78,8 @@ const SignInScreen: React.FC = () => {
         const userData = userToUserData(loginResponse.user);
         setUser(userData);
 
-        // Store in localStorage for persistence
+        // Store in localStorage for persistence (legacy compatibility)
         localStorage.setItem('user', JSON.stringify(userData));
-        if (loginResponse.token) {
-          localStorage.setItem('token', loginResponse.token);
-        }
 
         // Navigate to dashboard
         navigate('/dashboard');

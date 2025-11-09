@@ -7,10 +7,12 @@ import {
   TipsTripsAdvicePost,
 } from '../api/tipsTripsAdviceService';
 import { formatTimeAgo } from '../utils/time';
+import { useUserStore } from '../stores/userStore';
 
 const TipsTripsAdviceDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const { postId } = useParams<{ postId: string }>();
+  const { user } = useUserStore();
   const [post, setPost] = useState<TipsTripsAdvicePost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,13 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
     // TODO: Implement chat functionality
     console.log('Opening chat for post:', post?.id);
   };
+
+  const handleEditPost = () => {
+    if (!post) return;
+    navigate(`/edit-tips-trips-advice/${post.id}`);
+  };
+
+  const isCreator = user && post?.creator_id === user.uid;
 
   const getPostTypeColor = (postType: string) => {
     switch (postType) {
@@ -144,28 +153,43 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
 
           {/* Post Images */}
           {post.photos && post.photos.length > 0 && (
-            <div className="space-y-4 px-6 pb-6">
-              {post.photos.map((photo, index) => (
-                <div key={photo.id} className="relative">
-                  <img
-                    src={photo.photo_url}
-                    alt={`${post.title} - ${index + 1}`}
-                    className="w-full h-96 object-cover rounded-lg"
-                  />
-                </div>
-              ))}
+            <div className="px-6 pb-6">
+              <div className="flex flex-wrap justify-center gap-4">
+                {post.photos.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    className="relative max-w-xs w-full flex justify-center"
+                  >
+                    <img
+                      src={photo.photo_url}
+                      alt={`${post.title} - ${index + 1}`}
+                      className="w-full h-64 object-contain rounded-lg bg-gray-50"
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="px-6 py-4 border-t border-gray-100">
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={handleChat}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
-              >
-                Chat
-              </Button>
+            <div className="flex justify-end">
+              {isCreator ? (
+                <Button
+                  onClick={handleEditPost}
+                  variant="secondary"
+                  className="px-6 py-2"
+                >
+                  Update Post
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleChat}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+                >
+                  Chat
+                </Button>
+              )}
             </div>
           </div>
         </div>
