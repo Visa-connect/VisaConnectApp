@@ -13,7 +13,9 @@ interface AuthenticatedRequest extends Request {
 const REFRESH_TOKEN_COOKIE = 'vc_refresh_token';
 const isProduction = process.env.NODE_ENV === 'production';
 
-function parseCookies(cookieHeader: string | undefined): Record<string, string> {
+function parseCookies(
+  cookieHeader: string | undefined
+): Record<string, string> {
   if (!cookieHeader) {
     return {};
   }
@@ -39,7 +41,7 @@ function setRefreshTokenCookie(res: Response, token: string) {
     secure: isProduction,
     sameSite: isProduction ? 'strict' : 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
-    path: '/api/auth/refresh-token',
+    path: '/api/auth',
   });
 }
 
@@ -49,7 +51,7 @@ function clearRefreshTokenCookie(res: Response) {
     secure: isProduction,
     sameSite: isProduction ? 'strict' : 'lax',
     expires: new Date(0),
-    path: '/api/auth/refresh-token',
+    path: '/api/auth',
   });
 }
 
@@ -133,6 +135,17 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       return res.status(401).json({
         success: false,
         message: 'Token refresh failed. Please sign in again.',
+      });
+    }
+
+    if (
+      typeof error.message === 'string' &&
+      error.message.toLowerCase().includes('refresh token')
+    ) {
+      clearRefreshTokenCookie(res);
+      return res.status(401).json({
+        success: false,
+        message: error.message || 'Token refresh failed. Please sign in again.',
       });
     }
 
