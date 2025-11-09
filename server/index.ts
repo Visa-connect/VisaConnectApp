@@ -72,8 +72,7 @@ const defaultAllowedOrigins = [
 ].filter((value): value is string => Boolean(value));
 
 const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
-  const originHeader = req.headers['origin'];
-  const origin = Array.isArray(originHeader) ? originHeader[0] : originHeader;
+  const origin = req.headers['origin'];
   const method = (req.method || '').toUpperCase();
   const isReadOnlyRequest = method === 'GET' || method === 'HEAD';
 

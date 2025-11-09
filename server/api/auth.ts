@@ -43,8 +43,15 @@ function parseCookies(
 }
 
 function getRefreshTokenFromRequest(req: Request): string | undefined {
-  const cookies = parseCookies(req.headers.cookie);
-  return cookies[REFRESH_TOKEN_COOKIE];
+  try {
+    const cookies = parseCookies(req.headers.cookie);
+    return cookies[REFRESH_TOKEN_COOKIE];
+  } catch (error) {
+    if (error instanceof RefreshTokenError) {
+      throw error;
+    }
+    throw new RefreshTokenError('Failed to parse refresh token cookie');
+  }
 }
 
 function setRefreshTokenCookie(res: Response, token: string) {
