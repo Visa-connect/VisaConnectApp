@@ -58,4 +58,25 @@ describe('POST /api/auth/refresh-token', () => {
     );
     expect(response.get('Set-Cookie')?.[0]).toMatch(/HttpOnly/i);
   });
+
+  it('clears refresh cookie and returns 401 when refresh fails', async () => {
+    const app = setupApp();
+
+    (authService.refreshToken as jest.Mock).mockRejectedValue(
+      new Error('Failed to refresh token')
+    );
+
+    const response = await request(app)
+      .post('/api/auth/refresh-token')
+      .set('Cookie', ['vc_refresh_token=stale-refresh-token']);
+
+    expect(response.status).toBe(401);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toMatch(/please sign in again/i);
+
+    const clearedCookie = response.get('Set-Cookie')?.[0];
+    expect(clearedCookie).toBeDefined();
+    expect(clearedCookie).toContain('vc_refresh_token=');
+    expect(clearedCookie).toMatch(/expires=Thu, 01 Jan 1970 00:00:00 GMT/i);
+  });
 });
