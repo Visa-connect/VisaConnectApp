@@ -31,10 +31,10 @@ jobs:
           cache: 'npm'
 
       - name: Install root dependencies
-        run: npm install --no-progress --no-audit
+        run: npm install --no-progress --no-audit --legacy-peer-deps
 
       - name: Install server dependencies
-        run: cd server && npm install --no-progress --no-audit
+        run: cd server && npm install --no-progress --no-audit --legacy-peer-deps
 
       - name: Run npm audit (root)
         id: audit-root
