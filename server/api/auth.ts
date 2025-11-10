@@ -107,7 +107,7 @@ router.post('/login', async (req: Request, res: Response) => {
   try {
     // Validate request body
     if (!req.body || !email || !req.body.password) {
-      const validationError = new Error('Email and password are required');
+      const errorMessage = 'Email and password are required';
       console.error('Login validation error:', {
         email: email || 'missing',
         hasPassword: !!req.body?.password,
@@ -115,20 +115,20 @@ router.post('/login', async (req: Request, res: Response) => {
       });
       return res.status(400).json({
         success: false,
-        message: validationError.message,
+        message: errorMessage,
       });
     }
 
     // Validate email format
     if (!isValidEmail(email)) {
-      const validationError = new Error('Invalid email format');
+      const errorMessage = 'Invalid email format';
       console.error('Login validation error:', {
         email,
         path: req.path,
       });
       return res.status(400).json({
         success: false,
-        message: validationError.message,
+        message: errorMessage,
       });
     }
 
@@ -209,8 +209,9 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
   try {
     const refreshToken = getRefreshTokenFromRequest(req);
 
-    // Validate refresh token exists
-    if (!refreshToken || refreshToken.trim().length === 0) {
+    // Validate refresh token exists and is not empty
+    // Using optional chaining to safely handle undefined values
+    if (!refreshToken?.trim()) {
       console.error('Token refresh validation error:', {
         hasToken: !!refreshToken,
         tokenLength: refreshToken?.length || 0,
