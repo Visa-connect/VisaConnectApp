@@ -1,0 +1,175 @@
+name: SpecKit Security Scan
+
+on:
+  schedule:
+    # Run on the first day of each month at 00:00 UTC
+    - cron: '0 0 1 * *'
+  workflow_dispatch: # Allow manual triggering
+  pull_request:
+    paths:
+      - '.specify/**'
+      - 'specs/**'
+      - 'package.json'
+      - 'server/package.json'
+
+jobs:
+  security-scan:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm install --no-progress --no-audit --legacy-peer-deps
+
+      - name: Install server dependencies
+        run: cd server && npm install --no-progress --no-audit --legacy-peer-deps
+
+      - name: Run npm audit (root)
+        id: audit-root
+        continue-on-error: true
+        run: |
+          npm audit --production --json > audit-root.json || true
+          npm audit --production --audit-level=moderate || true
+        env:
+          NODE_ENV: production
+
+      - name: Run npm audit (server)
+        id: audit-server
+        continue-on-error: true
+        run: |
+          cd server
+          npm audit --production --json > ../audit-server.json || true
+          npm audit --production --audit-level=moderate || true
+        env:
+          NODE_ENV: production
+
+      - name: Check for Snyk
+        id: check-snyk
+        continue-on-error: true
+        run: |
+          if command -v snyk &> /dev/null; then
+            echo "snyk_available=true" >> $GITHUB_OUTPUT
+          else
+            echo "snyk_available=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run Snyk test (if available)
+        if: steps.check-snyk.outputs.snyk_available == 'true'
+        continue-on-error: true
+        run: |
+          snyk test --json > snyk-results.json || true
+          snyk test || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Generate security report
+        run: |
+          mkdir -p specs/logs
+          REPORT_DATE=$(date +%Y-%m)
+          REPORT_FILE="specs/logs/security-check-${REPORT_DATE}.md"
+
+          cat > "$REPORT_FILE" << EOF
+          # Security Scan Report - ${REPORT_DATE}
+
+          **Generated**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Workflow**: ${{ github.workflow }}
+          **Run ID**: ${{ github.run_id }}
+
+          ## npm audit Results
+
+          ### Root Dependencies
+          \`\`\`json
+          $(cat audit-root.json 2>/dev/null || echo '{"error": "Audit failed or no issues found"}')
+          \`\`\`
+
+          ### Server Dependencies
+          \`\`\`json
+          $(cat audit-server.json 2>/dev/null || echo '{"error": "Audit failed or no issues found"}')
+          \`\`\`
+
+          ## Snyk Results
+
+          $([ -f snyk-results.json ] && echo '```json' && cat snyk-results.json && echo '```' || echo 'Snyk not available or no issues found')
+
+          ## Summary
+
+          - **npm audit (root)**: $([ -f audit-root.json ] && echo "Completed" || echo "Failed/Skipped")
+          - **npm audit (server)**: $([ -f audit-server.json ] && echo "Completed" || echo "Failed/Skipped")
+          - **Snyk**: $([ -f snyk-results.json ] && echo "Completed" || echo "Not available/Skipped")
+
+          ## Next Steps
+
+          1. Review audit results for critical vulnerabilities
+          2. Update dependencies with known vulnerabilities
+          3. Address moderate and high severity issues
+          4. Document any accepted risks in \`docs/security/\`
+          EOF
+
+          echo "Security report generated: $REPORT_FILE"
+          cat "$REPORT_FILE"
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports-${{ github.run_id }}
+          path: |
+            audit-root.json
+            audit-server.json
+            snyk-results.json
+            specs/logs/security-check-*.md
+          retention-days: 90
+
+      - name: Comment PR with security findings
+        if: github.event_name == 'pull_request' && (steps.audit-root.outcome == 'failure' || steps.audit-server.outcome == 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'specs/logs/security-check-*.md';
+            const reports = fs.readdirSync('specs/logs').filter(f => f.startsWith('security-check-'));
+
+            if (reports.length > 0) {
+              const latestReport = reports.sort().reverse()[0];
+              const reportContent = fs.readFileSync(`specs/logs/${latestReport}`, 'utf8');
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🔒 Security Scan Results\n\n${reportContent}\n\n⚠️ **Action Required**: Please review and address any security vulnerabilities before merging.`
+              });
+            }
+
+      - name: Fail on critical vulnerabilities
+        run: |
+          # Check if there are critical vulnerabilities in audit results
+          if [ -f audit-root.json ]; then
+            CRITICAL_COUNT=$(cat audit-root.json | grep -o '"severity":"critical"' | wc -l || echo "0")
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Critical vulnerabilities found in root dependencies"
+              exit 1
+            fi
+          fi
+
+          if [ -f audit-server.json ]; then
+            CRITICAL_COUNT=$(cat audit-server.json | grep -o '"severity":"critical"' | wc -l || echo "0")
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "❌ Critical vulnerabilities found in server dependencies"
+              exit 1
+            fi
+          fi
+
+          echo "✅ No critical vulnerabilities found"

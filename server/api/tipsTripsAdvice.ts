@@ -12,6 +12,7 @@ import {
   AddCommentRequest,
 } from '../types/tipsTripsAdvice';
 import { uploadTipsPhoto } from '../services/firebaseStorageService';
+import { sanitizeComment, sanitizeResponse } from '../utils/sanitization';
 
 // Helper function to validate postId UUID
 function validatePostId(postId: string): void {
@@ -157,9 +158,17 @@ export default function tipsTripsAdviceApi(app: Express) {
 
         const post = await tipsTripsAdviceService.getPostById(postId, userId);
 
+        // Sanitize user-generated content in response
+        const sanitizedPost = sanitizeResponse(post, [
+          'title',
+          'description',
+          'comment',
+          'content',
+        ]);
+
         res.json({
           success: true,
-          data: post,
+          data: sanitizedPost,
         });
       } catch (error) {
         console.error('Error fetching post:', error);
@@ -203,9 +212,17 @@ export default function tipsTripsAdviceApi(app: Express) {
           userId
         );
 
+        // Sanitize user-generated content in response
+        const sanitizedPosts = sanitizeResponse(posts, [
+          'title',
+          'description',
+          'comment',
+          'content',
+        ]);
+
         res.json({
           success: true,
-          data: posts,
+          data: sanitizedPosts,
         });
       } catch (error) {
         console.error('Error searching posts:', error);
@@ -426,9 +443,12 @@ export default function tipsTripsAdviceApi(app: Express) {
           userId
         );
 
+        // Sanitize user-generated content in response
+        const sanitizedComment = sanitizeComment(newComment);
+
         res.status(201).json({
           success: true,
-          data: newComment,
+          data: sanitizedComment,
           message: 'Comment added successfully',
         });
       } catch (error) {
@@ -518,9 +538,17 @@ export default function tipsTripsAdviceApi(app: Express) {
           postType
         );
 
+        // Sanitize user-generated content in response
+        const sanitizedPosts = sanitizeResponse(posts, [
+          'title',
+          'description',
+          'comment',
+          'content',
+        ]);
+
         res.json({
           success: true,
-          data: posts,
+          data: sanitizedPosts,
         });
       } catch (error) {
         console.error('Error fetching user posts:', error);

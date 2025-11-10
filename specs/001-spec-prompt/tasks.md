@@ -5,14 +5,14 @@
 - [x] T001 Verify SpecKit scripts executable (`chmod +x .specify/scripts/bash/*.sh`)
 - [x] T002 Install dependencies (`yarn install`) and confirm lint/test baseline (`yarn lint && yarn test --runInBand`)
 - [x] T003 Configure prompt profiling script scaffold in `.specify/scripts/analysis/profile-specprompt.ts`
-- [ ] T004 Initialize prompt execution log at `specs/logs/speckit.log` with rotation README entry
+- [x] T004 Initialize prompt execution log at `specs/logs/speckit.log` with rotation README entry
 
 ## Phase 2 – Foundational Infrastructure
 
-- [ ] T005 Create validation utility for prompt inputs in `.specify/scripts/lib/promptValidation.ts`
-- [ ] T006 Wire validation into SpecKit feature script `.specify/scripts/bash/create-new-feature.sh`
-- [ ] T007 Establish JSON logging helper `.specify/scripts/lib/promptLogger.ts`
-- [ ] T008 Integrate logging helper into `.specify/scripts/bash/create-new-feature.sh`
+- [x] T005 Create validation utility for prompt inputs in `.specify/scripts/lib/promptValidation.ts`
+- [x] T006 Wire validation into SpecKit feature script `.specify/scripts/bash/create-new-feature.sh`
+- [x] T007 Establish JSON logging helper `.specify/scripts/lib/promptLogger.ts`
+- [x] T008 Integrate logging helper into `.specify/scripts/bash/create-new-feature.sh`
 - [x] T009 Audit refresh token flow to ensure secure httpOnly cookies in `server/api/auth.ts` (path set to `/api/auth` for login/refresh endpoints)
 - [x] T010 Update API client refresh handling in `src/api/index.ts` to rely on cookie-based flow and remove localStorage fallback
 - [x] T011 Implement backend refresh token integration tests in `server/tests/api/auth.refresh-token.test.ts`
@@ -52,11 +52,43 @@
 - [ ] T033 Review constitution alignment and update prompt defaults for new mandates
 - [ ] T034 Conduct quarterly dry-run checklist and capture findings `specs/logs/governance-audit-YYYY-QX.md`
 - [ ] T035 Create SpecKit release checklist at `docs/checklists/speckit-release.md`
-- [ ] T036 Automate monthly security scan workflow in `.github/workflows/speckit-security.yml`
+- [x] T036 Automate monthly security scan workflow in `.github/workflows/speckit-security.yml`
 - [ ] T037 Capture SpecKit usage metrics in `docs/runtime-specprompt.md#metrics` and dashboard config
 - [ ] T038 Implement template drift watchdog script `specs/scripts/template-drift-check.ts` with weekly log
 - [x] T039 Audit backend service validation rules and structured logging to ensure all API inputs, especially refresh-token flows, provide actionable diagnostics.
 - [x] T040 Audit client-side validation and logging for authentication flows so UI surfaces meaningful errors and network retries are traceable.
+
+## Phase 7 – Security Hardening (Production Readiness)
+
+- [x] T041 Implement rate limiting for public auth endpoints (`/api/auth/login`, `/api/auth/register`, `/api/auth/refresh-token`, `/api/auth/reset-password`) using `express-rate-limit` middleware in `server/middleware/rateLimit.ts`
+- [x] T042 Implement output sanitization for user-generated content (posts, comments, messages) and API responses in `server/utils/sanitization.ts`
+- [x] T043 Implement CSRF protection for state-changing operations (POST, PUT, DELETE, PATCH) using CSRF tokens in `server/middleware/csrf.ts`
+- [ ] T044 Document and automate secrets rotation process with quarterly rotation schedule in `docs/security/secrets-rotation.md`
+- [ ] T045 Implement GDPR data retention and deletion endpoints (`/api/auth/delete-account`, `/api/user/data-export`) with retention policies in `server/api/dataRetention.ts`
+
+## Phase 8 – Performance Optimization (Production Readiness)
+
+### Frontend Performance (High Priority)
+
+- [ ] T046 Analyze and optimize bundle size using `webpack-bundle-analyzer` in `package.json` scripts, identify large dependencies, implement code splitting, and optimize imports with tree-shaking
+- [ ] T047 Implement lazy loading for routes/screens beyond the fold using `React.lazy()` and `Suspense` boundaries, optimize image loading with lazy loading and responsive images
+- [ ] T048 Implement memoization for expensive selectors and computations using `React.useMemo()` and `React.useCallback()`, optimize Zustand and React Query selectors
+- [ ] T049 Optimize Core Web Vitals to achieve Lighthouse performance score ≥90: optimize FCP, LCP, CLS, TTI, and TBT, run Lighthouse audits and implement fixes
+
+### Backend Performance (High Priority)
+
+- [ ] T050 Profile API endpoints and optimize response times to achieve p95 <400ms: identify slow endpoints, optimize database queries, implement response caching, optimize serialization, add connection pooling
+- [ ] T051 Optimize database queries: audit all database queries, add indexes for frequently queried fields, review query plans for new SQL, set up slow query logging, optimize N+1 queries, implement query result caching
+- [ ] T052 Implement Redis caching for frequent reads: evaluate caching needs, set up Redis (if needed), implement caching for user profiles, job listings, company reviews, and unread notification counts, implement cache invalidation strategy, monitor cache hit rates
+
+### Performance Monitoring & Observability
+
+- [ ] T053 Set up performance monitoring: configure Sentry BrowserTracing for frontend, track Core Web Vitals, monitor API response times, set up alerts for performance degradation, create performance dashboards, track bundle size over time
+
+### SpecKit Performance (Medium Priority)
+
+- [ ] T031 [P] Add profiling benchmarks to `specs/reports/specprompt-benchmark.md`
+- [ ] T054 Optimize SpecKit runtime and memory usage: profile prompt execution to ensure <10s generation, introduce caching for repeated constitution lookups, parallelize optional analyses, target <200MB memory footprint
 
 ## Dependencies & Execution Order
 
@@ -65,6 +97,8 @@
 3. Phase 3 → Phase 4 (clarification logic depends on generators)
 4. Phase 4 → Phase 5 (governance enforcement needs limiter outputs)
 5. Phase 6 can start after Phase 3 for parallel polish except tasks 031-036 which follow audit, CI, and security setup.
+6. Phase 7 can start after Phase 2 (security hardening can proceed in parallel with core development, but T041-T043 are critical for production).
+7. Phase 8 can start after Phase 2 (performance optimization can proceed in parallel, but T050-T051 are critical for production scalability).
 
 ## Parallel Opportunities
 
@@ -73,6 +107,12 @@
 - T009 and T010 can run in parallel (backend vs frontend adjustments).
 - Within User Story 1, T011 and T013 parallelize (separate helper modules).
 - Phase 6 task T029 can run alongside Phase 4 implementation.
+- T041, T042, and T043 can run in parallel (distinct security middleware implementations).
+- T044 and T045 can run in parallel (documentation and implementation tasks).
+- T046, T047, and T048 can run in parallel (frontend performance optimizations).
+- T050 and T051 can run in parallel (backend performance optimizations, but T051 should complete before T052).
+- T053 can run in parallel with other performance tasks (monitoring setup).
+- T031 and T054 can run in parallel (SpecKit performance optimizations).
 
 ## Independent Test Criteria
 

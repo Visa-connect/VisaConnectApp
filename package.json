@@ -48,6 +48,7 @@
     "scripts:list-firebase-users": "node scripts/list-firebase-users.js",
     "scripts:make-admin": "node scripts/make-admin.js",
     "scripts:set-admin-claims": "node scripts/set-admin-claims.js",
+    "speckit:logs:rotate": "ts-node .specify/scripts/lib/rotateLogs.ts",
     "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate",
     "prepare": "husky"
   },

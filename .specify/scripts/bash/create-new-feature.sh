@@ -67,6 +67,9 @@ if [ -z "$FEATURE_DESCRIPTION" ]; then
     exit 1
 fi
 
+# Record start time for logging
+START_TIME=$(date +%s)
+
 # Function to find the repository root by searching for existing project markers
 find_repo_root() {
     local dir="$1"
@@ -132,6 +135,29 @@ cd "$REPO_ROOT"
 
 SPECS_DIR="$REPO_ROOT/specs"
 mkdir -p "$SPECS_DIR"
+
+# Validation: Validate feature description using Node.js validation utility
+VALIDATION_SCRIPT="$REPO_ROOT/.specify/scripts/lib/validateFeatureDescription.ts"
+if [ -f "$VALIDATION_SCRIPT" ] && command -v ts-node >/dev/null 2>&1; then
+    # Use ts-node to validate the feature description
+    VALIDATION_RESULT=$(cd "$REPO_ROOT" && ts-node -e "
+        import { validateFeatureDescription, formatValidationErrors } from './.specify/scripts/lib/promptValidation';
+        const result = validateFeatureDescription('$(echo "$FEATURE_DESCRIPTION" | sed "s/'/'\''/g")');
+        if (!result.valid) {
+            console.error(formatValidationErrors(result));
+            process.exit(1);
+        } else if (result.warnings.length > 0) {
+            console.warn('Validation warnings:');
+            result.warnings.forEach(w => console.warn('  -', w));
+        }
+    " 2>&1)
+    VALIDATION_EXIT_CODE=$?
+    
+    if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
+        echo "$VALIDATION_RESULT" >&2
+        exit $VALIDATION_EXIT_CODE
+    fi
+fi
 
 # Function to generate branch name with stop word filtering and length filtering
 generate_branch_name() {
@@ -249,6 +275,28 @@ if [ -f "$TEMPLATE" ]; then cp "$TEMPLATE" "$SPEC_FILE"; else touch "$SPEC_FILE"
 
 # Set the SPECIFY_FEATURE environment variable for the current session
 export SPECIFY_FEATURE="$BRANCH_NAME"
+
+# Log successful execution
+END_TIME=$(date +%s)
+DURATION=$((END_TIME - START_TIME))
+
+LOG_SCRIPT="$REPO_ROOT/.specify/scripts/lib/logSpecKitCommand.ts"
+if [ -f "$LOG_SCRIPT" ] && command -v ts-node >/dev/null 2>&1; then
+    # Escape the feature description for JSON
+    ESCAPED_DESCRIPTION=$(echo "$FEATURE_DESCRIPTION" | sed 's/"/\\"/g' | sed "s/'/\\'/g")
+    METADATA_JSON="{\"featureDescription\":\"$ESCAPED_DESCRIPTION\",\"specFile\":\"$SPEC_FILE\"}"
+    
+    # Log the command execution
+    cd "$REPO_ROOT" && ts-node "$LOG_SCRIPT" \
+        "specify" \
+        "$BRANCH_NAME" \
+        "$FEATURE_NUM" \
+        "$DURATION" \
+        "true" \
+        "$METADATA_JSON" \
+        "$REPO_ROOT" \
+        2>/dev/null || true
+fi
 
 if $JSON_MODE; then
     printf '{"BRANCH_NAME":"%s","SPEC_FILE":"%s","FEATURE_NUM":"%s"}\n' "$BRANCH_NAME" "$SPEC_FILE" "$FEATURE_NUM"

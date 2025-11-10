@@ -4,6 +4,12 @@ import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
 import { RefreshTokenError, isAuthenticationError } from '../errors/AuthErrors';
+import {
+  loginRateLimiter,
+  registerRateLimiter,
+  refreshTokenRateLimiter,
+  sensitiveAuthRateLimiter,
+} from '../middleware/rateLimit';
 
 const router = express.Router();
 
@@ -76,7 +82,7 @@ function clearRefreshTokenCookie(res: Response) {
 }
 
 // Register a new user
-router.post('/register', async (req: Request, res: Response) => {
+router.post('/register', registerRateLimiter, async (req: Request, res: Response) => {
   try {
     const result = await authService.registerUser(req.body);
 
@@ -100,7 +106,7 @@ router.post('/register', async (req: Request, res: Response) => {
 });
 
 // Login existing user
-router.post('/login', async (req: Request, res: Response) => {
+router.post('/login', loginRateLimiter, async (req: Request, res: Response) => {
   const startTime = Date.now();
   const email = req.body?.email;
 
@@ -203,7 +209,7 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // Refresh token endpoint
-router.post('/refresh-token', async (req: Request, res: Response) => {
+router.post('/refresh-token', refreshTokenRateLimiter, async (req: Request, res: Response) => {
   const startTime = Date.now();
 
   try {
@@ -322,7 +328,7 @@ router.post(
 );
 
 // Reset password
-router.post('/reset-password', async (req: Request, res: Response) => {
+router.post('/reset-password', sensitiveAuthRateLimiter, async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (!email) {
