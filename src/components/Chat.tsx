@@ -24,8 +24,6 @@ interface ChatProps {
 const Chat: React.FC<ChatProps> = ({
   conversationId,
   otherUserId,
-  otherUserName,
-  otherUserPhoto,
   onScrollToBottom,
 }) => {
   const { user } = useUserStore();
@@ -66,7 +64,7 @@ const Chat: React.FC<ChatProps> = ({
 
         // Mark messages as read when conversation is opened
         try {
-          await chatService.markMessagesAsRead(conversationId, user.uid);
+          await chatService.markMessagesAsRead(conversationId);
         } catch (error) {
           console.error('Error marking messages as read:', error);
           // Don't fail the conversation load if mark as read fails
@@ -478,7 +476,7 @@ const Chat: React.FC<ChatProps> = ({
           </div>
         ) : (
           <>
-            {groupMessagesByDate(messages).map((group, groupIndex) => (
+            {groupMessagesByDate(messages).map((group, _) => (
               <div key={group.dateString}>
                 {/* Date Header */}
                 <DateHeader dateHeader={group.dateHeader} />

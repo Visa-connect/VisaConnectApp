@@ -90,12 +90,6 @@ describe('AuthService', () => {
     updated_at: new Date(),
   };
 
-  const mockAuthData = {
-    localId: 'test-uid-123',
-    idToken: 'mock-id-token',
-    refreshToken: 'mock-refresh-token',
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     authService = new AuthService();

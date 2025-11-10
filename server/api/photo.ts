@@ -9,7 +9,6 @@ import {
   uploadResume,
   uploadTipsPhoto,
   deleteFile,
-  extractFileNameFromUrl,
 } from '../services/firebaseStorageService';
 
 // Configure multer for memory storage

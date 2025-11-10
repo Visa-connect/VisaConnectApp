@@ -127,8 +127,8 @@ class ChatService {
 
   // Get messages for a conversation with pagination (initial load, not real-time)
   async getMessages(
-    conversationId: string, 
-    limit: number = 50, 
+    conversationId: string,
+    limit: number = 50,
     startAfter?: any
   ): Promise<{ messages: Message[]; hasMore: boolean; lastMessage?: any }> {
     try {
@@ -137,15 +137,15 @@ class ChatService {
       if (startAfter) {
         params.append('startAfter', JSON.stringify(startAfter));
       }
-      
+
       const response = await this.makeRequest(
         `/conversations/${conversationId}/messages?${params.toString()}`
       );
-      
+
       return {
         messages: response.data || [],
         hasMore: response.hasMore || false,
-        lastMessage: response.lastMessage
+        lastMessage: response.lastMessage,
       };
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -167,10 +167,7 @@ class ChatService {
   }
 
   // Mark messages as read
-  async markMessagesAsRead(
-    conversationId: string,
-    userId: string
-  ): Promise<void> {
+  async markMessagesAsRead(conversationId: string): Promise<void> {
     try {
       await this.makeRequest(`/conversations/${conversationId}/read`, {
         method: 'PUT',

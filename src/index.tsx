@@ -35,7 +35,7 @@ if (config.sentryDsn) {
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
-    beforeSend(event, hint) {
+    beforeSend(event, _) {
       // Filter out sensitive data
       if (event.request) {
         if (event.request.headers) {

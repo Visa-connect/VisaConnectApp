@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import DrawerMenu from '../components/DrawerMenu';
 import { useUserStore } from '../stores/userStore';
 import { useNotificationStore } from '../stores/notificationStore';
-import * as Sentry from '@sentry/react';
 
 const DashboardScreen: React.FC = () => {
   const { user, isLoading, getCompletion } = useUserStore();

@@ -53,9 +53,7 @@ export const uploadProfilePhoto = async (
   }
 };
 
-export const deleteProfilePhoto = async (
-  fileName: string
-): Promise<PhotoUploadResult> => {
+export const deleteProfilePhoto = async (): Promise<PhotoUploadResult> => {
   try {
     // Get auth token from user store
     const token = useUserStore.getState().getToken();

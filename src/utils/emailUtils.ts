@@ -48,6 +48,7 @@ export const openVisaConnectEmail = (): void => {
   };
 
   openEmailClient(config).catch((error) => {
+    console.error('Failed to open email client:', error);
     // Fallback: show instructions
     alert(
       'Unable to open email client automatically.\n\n' +

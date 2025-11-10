@@ -274,7 +274,7 @@ const SettingsScreen: React.FC = () => {
               Account
             </h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {menuItemsAccount.map((item, idx) => {
+              {menuItemsAccount.map((item, _) => {
                 const isLogout = item.label === 'Logout';
                 const isEditProfile = item.label === 'Edit profile';
                 const isEmailVisaConnect = item.label === 'Email VisaConnect';
@@ -314,7 +314,7 @@ const SettingsScreen: React.FC = () => {
               Preferences
             </h2>
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              {menuItemsPreferences.map((item, idx) => {
+              {menuItemsPreferences.map((item, _) => {
                 const isPreferences = item.label === 'Preferences';
                 const isMeetupsPosted = item.label === 'Meetups posted';
                 const isTipsTripsAdvicePosted =
