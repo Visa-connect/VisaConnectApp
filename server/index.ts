@@ -1,11 +1,13 @@
+import './instrument';
+
 import path from 'path';
 import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
 import cors, { CorsOptions, CorsOptionsDelegate } from 'cors';
+import * as Sentry from '@sentry/node';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { WebSocketService } from './services/websocketService';
-
 // Database connection
 import pool from './db/config';
 // Register API routes
@@ -41,7 +43,6 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     process.exit(1);
   }
 }
-
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   storageBucket:
@@ -63,6 +64,7 @@ pool
   });
 
 // Middleware setup
+// Note: Sentry request and tracing handlers are automatically set up by expressIntegration
 app.use(express.json()); // For parsing JSON bodies
 
 const defaultAllowedOrigins = [
@@ -189,6 +191,52 @@ app.get('/api/health', async (req: Request, res: Response) => {
 
 // Register API routes
 registerApiRoutes(app);
+
+// Global error handler middleware (must be after all routes)
+// Note: Sentry error handling is done via expressIntegration and manual captureException calls
+app.use((err: any, req: Request, res: Response, next: any) => {
+  console.error('Unhandled error:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+  });
+
+  // Capture error in Sentry if initialized
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err, {
+      tags: {
+        path: req.path,
+        method: req.method,
+      },
+      extra: {
+        url: req.url,
+        headers: {
+          'user-agent': req.headers['user-agent'],
+          'content-type': req.headers['content-type'],
+        },
+      },
+    });
+  }
+
+  // Don't send response if headers already sent
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  // Return JSON error for API routes, HTML for others
+  if (req.path.startsWith('/api/')) {
+    res.status(err.status || 500).json({
+      success: false,
+      message: err.message || 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
+  } else {
+    res.status(err.status || 500).json({
+      error: err.message || 'Internal server error',
+    });
+  }
+});
 
 // Serve static files and handle root route
 const buildPath = path.join(__dirname, '../../build');

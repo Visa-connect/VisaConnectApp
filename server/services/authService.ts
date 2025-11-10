@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node';
 import admin from 'firebase-admin';
 import pool from '../db/config';
 import { userService } from './userService';
@@ -234,10 +235,38 @@ export class AuthService {
         refreshToken: exchangeData.refreshToken,
       };
     } catch (error: any) {
-      console.log('authService.loginUser ERROR', error);
-      if (error.message === 'Invalid email or password') {
+      const errorMessage = error.message || 'Authentication failed';
+      const isAuthError = errorMessage === 'Invalid email or password';
+
+      // Log structured error
+      console.error('authService.loginUser ERROR:', {
+        message: errorMessage,
+        stack: error.stack,
+        email: loginData.email,
+        isAuthError,
+      });
+
+      // Capture error in Sentry (only for non-auth errors to avoid noise)
+      if (process.env.SENTRY_DSN && !isAuthError) {
+        Sentry.captureException(error, {
+          tags: {
+            service: 'authService',
+            method: 'loginUser',
+            error_type: 'authentication',
+          },
+          extra: {
+            email: loginData.email,
+            errorMessage,
+          },
+        });
+      }
+
+      // Re-throw auth errors as-is
+      if (isAuthError) {
         throw error;
       }
+
+      // For other errors, throw generic message but log original
       throw new Error('Authentication failed');
     }
   }
