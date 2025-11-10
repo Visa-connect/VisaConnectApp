@@ -37,13 +37,6 @@ const DashboardScreen: React.FC = () => {
         navigate={navigate}
         highlight={undefined}
       />
-      <button
-        onClick={() => {
-          throw new Error('This is your first error!');
-        }}
-      >
-        Break the world
-      </button>
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
           <svg
