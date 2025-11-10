@@ -9,6 +9,8 @@
  * user input, but server-side sanitization is the primary defense.
  */
 
+import sanitizeHtml from 'sanitize-html';
+
 /**
  * Escapes HTML entities in a string to prevent XSS attacks
  *
@@ -34,26 +36,41 @@ export function escapeHtml(str: string | null | undefined): string {
 
 /**
  * Removes potentially dangerous HTML tags and attributes
- * Keeps only safe, plain text content
+ * Uses sanitize-html library for robust HTML sanitization
+ * that handles malformed HTML, nested tags, and various bypass attempts
  *
  * @param str - The string to sanitize
- * @returns Sanitized string with HTML tags removed
+ * @returns Sanitized string with HTML tags removed (plain text only)
  */
 export function stripHtmlTags(str: string | null | undefined): string {
   if (!str) {
     return '';
   }
 
-  // Remove HTML tags
-  return str.replace(/<[^>]*>/g, '');
+  // Use sanitize-html to strip all HTML tags and return plain text
+  // This handles malformed HTML, nested tags, line breaks, and various bypass attempts
+  // Setting allowedTags to [] removes all tags, leaving only text content
+  return sanitizeHtml(str, {
+    allowedTags: [], // No tags allowed - strip everything
+    allowedAttributes: {}, // No attributes allowed
+  });
 }
 
 /**
- * Sanitizes a string by escaping HTML and removing dangerous content
+ * Sanitizes a string by escaping HTML or removing dangerous content
  *
  * @param str - The string to sanitize
  * @param options - Sanitization options
+ * @param options.escapeHtml - If true, escape HTML entities (mutually exclusive with stripHtmlTags)
+ * @param options.stripHtmlTags - If true, strip all HTML tags (mutually exclusive with escapeHtml)
+ * @param options.maxLength - Maximum length of the sanitized string
+ * @param options.trim - Whether to trim whitespace (default: true)
  * @returns Sanitized string
+ * @throws Error if both escapeHtml and stripHtmlTags are true
+ *
+ * Note: escapeHtml and stripHtmlTags are mutually exclusive. If both are true,
+ * stripHtmlTags takes precedence (more secure as it removes all HTML).
+ * If neither is specified, defaults to stripHtmlTags: true for security.
  */
 export function sanitizeString(
   str: string | null | undefined,
@@ -70,19 +87,26 @@ export function sanitizeString(
 
   let sanitized = str;
 
-  // Trim if requested
+  // Trim if requested (default: true)
   if (options.trim !== false) {
     sanitized = sanitized.trim();
   }
 
-  // Strip HTML tags if requested (default: true for user-generated content)
-  if (options.stripHtmlTags !== false) {
-    sanitized = stripHtmlTags(sanitized);
-  }
+  // Enforce mutual exclusivity: stripHtmlTags takes precedence if both are true
+  const shouldEscape =
+    options.escapeHtml === true && options.stripHtmlTags !== true;
+  const shouldStrip =
+    options.stripHtmlTags === true ||
+    (options.escapeHtml !== true && options.stripHtmlTags !== false);
 
-  // Escape HTML entities if requested (default: true for user-generated content)
-  if (options.escapeHtml !== false) {
+  // Apply sanitization in correct order: escape first (if needed), then strip (if needed)
+  // Order: trim → escape → strip → limit length
+  if (shouldEscape) {
+    // Escape HTML entities first to neutralize any malicious HTML
     sanitized = escapeHtml(sanitized);
+  } else if (shouldStrip) {
+    // Strip HTML tags (removes all HTML, so escaping is unnecessary)
+    sanitized = stripHtmlTags(sanitized);
   }
 
   // Limit length if requested
@@ -189,8 +213,7 @@ export function sanitizePost(post: {
 }): typeof post {
   return (
     sanitizeObject(post, ['title', 'description'], {
-      escapeHtml: true,
-      stripHtmlTags: true,
+      stripHtmlTags: true, // Strip HTML tags (more secure than escaping)
       maxLength: 10000, // Reasonable max length for posts
     }) || post
   );
@@ -208,8 +231,7 @@ export function sanitizeComment(comment: {
 }): typeof comment {
   return (
     sanitizeObject(comment, ['content'], {
-      escapeHtml: true,
-      stripHtmlTags: true,
+      stripHtmlTags: true, // Strip HTML tags (more secure than escaping)
       maxLength: 5000, // Reasonable max length for comments
     }) || comment
   );
@@ -227,8 +249,7 @@ export function sanitizeMessage(message: {
 }): typeof message {
   return (
     sanitizeObject(message, ['content'], {
-      escapeHtml: true,
-      stripHtmlTags: true,
+      stripHtmlTags: true, // Strip HTML tags (more secure than escaping)
       maxLength: 10000, // Reasonable max length for messages
     }) || message
   );

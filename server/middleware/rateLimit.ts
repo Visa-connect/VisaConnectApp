@@ -35,7 +35,7 @@ export const authRateLimiter = rateLimit({
       ip: req.ip,
       path: req.path,
       method: req.method,
-      userAgent: req.headers['user-agent'],
+      // Don't log sensitive information (email, userAgent) to protect user privacy
     });
 
     res.status(429).json({
@@ -77,7 +77,7 @@ export const sensitiveAuthRateLimiter = rateLimit({
       ip: req.ip,
       path: req.path,
       method: req.method,
-      userAgent: req.headers['user-agent'],
+      // Don't log sensitive information (email, userAgent) to protect user privacy
     });
 
     res.status(429).json({
@@ -116,10 +116,9 @@ export const loginRateLimiter = rateLimit({
   handler: (req: Request, res: Response) => {
     console.warn('Login rate limit exceeded:', {
       ip: req.ip,
-      email: req.body?.email,
       path: req.path,
       method: req.method,
-      userAgent: req.headers['user-agent'],
+      // Don't log sensitive information (email, userAgent) to protect user privacy
     });
 
     res.status(429).json({
@@ -152,10 +151,9 @@ export const registerRateLimiter = rateLimit({
   handler: (req: Request, res: Response) => {
     console.warn('Registration rate limit exceeded:', {
       ip: req.ip,
-      email: req.body?.email,
       path: req.path,
       method: req.method,
-      userAgent: req.headers['user-agent'],
+      // Don't log sensitive information (email, userAgent) to protect user privacy
     });
 
     res.status(429).json({
@@ -191,7 +189,7 @@ export const refreshTokenRateLimiter = rateLimit({
       ip: req.ip,
       path: req.path,
       method: req.method,
-      userAgent: req.headers['user-agent'],
+      // Don't log sensitive information (email, userAgent) to protect user privacy
     });
 
     res.status(429).json({

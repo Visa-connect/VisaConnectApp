@@ -35,6 +35,7 @@ interface Config {
     appUrl: string | undefined;
   };
   sentryDsn: string | undefined;
+  csrfSecret: string | undefined;
 }
 
 export const config: Config = {
@@ -67,4 +68,5 @@ export const config: Config = {
     appUrl: process.env.APP_URL,
   },
   sentryDsn: process.env.SENTRY_DSN,
+  csrfSecret: process.env.CSRF_SECRET,
 };

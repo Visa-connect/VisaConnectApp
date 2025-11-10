@@ -2,28 +2,136 @@
  * CSRF Protection Middleware
  *
  * Provides CSRF (Cross-Site Request Forgery) protection for state-changing
- * operations (POST, PUT, DELETE, PATCH). Uses the double-submit cookie pattern
- * for stateless CSRF protection.
+ * operations (POST, PUT, DELETE, PATCH). Uses CSRF tokens with the double-submit
+ * cookie pattern for stateless CSRF protection.
  *
- * Note: For a stateless backend, we use a simplified CSRF protection approach
- * that relies on SameSite cookies and origin validation. Full CSRF token
- * implementation would require session storage, which conflicts with stateless
- * architecture.
- *
- * Alternative approach: Use SameSite=Strict cookies and validate Origin header
- * for state-changing operations. This provides CSRF protection without requiring
- * server-side session storage.
+ * Implementation:
+ * - Generates CSRF tokens on GET requests and sets them in cookies
+ * - Validates CSRF tokens on state-changing operations
+ * - Uses Origin/Referer validation as defense-in-depth
+ * - Works with stateless backend architecture
  */
 
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../config/env';
+import Tokens from 'csrf';
+
+// CSRF token cookie and header names
+const CSRF_TOKEN_COOKIE = '_csrf';
+const CSRF_TOKEN_HEADER = 'x-csrf-token';
+
+// Initialize CSRF token generator/validator
+// The csrf package generates secrets per token (double-submit cookie pattern)
+// This works with stateless backends - secret is stored in cookie, token in header/body
+const tokens = new Tokens();
+
+/**
+ * Get allowed origins from environment or use defaults
+ */
+function getAllowedOrigins(): string[] {
+  return [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    config.email.appUrl,
+    process.env.APP_URL,
+  ].filter((value): value is string => Boolean(value));
+}
+
+/**
+ * Validates Origin/Referer header as defense-in-depth
+ * This is a secondary check - CSRF tokens are the primary protection
+ */
+function validateOriginHeader(req: Request, allowedOrigins: string[]): boolean {
+  const origin = req.headers.origin;
+  const referer = req.headers.referer;
+
+  if (origin && allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      const refererOrigin = refererUrl.origin;
+      if (allowedOrigins.includes(refererOrigin)) {
+        return true;
+      }
+    } catch (error) {
+      // Invalid URL format
+      return false;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * CSRF token generation middleware
+ * Generates and sets CSRF tokens on GET requests
+ * Should be applied before routes that need CSRF protection
+ */
+export function csrfTokenGenerator(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  // Only generate tokens for GET requests
+  if (req.method.toUpperCase() !== 'GET') {
+    return next();
+  }
+
+  // Skip token generation for health checks and internal endpoints
+  if (req.path === '/api/health' || req.path.startsWith('/api/internal')) {
+    return next();
+  }
+
+  // Skip token generation for static assets and API documentation
+  if (
+    req.path.startsWith('/static') ||
+    req.path.startsWith('/api/docs') ||
+    req.path.endsWith('.json')
+  ) {
+    return next();
+  }
+
+  try {
+    // Generate a new CSRF token
+    const secret = tokens.secretSync();
+    const token = tokens.create(secret);
+
+    // Set the token in a cookie (httpOnly for security)
+    const isProduction = config.server.nodeEnv === 'production';
+    res.cookie(CSRF_TOKEN_COOKIE, secret, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? 'strict' : 'lax',
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      path: '/',
+    });
+
+    // Also set the token in a response header for client-side access
+    res.setHeader(CSRF_TOKEN_HEADER, token);
+
+    // Store token in response locals for potential use in templates
+    res.locals.csrfToken = token;
+  } catch (error) {
+    console.error('CSRF: Error generating token', {
+      path: req.path,
+      method: req.method,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    // Continue even if token generation fails (will be caught by validation)
+  }
+
+  next();
+}
 
 /**
  * CSRF protection middleware
- * Validates that state-changing requests come from the same origin
+ * Validates CSRF tokens on state-changing operations
  *
  * This middleware should be applied to all POST, PUT, DELETE, PATCH endpoints
- * that modify server state. It validates the Origin header against allowed origins.
+ * that modify server state. It validates CSRF tokens and Origin headers.
  */
 export function csrfProtection(
   req: Request,
@@ -49,67 +157,87 @@ export function csrfProtection(
     return next();
   }
 
-  // Get the Origin header from the request
-  const origin = req.headers.origin;
-  const referer = req.headers.referer;
-
-  // In development, allow requests without Origin (e.g., from Postman, curl)
-  if (config.server.nodeEnv !== 'production') {
-    if (!origin && !referer) {
-      console.warn(
-        'CSRF: Request without Origin or Referer header (allowed in development)',
-        {
-          path: req.path,
-          method: req.method,
-          ip: req.ip,
-        }
-      );
-      return next();
-    }
+  // Skip CSRF protection for public authentication endpoints
+  // These endpoints need to accept cross-origin requests and don't require CSRF tokens
+  const publicAuthEndpoints = [
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh-token',
+    '/api/auth/reset-password',
+  ];
+  if (publicAuthEndpoints.includes(req.path)) {
+    return next();
   }
 
-  // Get allowed origins from environment or use defaults
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    config.email.appUrl,
-    process.env.APP_URL,
-  ].filter((value): value is string => Boolean(value));
+  // Get CSRF token from header or body
+  const tokenFromHeader = req.headers[CSRF_TOKEN_HEADER.toLowerCase()] as
+    | string
+    | undefined;
+  const tokenFromBody = req.body?._csrf as string | undefined;
+  const csrfToken = tokenFromHeader || tokenFromBody;
 
-  // Validate Origin header
-  if (origin) {
-    if (allowedOrigins.includes(origin)) {
-      return next();
-    }
+  // Get CSRF secret from cookie
+  const secret = req.cookies?.[CSRF_TOKEN_COOKIE];
 
-    console.warn('CSRF: Invalid Origin header', {
-      origin,
+  // Validate CSRF token
+  if (!csrfToken || !secret) {
+    console.warn('CSRF: Missing CSRF token or secret', {
       path: req.path,
       method: req.method,
       ip: req.ip,
-      allowedOrigins,
+      hasToken: !!csrfToken,
+      hasSecret: !!secret,
     });
 
     res.status(403).json({
       success: false,
-      message: 'Invalid origin. Request rejected for security reasons.',
+      message: 'CSRF token missing. Request rejected for security reasons.',
     });
     return;
   }
 
-  // If no Origin header, try to validate Referer header
-  if (referer) {
-    try {
-      const refererUrl = new URL(referer);
-      const refererOrigin = refererUrl.origin;
+  try {
+    // Verify the CSRF token
+    if (!tokens.verify(secret, csrfToken)) {
+      console.warn('CSRF: Invalid CSRF token', {
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+      });
 
-      if (allowedOrigins.includes(refererOrigin)) {
-        return next();
-      }
+      res.status(403).json({
+        success: false,
+        message: 'Invalid CSRF token. Request rejected for security reasons.',
+      });
+      return;
+    }
+  } catch (error) {
+    console.warn('CSRF: Error verifying token', {
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+      error: error instanceof Error ? error.message : String(error),
+    });
 
-      console.warn('CSRF: Invalid Referer header', {
-        referer,
-        refererOrigin,
+    res.status(403).json({
+      success: false,
+      message:
+        'CSRF token validation failed. Request rejected for security reasons.',
+    });
+    return;
+  }
+
+  // Defense-in-depth: Also validate Origin/Referer header
+  // This provides additional protection even if tokens are compromised
+  const allowedOrigins = getAllowedOrigins();
+  const isProduction = config.server.nodeEnv === 'production';
+
+  // In production, require Origin/Referer validation
+  if (isProduction) {
+    if (!validateOriginHeader(req, allowedOrigins)) {
+      console.warn('CSRF: Invalid Origin/Referer header (production)', {
+        origin: req.headers.origin,
+        referer: req.headers.referer,
         path: req.path,
         method: req.method,
         ip: req.ip,
@@ -118,41 +246,30 @@ export function csrfProtection(
 
       res.status(403).json({
         success: false,
-        message: 'Invalid referer. Request rejected for security reasons.',
+        message: 'Invalid origin. Request rejected for security reasons.',
       });
       return;
-    } catch (error) {
-      console.warn('CSRF: Invalid Referer URL format', {
-        referer,
-        path: req.path,
-        method: req.method,
-        error: error instanceof Error ? error.message : String(error),
-      });
+    }
+  } else {
+    // In development, warn but allow (for testing with Postman, curl, etc.)
+    if (!validateOriginHeader(req, allowedOrigins)) {
+      console.warn(
+        'CSRF: Invalid Origin/Referer header (development - allowed)',
+        {
+          origin: req.headers.origin,
+          referer: req.headers.referer,
+          path: req.path,
+          method: req.method,
+          ip: req.ip,
+          allowedOrigins,
+        }
+      );
+      // Continue in development - token validation is sufficient
     }
   }
 
-  // In production, reject requests without Origin or Referer
-  if (config.server.nodeEnv === 'production') {
-    console.warn(
-      'CSRF: Request without Origin or Referer header (rejected in production)',
-      {
-        path: req.path,
-        method: req.method,
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-      }
-    );
-
-    res.status(403).json({
-      success: false,
-      message:
-        'Request must include Origin or Referer header. Request rejected for security reasons.',
-    });
-    return;
-  }
-
-  // Allow in development if we get here
-  return next();
+  // Token and origin validation passed
+  next();
 }
 
 /**
@@ -186,25 +303,13 @@ export function validateOrigin(
   req: Request,
   allowedOrigins: string[]
 ): boolean {
-  const origin = req.headers.origin;
-  const referer = req.headers.referer;
+  return validateOriginHeader(req, allowedOrigins);
+}
 
-  if (origin && allowedOrigins.includes(origin)) {
-    return true;
-  }
-
-  if (referer) {
-    try {
-      const refererUrl = new URL(referer);
-      const refererOrigin = refererUrl.origin;
-      if (allowedOrigins.includes(refererOrigin)) {
-        return true;
-      }
-    } catch (error) {
-      // Invalid URL format
-      return false;
-    }
-  }
-
-  return false;
+/**
+ * Get CSRF token from response (for use in templates or API responses)
+ * Should be called after csrfTokenGenerator middleware
+ */
+export function getCsrfToken(res: Response): string | undefined {
+  return res.locals.csrfToken;
 }

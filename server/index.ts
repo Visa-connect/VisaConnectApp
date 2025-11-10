@@ -6,6 +6,7 @@ import path from 'path';
 import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
 import cors, { CorsOptions, CorsOptionsDelegate } from 'cors';
+import cookieParser from 'cookie-parser';
 import * as Sentry from '@sentry/node';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
@@ -15,7 +16,7 @@ import pool from './db/config';
 // Register API routes
 import { registerApiRoutes } from './api';
 // CSRF Protection
-import { csrfProtection } from './middleware/csrf';
+import { csrfTokenGenerator, csrfProtection } from './middleware/csrf';
 
 // Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
@@ -73,6 +74,7 @@ pool
 
 // Middleware setup
 // Note: Sentry request and tracing handlers are automatically set up by expressIntegration
+app.use(cookieParser()); // Parse cookies for CSRF protection
 app.use(express.json()); // For parsing JSON bodies
 
 const defaultAllowedOrigins = [
@@ -112,8 +114,10 @@ app.options('*', cors(corsOptionsDelegate));
 
 // CSRF Protection for state-changing operations
 // Note: Applied before API routes to protect all state-changing endpoints
-// Skips GET, HEAD, OPTIONS requests automatically
-app.use(csrfProtection);
+// 1. Generate CSRF tokens on GET requests
+// 2. Validate CSRF tokens on state-changing operations (POST, PUT, DELETE, PATCH)
+app.use(csrfTokenGenerator); // Generate tokens on GET requests
+app.use(csrfProtection); // Validate tokens on state-changing operations
 
 // Content Security Policy - Allow necessary resources
 // Note: 'unsafe-inline' is currently required for React apps built with Create React App
