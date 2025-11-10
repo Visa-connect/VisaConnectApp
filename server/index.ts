@@ -15,8 +15,6 @@ import { WebSocketService } from './services/websocketService';
 import pool from './db/config';
 // Register API routes
 import { registerApiRoutes } from './api';
-// CSRF Protection
-import { csrfTokenGenerator, csrfProtection } from './middleware/csrf';
 
 // Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
@@ -74,7 +72,7 @@ pool
 
 // Middleware setup
 // Note: Sentry request and tracing handlers are automatically set up by expressIntegration
-app.use(cookieParser()); // Parse cookies for CSRF protection
+app.use(cookieParser()); // Parse cookies for refresh token httpOnly cookies
 app.use(express.json()); // For parsing JSON bodies
 
 const defaultAllowedOrigins = [
@@ -112,59 +110,20 @@ const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
 app.use(cors(corsOptionsDelegate));
 app.options('*', cors(corsOptionsDelegate));
 
-// CSRF Protection for state-changing operations
-// Note: Applied before API routes to protect all state-changing endpoints
-// 1. Generate CSRF tokens on GET requests
-// 2. Validate CSRF tokens on state-changing operations (POST, PUT, DELETE, PATCH)
-app.use(csrfTokenGenerator); // Generate tokens on GET requests
-app.use(csrfProtection); // Validate tokens on state-changing operations
-
-// Content Security Policy - Allow necessary resources
-// Note: 'unsafe-inline' is currently required for React apps built with Create React App
-// as React uses inline scripts during hydration and Webpack may generate inline scripts.
-// This weakens protection against XSS attacks. Future improvement: migrate to a custom build setup
-// (e.g., Vite or custom Webpack config) to implement nonces or hashes for inline scripts and styles,
-// allowing us to remove 'unsafe-inline' and significantly improve security posture.
-// TODO: Implement nonce-based or hash-based CSP [CSP Security Enhancement]
-// Options:
-//   1. Migrate to Vite (recommended): Vite supports CSP nonces out of the box via @vitejs/plugin-react
-//   2. Use react-app-rewired: Customize CRA build to inject nonces into inline scripts/styles
-//   3. Use @craco/craco: Alternative to react-app-rewired for customizing CRA
-//   4. Manual hash-based CSP: Extract inline script/style hashes and add them to CSP policy
-// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP for CSP best practices
+// Minimal Content Security Policy
+// Note: With Create React App and 'unsafe-inline', CSP provides limited XSS protection.
+// However, it still provides value by:
+// - Preventing clickjacking (frame-ancestors)
+// - Restricting form submissions (form-action)
+// - Blocking plugins (object-src)
+// For full XSS protection, migrate to Vite or implement nonces/hashes to remove 'unsafe-inline'
 app.use((req: Request, res: Response, next) => {
   if (process.env.NODE_ENV === 'production') {
-    // Construct WebSocket URL from APP_URL environment variable
-    let wsUrl = '';
-    if (process.env.APP_URL) {
-      try {
-        const appUrl = new URL(process.env.APP_URL);
-        // Convert http/https to ws/wss
-        const wsProtocol = appUrl.protocol === 'https:' ? 'wss:' : 'ws:';
-        wsUrl = `${wsProtocol}//${appUrl.host}`;
-      } catch (error) {
-        console.warn(
-          '⚠️  Invalid APP_URL format, WebSocket CSP directive will be omitted:',
-          error
-        );
-      }
-    }
-
-    // Build CSP policy with dynamic WebSocket URL
+    // Minimal CSP focusing on clickjacking prevention and basic resource restrictions
     const cspPolicy =
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "font-src 'self' data:; " +
-      "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://storage.googleapis.com https://lh3.googleusercontent.com; " +
-      "connect-src 'self' https://*.googleapis.com https://identitytoolkit.googleapis.com https://nominatim.openstreetmap.org" +
-      (wsUrl ? ` ${wsUrl}` : '') +
-      '; ' +
-      "manifest-src 'self'; " +
-      "base-uri 'self'; " +
-      "form-action 'self'; " +
-      "frame-ancestors 'none'; " +
-      "object-src 'none';";
+      "frame-ancestors 'none'; " + // Prevent clickjacking
+      "form-action 'self'; " + // Prevent form hijacking
+      "object-src 'none';"; // Block plugins
 
     res.setHeader('Content-Security-Policy', cspPolicy);
   }

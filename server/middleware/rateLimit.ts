@@ -89,9 +89,13 @@ export const sensitiveAuthRateLimiter = rateLimit({
 });
 
 /**
- * Login-specific rate limiter with stricter limits
- * Limits: 5 requests per 15 minutes per IP, but tracks failed attempts
+ * Login-specific rate limiter
+ * Limits: 5 requests per 15 minutes per IP
  * Used for: login endpoint (most targeted by brute force attacks)
+ *
+ * Note: Uses IP-only rate limiting to prevent attackers from bypassing limits
+ * by using different email addresses. This ensures that all login attempts from
+ * a single IP are counted together, regardless of which email is targeted.
  */
 export const loginRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -103,15 +107,11 @@ export const loginRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
-    // Use email + IP for login attempts to prevent targeting specific users
-    const email = req.body?.email;
+    // Use IP-only rate limiting to prevent bypass attacks
+    // An attacker cannot bypass the rate limit by using different emails
     // ipKeyGenerator properly handles IPv6 addresses and prevents bypass attacks
     // req.ip is set correctly when trust proxy is enabled in Express
-    const ip = ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
-
-    // Combine email and IP for more granular rate limiting
-    // This prevents brute force attacks on specific accounts
-    return email ? `${ip}:${email.toLowerCase()}` : ip;
+    return ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown');
   },
   handler: (req: Request, res: Response) => {
     console.warn('Login rate limit exceeded:', {
