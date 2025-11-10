@@ -8,6 +8,7 @@ import { useUserStore } from '../stores/userStore';
 import logo from '../assets/images/logo.png';
 import { LoginResponse } from '../types/api';
 import { userToUserData } from '../stores/userStore';
+import { isAuthenticationError } from '../utils/authErrors';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -103,8 +104,7 @@ const SignInScreen: React.FC = () => {
       // Capture error in Sentry (only for non-auth errors to avoid noise)
       if (
         process.env.REACT_APP_SENTRY_DSN &&
-        !errorMessage.includes('Invalid email or password') &&
-        !errorMessage.includes('Authentication failed')
+        !isAuthenticationError(errorMessage)
       ) {
         Sentry.captureException(error, {
           tags: {

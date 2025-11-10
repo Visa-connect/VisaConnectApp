@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
-import { RefreshTokenError } from '../errors/AuthErrors';
+import { RefreshTokenError, isAuthenticationError } from '../errors/AuthErrors';
 
 const router = express.Router();
 
@@ -166,9 +166,7 @@ router.post('/login', async (req: Request, res: Response) => {
   } catch (error: any) {
     const duration = Date.now() - startTime;
     const errorMessage = error.message || 'Login failed';
-    const isAuthError =
-      errorMessage.includes('Invalid email or password') ||
-      errorMessage.includes('Authentication failed');
+    const isAuthError = isAuthenticationError(errorMessage);
 
     // Log structured error
     console.error('Login error:', {

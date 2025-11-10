@@ -5,7 +5,7 @@ import { userService } from './userService';
 import { User } from './userService';
 import { config } from '../config/env';
 import { emailService } from './emailService';
-import { RefreshTokenError } from '../errors/AuthErrors';
+import { RefreshTokenError, isAuthenticationError } from '../errors/AuthErrors';
 
 export interface AuthResponse {
   success: boolean;
@@ -236,7 +236,7 @@ export class AuthService {
       };
     } catch (error: any) {
       const errorMessage = error.message || 'Authentication failed';
-      const isAuthError = errorMessage === 'Invalid email or password';
+      const isAuthError = isAuthenticationError(errorMessage);
 
       // Log structured error
       console.error('authService.loginUser ERROR:', {

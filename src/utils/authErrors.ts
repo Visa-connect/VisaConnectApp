@@ -1,12 +1,3 @@
-export class RefreshTokenError extends Error {
-  public readonly code = 'REFRESH_TOKEN_ERROR';
-
-  constructor(message = 'Token refresh failed') {
-    super(message);
-    this.name = 'RefreshTokenError';
-  }
-}
-
 /**
  * Determines if an error message represents an authentication error.
  * Authentication errors are typically user-facing (invalid credentials) and
@@ -33,3 +24,4 @@ export function isAuthenticationError(errorMessage: string): boolean {
     errorMessage.toLowerCase().includes(msg.toLowerCase())
   );
 }
+
