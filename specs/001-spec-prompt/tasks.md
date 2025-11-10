@@ -66,6 +66,30 @@
 - [ ] T044 Document and automate secrets rotation process with quarterly rotation schedule in `docs/security/secrets-rotation.md`
 - [ ] T045 Implement GDPR data retention and deletion endpoints (`/api/auth/delete-account`, `/api/user/data-export`) with retention policies in `server/api/dataRetention.ts`
 
+## Phase 8 – Performance Optimization (Production Readiness)
+
+### Frontend Performance (High Priority)
+
+- [ ] T046 Analyze and optimize bundle size using `webpack-bundle-analyzer` in `package.json` scripts, identify large dependencies, implement code splitting, and optimize imports with tree-shaking
+- [ ] T047 Implement lazy loading for routes/screens beyond the fold using `React.lazy()` and `Suspense` boundaries, optimize image loading with lazy loading and responsive images
+- [ ] T048 Implement memoization for expensive selectors and computations using `React.useMemo()` and `React.useCallback()`, optimize Zustand and React Query selectors
+- [ ] T049 Optimize Core Web Vitals to achieve Lighthouse performance score ≥90: optimize FCP, LCP, CLS, TTI, and TBT, run Lighthouse audits and implement fixes
+
+### Backend Performance (High Priority)
+
+- [ ] T050 Profile API endpoints and optimize response times to achieve p95 <400ms: identify slow endpoints, optimize database queries, implement response caching, optimize serialization, add connection pooling
+- [ ] T051 Optimize database queries: audit all database queries, add indexes for frequently queried fields, review query plans for new SQL, set up slow query logging, optimize N+1 queries, implement query result caching
+- [ ] T052 Implement Redis caching for frequent reads: evaluate caching needs, set up Redis (if needed), implement caching for user profiles, job listings, company reviews, and unread notification counts, implement cache invalidation strategy, monitor cache hit rates
+
+### Performance Monitoring & Observability
+
+- [ ] T053 Set up performance monitoring: configure Sentry BrowserTracing for frontend, track Core Web Vitals, monitor API response times, set up alerts for performance degradation, create performance dashboards, track bundle size over time
+
+### SpecKit Performance (Medium Priority)
+
+- [ ] T031 [P] Add profiling benchmarks to `specs/reports/specprompt-benchmark.md`
+- [ ] T054 Optimize SpecKit runtime and memory usage: profile prompt execution to ensure <10s generation, introduce caching for repeated constitution lookups, parallelize optional analyses, target <200MB memory footprint
+
 ## Dependencies & Execution Order
 
 1. Phase 1 → Phase 2 (setup before wiring validation/logging)
@@ -74,6 +98,7 @@
 4. Phase 4 → Phase 5 (governance enforcement needs limiter outputs)
 5. Phase 6 can start after Phase 3 for parallel polish except tasks 031-036 which follow audit, CI, and security setup.
 6. Phase 7 can start after Phase 2 (security hardening can proceed in parallel with core development, but T041-T043 are critical for production).
+7. Phase 8 can start after Phase 2 (performance optimization can proceed in parallel, but T050-T051 are critical for production scalability).
 
 ## Parallel Opportunities
 
@@ -84,6 +109,10 @@
 - Phase 6 task T029 can run alongside Phase 4 implementation.
 - T041, T042, and T043 can run in parallel (distinct security middleware implementations).
 - T044 and T045 can run in parallel (documentation and implementation tasks).
+- T046, T047, and T048 can run in parallel (frontend performance optimizations).
+- T050 and T051 can run in parallel (backend performance optimizations, but T051 should complete before T052).
+- T053 can run in parallel with other performance tasks (monitoring setup).
+- T031 and T054 can run in parallel (SpecKit performance optimizations).
 
 ## Independent Test Criteria
 
