@@ -15,7 +15,6 @@ const LocationInput: React.FC<LocationInputProps> = ({
   onChange,
   placeholder = 'Enter location',
   allowCurrentLocation = true,
-  showMap = false,
   required = false,
   disabled = false,
   className = '',

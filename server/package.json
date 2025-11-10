@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@sendgrid/mail": "^8.1.5",
+    "@sentry/node": "^10.24.0",
     "@types/multer": "^2.0.0",
     "@types/pg": "^8.15.5",
     "@types/uuid": "^10.0.0",

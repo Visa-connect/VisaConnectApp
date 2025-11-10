@@ -14,7 +14,7 @@ const isLocalhost = Boolean(
 );
 */
 
-export function register(config) {
+export function register() {
   // Temporarily disable service worker to prevent refresh loops
   console.log('Service worker registration disabled to prevent refresh loops');
 

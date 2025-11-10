@@ -34,6 +34,7 @@ interface Config {
     adminDashboardUrl: string | undefined;
     appUrl: string | undefined;
   };
+  sentryDsn: string | undefined;
 }
 
 export const config: Config = {
@@ -65,4 +66,5 @@ export const config: Config = {
     adminDashboardUrl: process.env.ADMIN_DASHBOARD_URL,
     appUrl: process.env.APP_URL,
   },
+  sentryDsn: process.env.SENTRY_DSN,
 };

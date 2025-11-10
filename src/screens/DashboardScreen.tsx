@@ -37,7 +37,6 @@ const DashboardScreen: React.FC = () => {
         navigate={navigate}
         highlight={undefined}
       />
-
       {isLoading && (
         <div className="flex-1 flex items-center justify-center">
           <svg

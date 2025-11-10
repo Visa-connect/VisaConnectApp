@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as Sentry from '@sentry/react';
 import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import Button from '../components/Button';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +8,7 @@ import { useUserStore } from '../stores/userStore';
 import logo from '../assets/images/logo.png';
 import { LoginResponse } from '../types/api';
 import { userToUserData } from '../stores/userStore';
+import { isAuthenticationError } from '../utils/authErrors';
 
 const Input = React.forwardRef<
   HTMLInputElement,
@@ -87,12 +89,38 @@ const SignInScreen: React.FC = () => {
         setApiError('Login failed. Please check your credentials.');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
-      setApiError(
+      const errorMessage =
         error.response?.data?.message ||
-          error.message ||
-          'Login failed. Please try again.'
-      );
+        error.message ||
+        'Login failed. Please try again.';
+
+      // Log structured error
+      console.error('Login error:', {
+        error: errorMessage,
+        email: form.email,
+        stack: error.stack,
+      });
+
+      // Capture error in Sentry (only for non-auth errors to avoid noise)
+      if (
+        process.env.REACT_APP_SENTRY_DSN &&
+        !isAuthenticationError(errorMessage)
+      ) {
+        Sentry.captureException(error, {
+          tags: {
+            screen: 'LoginScreen',
+            action: 'login',
+            error_type: 'authentication',
+          },
+          extra: {
+            email: form.email,
+            errorMessage,
+          },
+        });
+      }
+
+      // Set user-friendly error message
+      setApiError(errorMessage);
     } finally {
       setSubmitting(false);
     }

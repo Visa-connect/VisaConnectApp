@@ -1,8 +1,9 @@
 import express, { Request, Response } from 'express';
+import * as Sentry from '@sentry/node';
 import { authService } from '../services/authService';
 import { isAuthenticated } from '../middleware/isAuthenticated';
 import { isValidEmail } from '../utils/validation';
-import { RefreshTokenError } from '../errors/AuthErrors';
+import { RefreshTokenError, isAuthenticationError } from '../errors/AuthErrors';
 
 const router = express.Router();
 
@@ -100,14 +101,61 @@ router.post('/register', async (req: Request, res: Response) => {
 
 // Login existing user
 router.post('/login', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  const email = req.body?.email;
+
   try {
+    // Validate request body
+    if (!req.body || !email || !req.body.password) {
+      const errorMessage = 'Email and password are required';
+      console.error('Login validation error:', {
+        email: email || 'missing',
+        hasPassword: !!req.body?.password,
+        path: req.path,
+      });
+      return res.status(400).json({
+        success: false,
+        message: errorMessage,
+      });
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      const errorMessage = 'Invalid email format';
+      console.error('Login validation error:', {
+        email,
+        path: req.path,
+      });
+      return res.status(400).json({
+        success: false,
+        message: errorMessage,
+      });
+    }
+
+    // Set Sentry context for this request
+    if (process.env.SENTRY_DSN) {
+      Sentry.setUser({ email });
+      Sentry.setContext('login_request', {
+        email,
+        path: req.path,
+        method: req.method,
+      });
+    }
+
     const result = await authService.loginUser(req.body);
 
     if (!result.refreshToken) {
-      console.warn('Login succeeded without refresh token.');
+      console.warn('Login succeeded without refresh token.', { email });
     } else {
       setRefreshTokenCookie(res, result.refreshToken);
     }
+
+    const duration = Date.now() - startTime;
+    console.log('Login successful:', {
+      email,
+      duration: `${duration}ms`,
+      userId: result.user?.id,
+    });
 
     res.json({
       success: result.success,
@@ -116,23 +164,71 @@ router.post('/login', async (req: Request, res: Response) => {
       token: result.token,
     });
   } catch (error: any) {
-    console.error('Login error:', error);
-    res.status(401).json({
+    const duration = Date.now() - startTime;
+    const errorMessage = error.message || 'Login failed';
+    const isAuthError = isAuthenticationError(errorMessage);
+
+    // Log structured error
+    console.error('Login error:', {
+      email,
+      error: errorMessage,
+      duration: `${duration}ms`,
+      stack: error.stack,
+      path: req.path,
+    });
+
+    // Capture error in Sentry (only for non-auth errors to avoid noise)
+    if (process.env.SENTRY_DSN && !isAuthError) {
+      Sentry.captureException(error, {
+        tags: {
+          endpoint: 'login',
+          error_type: 'authentication',
+        },
+        extra: {
+          email,
+          duration: `${duration}ms`,
+          path: req.path,
+        },
+      });
+    }
+
+    // Determine appropriate status code
+    const statusCode = isAuthError ? 401 : 500;
+
+    res.status(statusCode).json({
       success: false,
-      message: error.message || 'Login failed',
+      message: errorMessage,
     });
   }
 });
 
 // Refresh token endpoint
 router.post('/refresh-token', async (req: Request, res: Response) => {
+  const startTime = Date.now();
+
   try {
     const refreshToken = getRefreshTokenFromRequest(req);
 
-    if (!refreshToken) {
+    // Validate refresh token exists and is not empty
+    // Using optional chaining to safely handle undefined values
+    if (!refreshToken?.trim()) {
+      console.error('Token refresh validation error:', {
+        hasToken: !!refreshToken,
+        tokenLength: refreshToken?.length || 0,
+        path: req.path,
+      });
       return res.status(401).json({
         success: false,
         message: 'Refresh token cookie missing',
+      });
+    }
+
+    // Set Sentry context for this request
+    if (process.env.SENTRY_DSN) {
+      Sentry.setContext('refresh_token_request', {
+        path: req.path,
+        method: req.method,
+        hasToken: true,
       });
     }
 
@@ -140,6 +236,13 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
 
     setRefreshTokenCookie(res, result.refreshToken);
 
+    const duration = Date.now() - startTime;
+    console.log('Token refresh successful:', {
+      duration: `${duration}ms`,
+      userId: result.user?.id,
+      path: req.path,
+    });
+
     res.json({
       success: result.success,
       token: result.token,
@@ -147,9 +250,34 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
       message: result.message,
     });
   } catch (error: any) {
-    console.error('Token refresh error:', error);
+    const duration = Date.now() - startTime;
+    const errorMessage = error.message || 'Token refresh failed';
+    const isRefreshTokenError = error instanceof RefreshTokenError;
 
-    if (error instanceof RefreshTokenError) {
+    // Log structured error
+    console.error('Token refresh error:', {
+      error: errorMessage,
+      duration: `${duration}ms`,
+      stack: error.stack,
+      path: req.path,
+      isRefreshTokenError,
+    });
+
+    // Capture error in Sentry (only for non-auth errors to avoid noise)
+    if (process.env.SENTRY_DSN && !isRefreshTokenError) {
+      Sentry.captureException(error, {
+        tags: {
+          endpoint: 'refresh-token',
+          error_type: 'token_refresh',
+        },
+        extra: {
+          duration: `${duration}ms`,
+          path: req.path,
+        },
+      });
+    }
+
+    if (isRefreshTokenError) {
       clearRefreshTokenCookie(res);
       return res.status(401).json({
         success: false,
@@ -159,7 +287,7 @@ router.post('/refresh-token', async (req: Request, res: Response) => {
 
     res.status(500).json({
       success: false,
-      message: error.message || 'Token refresh failed',
+      message: errorMessage,
     });
   }
 });

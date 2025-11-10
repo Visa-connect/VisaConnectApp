@@ -16,6 +16,9 @@ export const config = {
     name: 'VisaConnect',
     version: '1.0.0',
   },
+
+  // Sentry Configuration
+  sentryDsn: process.env.REACT_APP_SENTRY_DSN || null,
 };
 
 export default config;
