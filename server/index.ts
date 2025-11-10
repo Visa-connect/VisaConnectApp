@@ -1,3 +1,5 @@
+// Load environment variables first (before Sentry initialization)
+import './config/env';
 import './instrument';
 
 import path from 'path';

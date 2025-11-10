@@ -1,9 +1,9 @@
+// Sentry initialization (environment variables are loaded by config/env.ts)
 import * as Sentry from '@sentry/node';
 import { httpIntegration, expressIntegration } from '@sentry/node';
-import { config } from './config/env';
 
 Sentry.init({
-  dsn: config.sentryDsn,
+  dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || 'development',
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
   integrations: [httpIntegration(), expressIntegration()],
