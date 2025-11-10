@@ -2,9 +2,9 @@
 
 ## Phase 1 – Setup & Tooling Baseline
 
-- [ ] T001 Verify SpecKit scripts executable (`chmod +x .specify/scripts/bash/*.sh`)
-- [ ] T002 Install dependencies (`yarn install`) and confirm lint/test baseline (`yarn lint && yarn test --runInBand`)
-- [ ] T003 Configure prompt profiling script scaffold in `.specify/scripts/analysis/profile-specprompt.ts`
+- [x] T001 Verify SpecKit scripts executable (`chmod +x .specify/scripts/bash/*.sh`)
+- [x] T002 Install dependencies (`yarn install`) and confirm lint/test baseline (`yarn lint && yarn test --runInBand`)
+- [x] T003 Configure prompt profiling script scaffold in `.specify/scripts/analysis/profile-specprompt.ts`
 - [ ] T004 Initialize prompt execution log at `specs/logs/speckit.log` with rotation README entry
 
 ## Phase 2 – Foundational Infrastructure
