@@ -94,7 +94,8 @@ export class TokenRefreshService {
     try {
       const response = (await apiPost(
         '/api/auth/refresh-token',
-        {}
+        {},
+        { skipAuth: true }
       )) as TokenRefreshResponse;
 
       if (!response.success) {

@@ -4,12 +4,14 @@ import { userService } from './userService';
 import { User } from './userService';
 import { config } from '../config/env';
 import { emailService } from './emailService';
+import { RefreshTokenError } from '../errors/AuthErrors';
 
 export interface AuthResponse {
   success: boolean;
   message: string;
   user: User;
   token: string; // Firebase ID token for authenticated API calls - always present on successful login
+  refreshToken?: string;
 }
 
 export interface RegistrationResponse {
@@ -17,6 +19,7 @@ export interface RegistrationResponse {
   message: string;
   user: User;
   token?: string; // Optional for registration - may not be present if auto-login fails
+  refreshToken?: string;
 }
 
 export interface LoginData {
@@ -103,8 +106,15 @@ export class AuthService {
         };
       }
 
-      const exchangeData = (await exchangeResponse.json()) as any;
+      const exchangeData = (await exchangeResponse.json()) as {
+        idToken?: string;
+        refreshToken?: string;
+      };
       const idToken = exchangeData.idToken;
+
+      if (!idToken) {
+        throw new Error('Authentication failed');
+      }
 
       // 4. Send email verification
       // await this.sendEmailVerification(firebaseUser.uid);
@@ -114,6 +124,7 @@ export class AuthService {
         message: 'User registered and logged in successfully.',
         user: userProfile,
         token: idToken, // Return the authentication token
+        refreshToken: exchangeData.refreshToken,
       };
     } catch (error: any) {
       // If PostgreSQL creation fails, clean up Firebase user
@@ -190,8 +201,16 @@ export class AuthService {
         throw new Error('Authentication failed');
       }
 
-      const exchangeData = (await exchangeResponse.json()) as any;
+      const exchangeData = (await exchangeResponse.json()) as {
+        idToken?: string;
+        refreshToken?: string;
+      };
       const idToken = exchangeData.idToken; // Firebase ID token
+
+      if (!idToken) {
+        throw new Error('Authentication failed');
+      }
+
       // 4. Get user profile from PostgreSQL
       const userProfile = await userService.getUserById(firebaseUid);
 
@@ -212,6 +231,7 @@ export class AuthService {
         message: 'Login successful',
         user: userProfile,
         token: idToken,
+        refreshToken: exchangeData.refreshToken,
       };
     } catch (error: any) {
       console.log('authService.loginUser ERROR', error);
@@ -297,52 +317,69 @@ export class AuthService {
   }
 
   // Refresh user token
-  async refreshToken(
-    uid: string
-  ): Promise<{ success: boolean; token: string; user: User; message: string }> {
+  async refreshToken(refreshToken: string): Promise<{
+    success: boolean;
+    token: string;
+    refreshToken: string;
+    user: User;
+    message: string;
+  }> {
     try {
-      // 1. Verify user exists in PostgreSQL
-      const userProfile = await userService.getUserById(uid);
-      if (!userProfile) {
-        throw new Error('User not found');
-      }
-
-      // 2. Generate new custom token
-      const customToken = await admin.auth().createCustomToken(uid);
-
-      // 3. Exchange custom token for ID token
-      const exchangeResponse = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=${config.firebase.webApiKey}`,
+      const refreshResponse = await fetch(
+        `https://securetoken.googleapis.com/v1/token?key=${config.firebase.webApiKey}`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: JSON.stringify({
-            token: customToken,
-            returnSecureToken: true,
-          }),
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+          }).toString(),
         }
       );
 
-      if (!exchangeResponse.ok) {
-        const errorData = (await exchangeResponse.json()) as any;
-        console.error('Token refresh exchange failed:', errorData);
-        throw new Error('Token refresh failed');
+      if (!refreshResponse.ok) {
+        const errorText = await refreshResponse.text();
+        console.error('Token refresh exchange failed:', errorText);
+        throw new RefreshTokenError('Token refresh failed');
       }
 
-      const exchangeData = (await exchangeResponse.json()) as any;
-      const idToken = exchangeData.idToken;
+      const refreshData = (await refreshResponse.json()) as {
+        id_token?: string;
+        refresh_token?: string;
+        user_id?: string;
+      };
+
+      const newIdToken = refreshData.id_token;
+      const newRefreshToken = refreshData.refresh_token;
+      const userId = refreshData.user_id;
+
+      if (!newIdToken || !newRefreshToken || !userId) {
+        throw new RefreshTokenError('Token refresh failed');
+      }
+
+      const userProfile = await userService.getUserById(userId);
+      if (!userProfile) {
+        throw new RefreshTokenError('User not found');
+      }
 
       return {
         success: true,
-        token: idToken,
+        token: newIdToken,
+        refreshToken: newRefreshToken,
         user: userProfile,
         message: 'Token refreshed successfully',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Token refresh error:', error);
-      throw new Error('Failed to refresh token');
+
+      if (error instanceof RefreshTokenError) {
+        throw error;
+      }
+
+      const message = error instanceof Error ? error.message : undefined;
+      throw new RefreshTokenError(message);
     }
   }
 

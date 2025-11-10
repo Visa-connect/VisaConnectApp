@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import express, { Express, Request, Response } from 'express';
-import cors from 'cors';
+import cors, { CorsOptions, CorsOptionsDelegate } from 'cors';
 import admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 import { WebSocketService } from './services/websocketService';
@@ -64,7 +64,41 @@ pool
 
 // Middleware setup
 app.use(express.json()); // For parsing JSON bodies
-app.use(cors()); // Enable CORS for all routes
+
+const defaultAllowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  process.env.APP_URL,
+].filter((value): value is string => Boolean(value));
+
+const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
+  const origin = req.headers['origin'];
+  const method = (req.method || '').toUpperCase();
+  const isReadOnlyRequest = method === 'GET' || method === 'HEAD';
+
+  if (!origin) {
+    if (process.env.NODE_ENV !== 'production' || isReadOnlyRequest) {
+      callback(null, { origin: true, credentials: true } as CorsOptions);
+      return;
+    }
+
+    callback(
+      new Error(
+        'Requests without an Origin header are not allowed in production'
+      )
+    );
+    return;
+  }
+
+  if (defaultAllowedOrigins.includes(origin)) {
+    callback(null, { origin: true, credentials: true } as CorsOptions);
+  } else {
+    callback(new Error(`Origin ${origin} not allowed by CORS`));
+  }
+};
+
+app.use(cors(corsOptionsDelegate));
+app.options('*', cors(corsOptionsDelegate));
 
 // Content Security Policy - Allow necessary resources
 // Note: 'unsafe-inline' is currently required for React apps built with Create React App
