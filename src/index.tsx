@@ -24,7 +24,14 @@ if (config.sentryDsn) {
       }),
     ],
     // Set tracing origins to track performance
-    tracePropagationTargets: ['localhost', /^https:\/\/.*\.visaconnectus\.com/],
+    // Only propagate trace headers to HTTPS endpoints for security
+    // localhost is allowed for development (HTTP is acceptable in dev)
+    tracePropagationTargets: [
+      'localhost',
+      // Explicitly match HTTPS protocol only - prevents trace header propagation to HTTP endpoints
+      // Matches: https://visaconnectus.com and https://*.visaconnectus.com (any subdomain)
+      /^https:\/\/([a-zA-Z0-9-]+\.)?visaconnectus\.com(\/|$)/,
+    ],
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
