@@ -17,6 +17,14 @@ jest.mock('../../errors/AuthErrors', () => ({
   isAuthenticationError: jest.fn(),
 }));
 
+// Mock rate limiter middleware - bypass for tests
+jest.mock('../../middleware/rateLimit', () => ({
+  loginRateLimiter: (req: any, res: any, next: any) => next(),
+  registerRateLimiter: (req: any, res: any, next: any) => next(),
+  refreshTokenRateLimiter: (req: any, res: any, next: any) => next(),
+  sensitiveAuthRateLimiter: (req: any, res: any, next: any) => next(),
+}));
+
 // Mock isAuthenticated middleware
 jest.mock('../../middleware/isAuthenticated', () => {
   return {

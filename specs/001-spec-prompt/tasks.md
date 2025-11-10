@@ -60,9 +60,9 @@
 
 ## Phase 7 – Security Hardening (Production Readiness)
 
-- [ ] T041 Implement rate limiting for public auth endpoints (`/api/auth/login`, `/api/auth/register`, `/api/auth/refresh-token`, `/api/auth/reset-password`) using `express-rate-limit` middleware in `server/middleware/rateLimit.ts`
-- [ ] T042 Implement output sanitization for user-generated content (posts, comments, messages) and API responses in `server/utils/sanitization.ts`
-- [ ] T043 Implement CSRF protection for state-changing operations (POST, PUT, DELETE, PATCH) using CSRF tokens in `server/middleware/csrf.ts`
+- [x] T041 Implement rate limiting for public auth endpoints (`/api/auth/login`, `/api/auth/register`, `/api/auth/refresh-token`, `/api/auth/reset-password`) using `express-rate-limit` middleware in `server/middleware/rateLimit.ts`
+- [x] T042 Implement output sanitization for user-generated content (posts, comments, messages) and API responses in `server/utils/sanitization.ts`
+- [x] T043 Implement CSRF protection for state-changing operations (POST, PUT, DELETE, PATCH) using CSRF tokens in `server/middleware/csrf.ts`
 - [ ] T044 Document and automate secrets rotation process with quarterly rotation schedule in `docs/security/secrets-rotation.md`
 - [ ] T045 Implement GDPR data retention and deletion endpoints (`/api/auth/delete-account`, `/api/user/data-export`) with retention policies in `server/api/dataRetention.ts`
 

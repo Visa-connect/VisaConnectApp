@@ -6,6 +6,7 @@ import type { CreateReportData } from '../services/reportService';
 import { notificationService } from '../services/notificationService';
 import pool from '../db/config';
 import { userService } from '../services/userService';
+import { sanitizeMessage, sanitizeResponse } from '../utils/sanitization';
 
 export default function chatApi(app: Express) {
   // Get user's conversations with user details
@@ -158,11 +159,19 @@ export default function chatApi(app: Express) {
           startAfter ? JSON.parse(startAfter as string) : undefined
         );
 
+        // Sanitize user-generated content in messages
+        const sanitizedMessages = sanitizeResponse(result.messages, [
+          'content',
+        ]);
+        const sanitizedLastMessage = result.lastMessage
+          ? sanitizeMessage(result.lastMessage)
+          : null;
+
         res.json({
           success: true,
-          data: result.messages,
+          data: sanitizedMessages,
           hasMore: result.hasMore,
-          lastMessage: result.lastMessage,
+          lastMessage: sanitizedLastMessage,
         });
       } catch (error) {
         console.error('Error fetching messages:', error);

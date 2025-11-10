@@ -14,6 +14,8 @@ import { WebSocketService } from './services/websocketService';
 import pool from './db/config';
 // Register API routes
 import { registerApiRoutes } from './api';
+// CSRF Protection
+import { csrfProtection } from './middleware/csrf';
 
 // Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
@@ -54,6 +56,10 @@ admin.initializeApp({
 
 const app: Express = express();
 const PORT = process.env.PORT || 8080;
+
+// Trust proxy - Required for rate limiting and IP extraction behind proxies (Heroku, etc.)
+// This ensures req.ip and x-forwarded-for headers are properly handled
+app.set('trust proxy', true);
 
 // Test database connection
 pool
@@ -103,6 +109,11 @@ const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
 
 app.use(cors(corsOptionsDelegate));
 app.options('*', cors(corsOptionsDelegate));
+
+// CSRF Protection for state-changing operations
+// Note: Applied before API routes to protect all state-changing endpoints
+// Skips GET, HEAD, OPTIONS requests automatically
+app.use(csrfProtection);
 
 // Content Security Policy - Allow necessary resources
 // Note: 'unsafe-inline' is currently required for React apps built with Create React App
