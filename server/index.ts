@@ -90,7 +90,7 @@ const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
     return;
   }
 
-  if (origin && defaultAllowedOrigins.includes(origin)) {
+  if (defaultAllowedOrigins.includes(origin)) {
     callback(null, { origin: true, credentials: true } as CorsOptions);
   } else {
     callback(new Error(`Origin ${origin} not allowed by CORS`));
