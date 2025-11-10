@@ -100,7 +100,7 @@ export function sanitizeString(
     (options.escapeHtml !== true && options.stripHtmlTags !== false);
 
   // Apply sanitization in correct order: escape first (if needed), then strip (if needed)
-  // Order: trim → escape → strip → limit length
+  // Order: trim → (escape OR strip) → limit length
   if (shouldEscape) {
     // Escape HTML entities first to neutralize any malicious HTML
     sanitized = escapeHtml(sanitized);

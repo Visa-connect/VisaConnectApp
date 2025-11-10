@@ -44,14 +44,6 @@ export const authRateLimiter = rateLimit({
       retryAfter: Math.ceil(15 * 60), // 15 minutes in seconds
     });
   },
-  // Skip rate limiting for certain conditions (e.g., health checks)
-  skip: (req: Request): boolean => {
-    // Skip rate limiting for health checks
-    if (req.path === '/api/health') {
-      return true;
-    }
-    return false;
-  },
 });
 
 /**
