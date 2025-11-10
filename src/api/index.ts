@@ -54,8 +54,8 @@ const waitForTokenRefresh = async (
 // Helper function to handle token refresh and retry requests
 const handleTokenRefresh = async (
   originalRequest: () => Promise<Response>,
-  url?: string,
-  method?: string
+  url: string,
+  method: string
 ): Promise<Response> => {
   const MAX_RETRIES = 2;
   const BASE_DELAY = 1000; // 1 second
