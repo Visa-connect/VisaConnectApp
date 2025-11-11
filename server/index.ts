@@ -15,6 +15,8 @@ import { WebSocketService } from './services/websocketService';
 import pool from './db/config';
 // Register API routes
 import { registerApiRoutes } from './api';
+// Performance monitoring
+import performanceMonitoring from './middleware/performanceMonitoring';
 
 // Initialize Firebase Admin SDK FIRST
 let serviceAccount: ServiceAccount;
@@ -109,6 +111,10 @@ const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
 
 app.use(cors(corsOptionsDelegate));
 app.options('*', cors(corsOptionsDelegate));
+
+// Performance monitoring middleware (track API response times)
+// Must be before routes to capture all request durations
+app.use(performanceMonitoring);
 
 // Minimal Content Security Policy
 // Note: With Create React App and 'unsafe-inline', CSP provides limited XSS protection.

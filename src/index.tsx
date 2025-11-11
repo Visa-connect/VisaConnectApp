@@ -72,10 +72,14 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+// Report Core Web Vitals to Sentry for performance monitoring
+// Metrics are automatically sent to Sentry if DSN is configured
+reportWebVitals((metric) => {
+  // Optional: Log to console in development for debugging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Web Vital:', metric);
+  }
+});
 
 // Register service worker for PWA functionality
 serviceWorkerRegistration.register();
