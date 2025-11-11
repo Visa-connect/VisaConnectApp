@@ -23,10 +23,18 @@ interface PerformanceMetrics {
  * Normalize a path by replacing parameter values with placeholders
  * This helps aggregate metrics for the same endpoint regardless of parameter values
  *
+ * Normalization rules:
+ * - UUIDs: Always normalized (e.g., 550e8400-e29b-41d4-a716-446655440000 -> :id)
+ * - Numeric IDs: Multi-digit numbers (2+ digits) normalized (e.g., 123 -> :id)
+ * - Alphanumeric IDs: 8+ chars with 2+ digits normalized (e.g., abc-123-def -> :id)
+ * - Route segments: Preserved (e.g., electronics1, categories -> unchanged)
+ *
  * Examples:
  * - /users/123 -> /users/:id
  * - /posts/abc-123-def -> /posts/:id
  * - /api/jobs/456/comments -> /api/jobs/:id/comments
+ * - /categories/electronics1 -> /categories/electronics1 (preserved, single digit)
+ * - /categories/electronics-gadgets -> /categories/electronics-gadgets (preserved, no digits)
  */
 const normalizePath = (path: string): string => {
   // Split path into segments for more accurate normalization
@@ -49,10 +57,15 @@ const normalizePath = (path: string): string => {
       return ':id';
     }
 
-    // Alphanumeric ID: long alphanumeric strings with hyphens that contain digits
-    // Matches patterns like "abc-123-def" or "post-123" (8+ chars, contains digits)
+    // Alphanumeric ID: patterns that are clearly IDs, not route segments
+    // Matches patterns like "abc-123-def" or "post-123-456" but not "electronics1"
+    // Requirements:
+    // - 8+ characters (long enough to be an ID, not a common word)
+    // - Contains 2+ digits (multiple digits suggest an ID, not a word with a suffix)
+    // - Alphanumeric with hyphens allowed
     const alphanumericIdPattern = /^[a-z0-9-]{8,}$/i;
-    if (alphanumericIdPattern.test(segment) && /\d/.test(segment)) {
+    const digitCount = (segment.match(/\d/g) || []).length;
+    if (alphanumericIdPattern.test(segment) && digitCount >= 2) {
       return ':id';
     }
 
