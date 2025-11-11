@@ -98,10 +98,12 @@ const PostJobScreen: React.FC = () => {
 
         // Auto-select first verified business if available
         if (verifiedBusinesses.length > 0) {
-          setSelectedBusiness(verifiedBusinesses[0]);
+          const firstBusiness = verifiedBusinesses[0];
+          setSelectedBusiness(firstBusiness);
           setFormData((prev) => ({
             ...prev,
-            businessId: verifiedBusinesses[0].id,
+            businessId: firstBusiness.id,
+            businessLogo: firstBusiness.logo_url || undefined,
           }));
         }
       }

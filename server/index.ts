@@ -100,6 +100,15 @@ const corsOptionsDelegate: CorsOptionsDelegate = (req, callback) => {
     return;
   }
 
+  // In development, allow backend's own origin (for proxy/redirect scenarios)
+  if (process.env.NODE_ENV !== 'production') {
+    const backendOrigin = `http://localhost:${process.env.PORT || 8080}`;
+    if (origin === backendOrigin) {
+      callback(null, { origin: true, credentials: true } as CorsOptions);
+      return;
+    }
+  }
+
   if (defaultAllowedOrigins.includes(origin)) {
     callback(null, { origin: true, credentials: true } as CorsOptions);
   } else {

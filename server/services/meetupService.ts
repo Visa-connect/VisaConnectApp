@@ -1,11 +1,9 @@
 import pool from '../db/config';
 import {
   AppError,
-  ErrorCode,
   MeetupNotFoundError,
   AlreadyInterestedError,
   NotInterestedError,
-  MeetupAccessDeniedError,
   DatabaseError,
 } from '../types/errors';
 
@@ -190,16 +188,16 @@ class MeetupService {
   async createMeetup(
     userId: string,
     meetupData: CreateMeetupRequest
-  ): Promise<number> {
+  ): Promise<string> {
     try {
       // Validate input data
       this.validateMeetupData(meetupData);
 
       const result = await pool.query(
         `INSERT INTO meetups (
-          creator_id, category_id, title, description, location, 
+          id, creator_id, category_id, title, description, location, 
           meetup_date, max_participants, is_active, photo_url, photo_public_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) 
+        ) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) 
         RETURNING id`,
         [
           userId,

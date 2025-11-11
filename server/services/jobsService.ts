@@ -52,10 +52,10 @@ class JobsService {
   async createJob(jobData: JobSubmission): Promise<Job> {
     const query = `
       INSERT INTO jobs (
-        business_id, title, description, location, job_type, 
+        id, business_id, title, description, location, job_type, 
         rate_from, rate_to, business_logo_url
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
