@@ -242,13 +242,6 @@ router.post(
 
       setRefreshTokenCookie(res, result.refreshToken);
 
-      const duration = Date.now() - startTime;
-      console.log('Token refresh successful:', {
-        duration: `${duration}ms`,
-        userId: result.user?.id,
-        path: req.path,
-      });
-
       res.json({
         success: result.success,
         token: result.token,
