@@ -82,28 +82,32 @@ function clearRefreshTokenCookie(res: Response) {
 }
 
 // Register a new user
-router.post('/register', registerRateLimiter, async (req: Request, res: Response) => {
-  try {
-    const result = await authService.registerUser(req.body);
+router.post(
+  '/register',
+  registerRateLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const result = await authService.registerUser(req.body);
 
-    if (result.refreshToken) {
-      setRefreshTokenCookie(res, result.refreshToken);
+      if (result.refreshToken) {
+        setRefreshTokenCookie(res, result.refreshToken);
+      }
+
+      res.json({
+        success: result.success,
+        message: result.message,
+        user: result.user,
+        token: result.token,
+      });
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Registration failed',
+      });
     }
-
-    res.json({
-      success: result.success,
-      message: result.message,
-      user: result.user,
-      token: result.token,
-    });
-  } catch (error: any) {
-    console.error('Registration error:', error);
-    res.status(400).json({
-      success: false,
-      message: error.message || 'Registration failed',
-    });
   }
-});
+);
 
 // Login existing user
 router.post('/login', loginRateLimiter, async (req: Request, res: Response) => {
@@ -156,13 +160,6 @@ router.post('/login', loginRateLimiter, async (req: Request, res: Response) => {
       setRefreshTokenCookie(res, result.refreshToken);
     }
 
-    const duration = Date.now() - startTime;
-    console.log('Login successful:', {
-      email,
-      duration: `${duration}ms`,
-      userId: result.user?.id,
-    });
-
     res.json({
       success: result.success,
       message: result.message,
@@ -209,94 +206,92 @@ router.post('/login', loginRateLimiter, async (req: Request, res: Response) => {
 });
 
 // Refresh token endpoint
-router.post('/refresh-token', refreshTokenRateLimiter, async (req: Request, res: Response) => {
-  const startTime = Date.now();
+router.post(
+  '/refresh-token',
+  refreshTokenRateLimiter,
+  async (req: Request, res: Response) => {
+    const startTime = Date.now();
 
-  try {
-    const refreshToken = getRefreshTokenFromRequest(req);
+    try {
+      const refreshToken = getRefreshTokenFromRequest(req);
 
-    // Validate refresh token exists and is not empty
-    // Using optional chaining to safely handle undefined values
-    if (!refreshToken?.trim()) {
-      console.error('Token refresh validation error:', {
-        hasToken: !!refreshToken,
-        tokenLength: refreshToken?.length || 0,
-        path: req.path,
-      });
-      return res.status(401).json({
-        success: false,
-        message: 'Refresh token cookie missing',
-      });
-    }
-
-    // Set Sentry context for this request
-    if (process.env.SENTRY_DSN) {
-      Sentry.setContext('refresh_token_request', {
-        path: req.path,
-        method: req.method,
-        hasToken: true,
-      });
-    }
-
-    const result = await authService.refreshToken(refreshToken);
-
-    setRefreshTokenCookie(res, result.refreshToken);
-
-    const duration = Date.now() - startTime;
-    console.log('Token refresh successful:', {
-      duration: `${duration}ms`,
-      userId: result.user?.id,
-      path: req.path,
-    });
-
-    res.json({
-      success: result.success,
-      token: result.token,
-      user: result.user,
-      message: result.message,
-    });
-  } catch (error: any) {
-    const duration = Date.now() - startTime;
-    const errorMessage = error.message || 'Token refresh failed';
-    const isRefreshTokenError = error instanceof RefreshTokenError;
-
-    // Log structured error
-    console.error('Token refresh error:', {
-      error: errorMessage,
-      duration: `${duration}ms`,
-      stack: error.stack,
-      path: req.path,
-      isRefreshTokenError,
-    });
-
-    // Capture error in Sentry (only for non-auth errors to avoid noise)
-    if (process.env.SENTRY_DSN && !isRefreshTokenError) {
-      Sentry.captureException(error, {
-        tags: {
-          endpoint: 'refresh-token',
-          error_type: 'token_refresh',
-        },
-        extra: {
-          duration: `${duration}ms`,
+      // Validate refresh token exists and is not empty
+      // Using optional chaining to safely handle undefined values
+      if (!refreshToken?.trim()) {
+        console.error('Token refresh validation error:', {
+          hasToken: !!refreshToken,
+          tokenLength: refreshToken?.length || 0,
           path: req.path,
-        },
-      });
-    }
+        });
+        return res.status(401).json({
+          success: false,
+          message: 'Refresh token cookie missing',
+        });
+      }
 
-    if (isRefreshTokenError) {
-      clearRefreshTokenCookie(res);
-      return res.status(401).json({
+      // Set Sentry context for this request
+      if (process.env.SENTRY_DSN) {
+        Sentry.setContext('refresh_token_request', {
+          path: req.path,
+          method: req.method,
+          hasToken: true,
+        });
+      }
+
+      const result = await authService.refreshToken(refreshToken);
+
+      setRefreshTokenCookie(res, result.refreshToken);
+
+      res.json({
+        success: result.success,
+        token: result.token,
+        user: result.user,
+        message: result.message,
+      });
+    } catch (error: any) {
+      const duration = Date.now() - startTime;
+      const errorMessage = error.message || 'Token refresh failed';
+      const isRefreshTokenError = error instanceof RefreshTokenError;
+
+      // Log structured error
+      console.error('Token refresh error:', {
+        error: errorMessage,
+        duration: `${duration}ms`,
+        stack: error.stack,
+        path: req.path,
+        isRefreshTokenError,
+      });
+
+      // Capture error in Sentry (only for non-auth errors to avoid noise)
+      if (process.env.SENTRY_DSN && !isRefreshTokenError) {
+        Sentry.captureException(error, {
+          tags: {
+            endpoint: 'refresh-token',
+            error_type: 'token_refresh',
+          },
+          extra: {
+            duration: `${duration}ms`,
+            path: req.path,
+          },
+        });
+      }
+
+      if (isRefreshTokenError) {
+        clearRefreshTokenCookie(res);
+        return res.status(401).json({
+          success: false,
+          message:
+            error.message || 'Token refresh failed. Please sign in again.',
+        });
+      }
+
+      res.status(500).json({
         success: false,
-        message: error.message || 'Token refresh failed. Please sign in again.',
+        message: errorMessage,
       });
     }
-
-    res.status(500).json({
-      success: false,
-      message: errorMessage,
-    });
   }
-});
+);
 
 // Verify email
 router.post(
@@ -328,29 +323,33 @@ router.post(
 );
 
 // Reset password
-router.post('/reset-password', sensitiveAuthRateLimiter, async (req: Request, res: Response) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({
+router.post(
+  '/reset-password',
+  sensitiveAuthRateLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required',
+        });
+      }
+
+      await authService.resetPassword(email);
+      res.json({
+        success: true,
+        message: 'Password reset email sent',
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      res.status(500).json({
         success: false,
-        message: 'Email is required',
+        message: error.message || 'Password reset failed',
       });
     }
-
-    await authService.resetPassword(email);
-    res.json({
-      success: true,
-      message: 'Password reset email sent',
-    });
-  } catch (error: any) {
-    console.error('Password reset error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Password reset failed',
-    });
   }
-});
+);
 
 // Initiate email change
 router.post(

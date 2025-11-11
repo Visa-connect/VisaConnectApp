@@ -1,65 +1,121 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import './App.css';
 import { Routes, Route } from 'react-router-dom';
-import LoginPage from './screens/WelcomeScreen';
-import CreateAccountPage from './screens/CreateAccountPage';
-import AccountCreatedPage from './screens/AccountCreatedPage';
-import BackgroundScreen from './screens/wizard/BackgroundScreen';
-import LifestyleScreen from './screens/wizard/LifestyleScreen';
-import DashboardScreen from './screens/DashboardScreen';
-import NotificationsScreen from './screens/NotificationsScreen';
-import SignInScreen from './screens/LoginScreen';
-import SettingsScreen from './screens/SettingsScreen';
-import EditProfileScreen from './screens/EditProfileScreen';
-import AddBusinessScreen from './screens/AddBusinessScreen';
-import EditBusinessScreen from './screens/EditBusinessScreen';
-import PublicProfileScreen from './screens/PublicProfileScreen';
-import SocialPortalScreen from './screens/SocialPortalScreen';
-import WorkPortalScreen from './screens/WorkPortalScreen';
-import SearchJobsScreen from './screens/SearchJobsScreen';
-import JobDetailsScreen from './screens/JobDetailsScreen';
-import ApplyToJobScreen from './screens/ApplyToJobScreen';
-import PostJobScreen from './screens/PostJobScreen';
-import MeetupsScreen from './screens/MeetupsScreen';
-import MeetupDetailsScreen from './screens/MeetupDetailsScreen';
-import PostMeetupScreen from './screens/PostMeetupScreen';
-import MeetupsPostedScreen from './screens/MeetupsPostedScreen';
-import MeetupsInterestedScreen from './screens/MeetupsInterestedScreen';
-import EditMeetupScreen from './screens/EditMeetupScreen';
-import JobsAppliedScreen from './screens/JobsAppliedScreen';
-import JobsPostedScreen from './screens/JobsPostedScreen';
-import JobApplicationsScreen from './screens/JobApplicationsScreen';
-import ConnectScreen from './screens/ConnectScreen';
-import ChatScreen from './screens/ChatScreen';
-import TipsTripsAdviceScreen from './screens/TipsTripsAdviceScreen';
-import TipsTripsAdviceDetailScreen from './screens/TipsTripsAdviceDetailScreen';
-import EditTipsTripsAdviceScreen from './screens/EditTipsTripsAdviceScreen';
-import UserTipsTripsAdviceScreen from './screens/UserTipsTripsAdviceScreen';
-import TravelExplorationScreen from './screens/wizard/TravelExplorationScreen';
-import KnowledgeCommunityScreen from './screens/wizard/KnowledgeCommunityScreen';
-import AdminLayout from './components/AdminLayout';
-import AdminRoute from './components/AdminRoute';
-import { AdminProvider } from './stores/adminStore';
-import AdminLoginScreen from './screens/admin/AdminLoginScreen';
-import AdminDashboardScreen from './screens/admin/AdminDashboardScreen';
-import BusinessListScreen from './screens/admin/BusinessListScreen';
-import BusinessDetailScreen from './screens/admin/BusinessDetailScreen';
-import TipsTripsAdviceListScreen from './screens/admin/TipsTripsAdviceListScreen';
-import PostTipsTripsAdviceScreen from './screens/PostTipsTripsAdviceScreen';
-import AdminPostTipsTripsAdviceScreen from './screens/admin/PostTipsTripsAdviceScreen';
-import AdminEditTipsTripsAdviceScreen from './screens/admin/EditTipsTripsAdviceScreen';
-import ViewTipsTripsAdviceScreen from './screens/admin/ViewTipsTripsAdviceScreen';
-import UsersListScreen from './screens/admin/UsersListScreen';
-import EmployersListScreen from './screens/admin/EmployersListScreen';
-import ReportsListScreen from './screens/admin/ReportsListScreen';
-import AdminReportEditScreen from './screens/admin/AdminReportEditScreen';
-import AdminUserViewScreen from './screens/admin/AdminUserViewScreen';
-import AdminUserEditScreen from './screens/admin/AdminUserEditScreen';
-import AdminEmployerViewScreen from './screens/admin/AdminEmployerViewScreen';
-import AdminEmployerEditScreen from './screens/admin/AdminEmployerEditScreen';
+import LazyRoute from './components/LazyRoute';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 import AuthenticatedRoute from './components/AuthenticatedRoute';
 import AuthenticatedLayout from './components/AuthenticatedLayout';
+import AdminLayout from './components/AdminLayout';
+import AdminRoute from './components/AdminRoute';
+import { AdminProvider } from './stores/adminStore';
+
+// Public routes (eagerly loaded for fast initial page load)
+import LoginPage from './screens/WelcomeScreen';
+import CreateAccountPage from './screens/CreateAccountPage';
+import SignInScreen from './screens/LoginScreen';
+import AdminLoginScreen from './screens/admin/AdminLoginScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import SocialPortalScreen from './screens/SocialPortalScreen';
+import WorkPortalScreen from './screens/WorkPortalScreen';
+import ChatScreen from './screens/ChatScreen';
+import DashboardScreen from './screens/DashboardScreen';
+
+// Lazy load all protected routes and admin routes (loaded on demand)
+// This reduces initial bundle size and improves Time to Interactive (TTI)
+const NotificationsScreen = lazy(() => import('./screens/NotificationsScreen'));
+const EditProfileScreen = lazy(() => import('./screens/EditProfileScreen'));
+const AddBusinessScreen = lazy(() => import('./screens/AddBusinessScreen'));
+const EditBusinessScreen = lazy(() => import('./screens/EditBusinessScreen'));
+const PublicProfileScreen = lazy(() => import('./screens/PublicProfileScreen'));
+const SearchJobsScreen = lazy(() => import('./screens/SearchJobsScreen'));
+const JobDetailsScreen = lazy(() => import('./screens/JobDetailsScreen'));
+const ApplyToJobScreen = lazy(() => import('./screens/ApplyToJobScreen'));
+const PostJobScreen = lazy(() => import('./screens/PostJobScreen'));
+const MeetupsScreen = lazy(() => import('./screens/MeetupsScreen'));
+const MeetupDetailsScreen = lazy(() => import('./screens/MeetupDetailsScreen'));
+const PostMeetupScreen = lazy(() => import('./screens/PostMeetupScreen'));
+const MeetupsPostedScreen = lazy(() => import('./screens/MeetupsPostedScreen'));
+const MeetupsInterestedScreen = lazy(
+  () => import('./screens/MeetupsInterestedScreen')
+);
+const EditMeetupScreen = lazy(() => import('./screens/EditMeetupScreen'));
+const JobsAppliedScreen = lazy(() => import('./screens/JobsAppliedScreen'));
+const JobsPostedScreen = lazy(() => import('./screens/JobsPostedScreen'));
+const JobApplicationsScreen = lazy(
+  () => import('./screens/JobApplicationsScreen')
+);
+const ConnectScreen = lazy(() => import('./screens/ConnectScreen'));
+const TipsTripsAdviceScreen = lazy(
+  () => import('./screens/TipsTripsAdviceScreen')
+);
+const TipsTripsAdviceDetailScreen = lazy(
+  () => import('./screens/TipsTripsAdviceDetailScreen')
+);
+const EditTipsTripsAdviceScreen = lazy(
+  () => import('./screens/EditTipsTripsAdviceScreen')
+);
+const UserTipsTripsAdviceScreen = lazy(
+  () => import('./screens/UserTipsTripsAdviceScreen')
+);
+const PostTipsTripsAdviceScreen = lazy(
+  () => import('./screens/PostTipsTripsAdviceScreen')
+);
+const BackgroundScreen = lazy(
+  () => import('./screens/wizard/BackgroundScreen')
+);
+const LifestyleScreen = lazy(() => import('./screens/wizard/LifestyleScreen'));
+const AccountCreatedPage = lazy(() => import('./screens/AccountCreatedPage'));
+const TravelExplorationScreen = lazy(
+  () => import('./screens/wizard/TravelExplorationScreen')
+);
+const KnowledgeCommunityScreen = lazy(
+  () => import('./screens/wizard/KnowledgeCommunityScreen')
+);
+
+// Admin routes (lazy loaded)
+const AdminDashboardScreen = lazy(
+  () => import('./screens/admin/AdminDashboardScreen')
+);
+const BusinessListScreen = lazy(
+  () => import('./screens/admin/BusinessListScreen')
+);
+const BusinessDetailScreen = lazy(
+  () => import('./screens/admin/BusinessDetailScreen')
+);
+const TipsTripsAdviceListScreen = lazy(
+  () => import('./screens/admin/TipsTripsAdviceListScreen')
+);
+const AdminPostTipsTripsAdviceScreen = lazy(
+  () => import('./screens/admin/PostTipsTripsAdviceScreen')
+);
+const AdminEditTipsTripsAdviceScreen = lazy(
+  () => import('./screens/admin/EditTipsTripsAdviceScreen')
+);
+const ViewTipsTripsAdviceScreen = lazy(
+  () => import('./screens/admin/ViewTipsTripsAdviceScreen')
+);
+const UsersListScreen = lazy(() => import('./screens/admin/UsersListScreen'));
+const EmployersListScreen = lazy(
+  () => import('./screens/admin/EmployersListScreen')
+);
+const ReportsListScreen = lazy(
+  () => import('./screens/admin/ReportsListScreen')
+);
+const AdminReportEditScreen = lazy(
+  () => import('./screens/admin/AdminReportEditScreen')
+);
+const AdminUserViewScreen = lazy(
+  () => import('./screens/admin/AdminUserViewScreen')
+);
+const AdminUserEditScreen = lazy(
+  () => import('./screens/admin/AdminUserEditScreen')
+);
+const AdminEmployerViewScreen = lazy(
+  () => import('./screens/admin/AdminEmployerViewScreen')
+);
+const AdminEmployerEditScreen = lazy(
+  () => import('./screens/admin/AdminEmployerEditScreen')
+);
 
 function App() {
   return (
@@ -70,14 +126,16 @@ function App() {
         <Route path="/create-account" element={<CreateAccountPage />} />
         <Route path="/sign-in" element={<SignInScreen />} />
 
-        {/* Protected routes - authentication required */}
+        {/* Protected routes - authentication required (lazy loaded) */}
         <Route
           path="/dashboard"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <DashboardScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <DashboardScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -85,9 +143,11 @@ function App() {
           path="/notifications"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <NotificationsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <NotificationsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -95,9 +155,11 @@ function App() {
           path="/tips-trips-advice"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <TipsTripsAdviceScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <TipsTripsAdviceScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -105,9 +167,11 @@ function App() {
           path="/post-tips-trips-advice"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <PostTipsTripsAdviceScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <PostTipsTripsAdviceScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -115,9 +179,11 @@ function App() {
           path="/tips-trips-advice/posted"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <UserTipsTripsAdviceScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <UserTipsTripsAdviceScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -125,9 +191,11 @@ function App() {
           path="/tips-trips-advice/:postId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <TipsTripsAdviceDetailScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <TipsTripsAdviceDetailScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -135,9 +203,11 @@ function App() {
           path="/edit-tips-trips-advice/:postId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <EditTipsTripsAdviceScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <EditTipsTripsAdviceScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -145,9 +215,11 @@ function App() {
           path="/settings"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <SettingsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <SettingsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -155,9 +227,11 @@ function App() {
           path="/edit-profile"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <EditProfileScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <EditProfileScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -165,9 +239,11 @@ function App() {
           path="/add-business"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <AddBusinessScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <AddBusinessScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -175,9 +251,11 @@ function App() {
           path="/edit-business/:id"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <EditBusinessScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <EditBusinessScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -185,9 +263,11 @@ function App() {
           path="/public-profile"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <PublicProfileScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <PublicProfileScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -195,9 +275,11 @@ function App() {
           path="/public-profile/:userId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <PublicProfileScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <PublicProfileScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -205,9 +287,11 @@ function App() {
           path="/social"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <SocialPortalScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <SocialPortalScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -215,9 +299,11 @@ function App() {
           path="/work"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <WorkPortalScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <WorkPortalScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -225,9 +311,11 @@ function App() {
           path="/search-jobs"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <SearchJobsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <SearchJobsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -235,9 +323,11 @@ function App() {
           path="/job/:jobId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <JobDetailsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <JobDetailsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -245,9 +335,11 @@ function App() {
           path="/apply/:jobId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <ApplyToJobScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <ApplyToJobScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -255,9 +347,11 @@ function App() {
           path="/post-job"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <PostJobScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <PostJobScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -265,9 +359,11 @@ function App() {
           path="/meetups"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <MeetupsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <MeetupsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -275,9 +371,11 @@ function App() {
           path="/meetups/:meetupId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <MeetupDetailsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <MeetupDetailsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -285,9 +383,11 @@ function App() {
           path="/post-meetup"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <PostMeetupScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <PostMeetupScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -295,9 +395,11 @@ function App() {
           path="/meetups-posted"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <MeetupsPostedScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <MeetupsPostedScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -305,9 +407,11 @@ function App() {
           path="/meetups-interested"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <MeetupsInterestedScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <MeetupsInterestedScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -315,9 +419,11 @@ function App() {
           path="/jobs-applied"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <JobsAppliedScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <JobsAppliedScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -325,9 +431,11 @@ function App() {
           path="/jobs-posted"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <JobsPostedScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <JobsPostedScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -335,9 +443,11 @@ function App() {
           path="/job-applications/:jobId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <JobApplicationsScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <JobApplicationsScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -345,9 +455,11 @@ function App() {
           path="/edit-meetup/:meetupId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <EditMeetupScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <EditMeetupScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -355,9 +467,11 @@ function App() {
           path="/connect"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <ConnectScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <ConnectScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -365,9 +479,11 @@ function App() {
           path="/chat"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <ChatScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <ChatScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -375,9 +491,11 @@ function App() {
           path="/chat/:conversationId"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <ChatScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <ChatScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -385,9 +503,11 @@ function App() {
           path="/background"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <BackgroundScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <BackgroundScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -395,9 +515,11 @@ function App() {
           path="/lifestyle"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <LifestyleScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <LifestyleScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -405,9 +527,11 @@ function App() {
           path="/travel-exploration"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <TravelExplorationScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <TravelExplorationScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -415,9 +539,11 @@ function App() {
           path="/knowledge-community"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <KnowledgeCommunityScreen />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <KnowledgeCommunityScreen />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
@@ -425,23 +551,27 @@ function App() {
           path="/account-created"
           element={
             <AuthenticatedRoute>
-              <AuthenticatedLayout>
-                <AccountCreatedPage />
-              </AuthenticatedLayout>
+              <LazyRoute>
+                <AuthenticatedLayout>
+                  <AccountCreatedPage />
+                </AuthenticatedLayout>
+              </LazyRoute>
             </AuthenticatedRoute>
           }
         />
 
-        {/* Admin Routes */}
+        {/* Admin Routes (lazy loaded) */}
         <Route path="/admin" element={<AdminLoginScreen />} />
         <Route
           path="/admin/dashboard"
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminDashboardScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminDashboardScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -451,9 +581,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <TipsTripsAdviceListScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <TipsTripsAdviceListScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -463,9 +595,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminPostTipsTripsAdviceScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminPostTipsTripsAdviceScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -475,9 +609,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminEditTipsTripsAdviceScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminEditTipsTripsAdviceScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -487,9 +623,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <ViewTipsTripsAdviceScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <ViewTipsTripsAdviceScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -499,9 +637,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <BusinessListScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <BusinessListScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -511,9 +651,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <BusinessDetailScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <BusinessDetailScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -523,9 +665,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <UsersListScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <UsersListScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -535,9 +679,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <EmployersListScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <EmployersListScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -547,9 +693,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminUserViewScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminUserViewScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -559,9 +707,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminUserEditScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminUserEditScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -571,9 +721,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminEmployerViewScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminEmployerViewScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -583,9 +735,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminEmployerEditScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminEmployerEditScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -595,9 +749,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <ReportsListScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <ReportsListScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -607,9 +763,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminReportEditScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminReportEditScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }
@@ -619,9 +777,11 @@ function App() {
           element={
             <AdminProvider>
               <AdminRoute>
-                <AdminLayout>
-                  <AdminReportEditScreen />
-                </AdminLayout>
+                <LazyRoute>
+                  <AdminLayout>
+                    <AdminReportEditScreen />
+                  </AdminLayout>
+                </LazyRoute>
               </AdminRoute>
             </AdminProvider>
           }

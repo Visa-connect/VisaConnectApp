@@ -23,7 +23,7 @@
     "react-router-dom": "6",
     "react-scripts": "5.0.1",
     "typescript": "^5.8.3",
-    "web-vitals": "^2.1.0",
+    "web-vitals": "^3.5.2",
     "world-countries": "^5.1.0",
     "zustand": "^5.0.7"
   },
@@ -31,6 +31,8 @@
     "start": "node server/dist/index.js",
     "build": "npm run build:client && npm run build:server",
     "build:client": "react-scripts build",
+    "build:analyze": "npm run build:client && source-map-explorer 'build/static/js/*.js' --html bundle-report.html",
+    "build:analyze:json": "npm run build:client && source-map-explorer 'build/static/js/*.js' --json bundle-report.json",
     "build:server": "cd server && npm install && npm run build",
     "test": "npm run test:client && npm run test:server",
     "pretest:server": "npm --prefix server install --no-progress --no-audit",
@@ -80,6 +82,7 @@
     "concurrently": "^9.2.0",
     "husky": "^9.1.7",
     "postcss": "^8.5.6",
+    "source-map-explorer": "^2.5.3",
     "tailwindcss": "3",
     "ts-node": "^10.9.2"
   },
