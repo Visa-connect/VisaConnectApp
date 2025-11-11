@@ -14,18 +14,19 @@ import LoginPage from './screens/WelcomeScreen';
 import CreateAccountPage from './screens/CreateAccountPage';
 import SignInScreen from './screens/LoginScreen';
 import AdminLoginScreen from './screens/admin/AdminLoginScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import SocialPortalScreen from './screens/SocialPortalScreen';
+import WorkPortalScreen from './screens/WorkPortalScreen';
+import ChatScreen from './screens/ChatScreen';
+import DashboardScreen from './screens/DashboardScreen';
 
 // Lazy load all protected routes and admin routes (loaded on demand)
 // This reduces initial bundle size and improves Time to Interactive (TTI)
-const DashboardScreen = lazy(() => import('./screens/DashboardScreen'));
 const NotificationsScreen = lazy(() => import('./screens/NotificationsScreen'));
-const SettingsScreen = lazy(() => import('./screens/SettingsScreen'));
 const EditProfileScreen = lazy(() => import('./screens/EditProfileScreen'));
 const AddBusinessScreen = lazy(() => import('./screens/AddBusinessScreen'));
 const EditBusinessScreen = lazy(() => import('./screens/EditBusinessScreen'));
 const PublicProfileScreen = lazy(() => import('./screens/PublicProfileScreen'));
-const SocialPortalScreen = lazy(() => import('./screens/SocialPortalScreen'));
-const WorkPortalScreen = lazy(() => import('./screens/WorkPortalScreen'));
 const SearchJobsScreen = lazy(() => import('./screens/SearchJobsScreen'));
 const JobDetailsScreen = lazy(() => import('./screens/JobDetailsScreen'));
 const ApplyToJobScreen = lazy(() => import('./screens/ApplyToJobScreen'));
@@ -44,7 +45,6 @@ const JobApplicationsScreen = lazy(
   () => import('./screens/JobApplicationsScreen')
 );
 const ConnectScreen = lazy(() => import('./screens/ConnectScreen'));
-const ChatScreen = lazy(() => import('./screens/ChatScreen'));
 const TipsTripsAdviceScreen = lazy(
   () => import('./screens/TipsTripsAdviceScreen')
 );
