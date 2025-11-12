@@ -159,6 +159,7 @@ class TipsTripsAdviceService {
     const response: TipsTripsAdviceListResponse = await apiGet(
       `/api/tips-trips-advice?${queryParams.toString()}`
     );
+    console.log(response);
     return response.data;
   }
 

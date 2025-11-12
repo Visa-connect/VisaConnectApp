@@ -40,6 +40,7 @@ const TipsTripsAdviceScreen: React.FC = () => {
       const response = await tipsTripsAdviceService.searchPosts({
         post_type: selectedFilter === 'all' ? undefined : selectedFilter,
       });
+      // console.log('POSTING RESPONSE', response);
       setPosts(response);
     } catch (err) {
       console.error('Error fetching posts:', err);
