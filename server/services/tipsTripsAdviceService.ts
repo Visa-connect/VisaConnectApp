@@ -97,7 +97,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error creating post:', error);
 
-      if (error instanceof AppError || error instanceof ValidationError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
@@ -489,14 +489,6 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error updating post:', error);
 
-      if (
-        error instanceof AppError ||
-        error instanceof ValidationError ||
-        error instanceof NotFoundError
-      ) {
-        throw error;
-      }
-
       throw new DatabaseError('Failed to update post', error as Error);
     }
   }
@@ -587,14 +579,6 @@ export class TipsTripsAdviceService {
       };
     } catch (error) {
       console.error('Error adding comment:', error);
-
-      if (
-        error instanceof AppError ||
-        error instanceof ValidationError ||
-        error instanceof NotFoundError
-      ) {
-        throw error;
-      }
 
       throw new DatabaseError('Failed to add comment', error as Error);
     }

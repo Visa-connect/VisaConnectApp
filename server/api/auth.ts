@@ -235,8 +235,6 @@ router.post('/refresh-token', refreshTokenRateLimiter, async (req: Request, res:
 
     setRefreshTokenCookie(res, result.refreshToken);
 
-    const duration = Date.now() - startTime;
-
     res.json({
       success: result.success,
       token: result.token,
