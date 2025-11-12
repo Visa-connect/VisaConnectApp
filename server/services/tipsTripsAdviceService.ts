@@ -2,7 +2,6 @@ import pool from '../db/config';
 import { v4 as uuidv4 } from 'uuid';
 import {
   TipsTripsAdvice,
-  TipsTripsAdvicePhoto,
   TipsTripsAdviceComment,
   CreateTipsTripsAdviceRequest,
   UpdateTipsTripsAdviceRequest,
@@ -69,7 +68,9 @@ export class TipsTripsAdviceService {
             // Validate that photo_url is not null or empty
             if (!photo.photo_url) {
               console.error(`Photo ${i + 1} is missing photo_url:`, photo);
-              throw new Error(`Photo upload failed: missing image data`);
+              throw new ValidationError(
+                'Photo upload failed: missing image data'
+              );
             }
 
             await client.query(
@@ -109,7 +110,8 @@ export class TipsTripsAdviceService {
     try {
       const query = `
         SELECT 
-          t.*,
+          t.id, t.title, t.description, t.creator_id, t.post_type, t.is_active,
+          t.created_at, t.updated_at,
           u.first_name, u.last_name, u.email, u.profile_photo_url,
           COALESCE(like_counts.likes_count, 0) as likes_count,
           COALESCE(comment_counts.comments_count, 0) as comments_count,
@@ -230,7 +232,8 @@ export class TipsTripsAdviceService {
     try {
       let query = `
         SELECT 
-          t.*,
+          t.id, t.title, t.description, t.creator_id, t.post_type, t.is_active,
+          t.created_at, t.updated_at,
           u.first_name, u.last_name, u.email, u.profile_photo_url,
           COALESCE(like_counts.likes_count, 0) as likes_count,
           COALESCE(comment_counts.comments_count, 0) as comments_count,
@@ -486,10 +489,6 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error updating post:', error);
 
-      if (error instanceof AppError) {
-        throw error;
-      }
-
       throw new DatabaseError('Failed to update post', error as Error);
     }
   }
@@ -523,7 +522,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error deleting post:', error);
 
-      if (error instanceof AppError) {
+      if (error instanceof AppError || error instanceof NotFoundError) {
         throw error;
       }
 
@@ -581,10 +580,6 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error adding comment:', error);
 
-      if (error instanceof AppError) {
-        throw error;
-      }
-
       throw new DatabaseError('Failed to add comment', error as Error);
     }
   }
@@ -629,7 +624,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error toggling like:', error);
 
-      if (error instanceof AppError) {
+      if (error instanceof AppError || error instanceof NotFoundError) {
         throw error;
       }
 
@@ -645,7 +640,8 @@ export class TipsTripsAdviceService {
     try {
       let query = `
         SELECT 
-          t.*,
+          t.id, t.title, t.description, t.creator_id, t.post_type, t.is_active,
+          t.created_at, t.updated_at,
           u.first_name, u.last_name, u.email, u.profile_photo_url,
           COALESCE(like_counts.likes_count, 0) as likes_count,
           COALESCE(comment_counts.comments_count, 0) as comments_count
@@ -712,7 +708,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error fetching user posts:', error);
 
-      if (error instanceof AppError) {
+      if (error instanceof AppError || error instanceof NotFoundError) {
         throw error;
       }
 

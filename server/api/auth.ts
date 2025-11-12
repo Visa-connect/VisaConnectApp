@@ -156,13 +156,6 @@ router.post('/login', loginRateLimiter, async (req: Request, res: Response) => {
       setRefreshTokenCookie(res, result.refreshToken);
     }
 
-    const duration = Date.now() - startTime;
-    console.log('Login successful:', {
-      email,
-      duration: `${duration}ms`,
-      userId: result.user?.id,
-    });
-
     res.json({
       success: result.success,
       message: result.message,
@@ -241,13 +234,6 @@ router.post('/refresh-token', refreshTokenRateLimiter, async (req: Request, res:
     const result = await authService.refreshToken(refreshToken);
 
     setRefreshTokenCookie(res, result.refreshToken);
-
-    const duration = Date.now() - startTime;
-    console.log('Token refresh successful:', {
-      duration: `${duration}ms`,
-      userId: result.user?.id,
-      path: req.path,
-    });
 
     res.json({
       success: result.success,
@@ -358,12 +344,6 @@ router.post(
   isAuthenticated,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      console.log('📧 Email change request received:', {
-        userId: req.user?.uid,
-        newEmail: req.body.newEmail,
-        hasPassword: !!req.body.password,
-      });
-
       const { newEmail, password } = req.body;
 
       if (!newEmail || !password) {

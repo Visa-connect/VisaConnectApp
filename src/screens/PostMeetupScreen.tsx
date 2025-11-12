@@ -275,11 +275,15 @@ const PostMeetupScreen: React.FC = () => {
 
           {/* Date and Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="meetup-date-time"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               Date and time
             </label>
             <div className="relative">
               <input
+                id="meetup-date-time"
                 type="datetime-local"
                 value={formData.dateTime}
                 onChange={(e) => handleInputChange('dateTime', e.target.value)}

@@ -158,11 +158,13 @@ export function sanitizeObject<T extends Record<string, any>>(
         sanitized[key] = sanitizeArray(sanitized[key], options);
       } else if (
         typeof sanitized[key] === 'object' &&
-        sanitized[key] !== null
+        sanitized[key] !== null &&
+        !(sanitized[key] instanceof Date)
       ) {
-        // Recursively sanitize nested objects
+        // Recursively sanitize nested objects (but preserve Date objects)
         sanitized[key] = sanitizeObject(sanitized[key], undefined, options);
       }
+      // Date objects are preserved as-is (they will be serialized to ISO strings by JSON.stringify)
     }
   }
 
@@ -193,9 +195,14 @@ export function sanitizeArray<T>(
       return sanitizeString(item, options) as T;
     } else if (Array.isArray(item)) {
       return sanitizeArray(item, options) as T;
-    } else if (typeof item === 'object' && item !== null) {
+    } else if (
+      typeof item === 'object' &&
+      item !== null &&
+      !(item instanceof Date)
+    ) {
       return sanitizeObject(item, undefined, options) as T;
     }
+    // Date objects and other primitives are preserved as-is
     return item;
   });
 }
@@ -285,7 +292,7 @@ export function sanitizeResponse<T>(
     return sanitizeArray(data) as T;
   }
 
-  if (typeof data === 'object') {
+  if (typeof data === 'object' && !(data instanceof Date)) {
     return sanitizeObject(
       data as Record<string, any>,
       userGeneratedFields

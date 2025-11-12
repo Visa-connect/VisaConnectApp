@@ -1,11 +1,9 @@
 import pool from '../db/config';
 import {
   AppError,
-  ErrorCode,
   MeetupNotFoundError,
   AlreadyInterestedError,
   NotInterestedError,
-  MeetupAccessDeniedError,
   DatabaseError,
 } from '../types/errors';
 
@@ -190,16 +188,16 @@ class MeetupService {
   async createMeetup(
     userId: string,
     meetupData: CreateMeetupRequest
-  ): Promise<number> {
+  ): Promise<string> {
     try {
       // Validate input data
       this.validateMeetupData(meetupData);
 
       const result = await pool.query(
         `INSERT INTO meetups (
-          creator_id, category_id, title, description, location, 
+          id, creator_id, category_id, title, description, location, 
           meetup_date, max_participants, is_active, photo_url, photo_public_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) 
+        ) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) 
         RETURNING id`,
         [
           userId,
@@ -217,6 +215,10 @@ class MeetupService {
       return result.rows[0].id;
     } catch (error) {
       console.error('Error creating meetup:', error);
+      // Preserve validation error messages
+      if (error instanceof Error && error.message.includes('must be')) {
+        throw error;
+      }
       throw new Error('Failed to create meetup');
     }
   }
@@ -750,6 +752,16 @@ class MeetupService {
       await pool.query(query, params);
     } catch (error) {
       console.error('Error updating meetup:', error);
+      // Preserve validation and authorization error messages
+      if (error instanceof Error) {
+        if (
+          error.message.includes('must be') ||
+          error.message.includes('not found') ||
+          error.message.includes('Only the creator')
+        ) {
+          throw error;
+        }
+      }
       throw new Error('Failed to update meetup');
     }
   }
@@ -774,6 +786,15 @@ class MeetupService {
       await pool.query('DELETE FROM meetups WHERE id = $1', [meetupId]);
     } catch (error) {
       console.error('Error deleting meetup:', error);
+      // Preserve authorization error messages
+      if (error instanceof Error) {
+        if (
+          error.message.includes('not found') ||
+          error.message.includes('Only the creator')
+        ) {
+          throw error;
+        }
+      }
       throw new Error('Failed to delete meetup');
     }
   }
