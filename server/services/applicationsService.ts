@@ -55,10 +55,10 @@ export class ApplicationsService {
   ): Promise<JobApplication> {
     const query = `
       INSERT INTO job_applications (
-        job_id, user_id, qualifications, location, visa_type, 
+        id, job_id, user_id, qualifications, location, visa_type, 
         start_date, resume_url, resume_filename
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
 
