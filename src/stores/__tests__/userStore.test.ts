@@ -1,6 +1,7 @@
 // Test file: src/stores/__tests__/userStore.test.ts
 import { useUserStore } from '../userStore';
 import { tokenRefreshService } from '../../utils/tokenRefresh';
+import { useNotificationStore } from '../notificationStore';
 
 // Mock the token refresh service
 jest.mock('../../utils/tokenRefresh', () => ({
@@ -42,6 +43,15 @@ describe('UserStore', () => {
   beforeEach(() => {
     localStorage.clear();
     jest.clearAllMocks();
+    // Reset mock functions on mockNotificationStore
+    mockNotificationStore.fetchNotifications.mockClear();
+    mockNotificationStore.fetchUnreadCount.mockClear();
+    mockNotificationStore.clearNotifications.mockClear();
+    mockNotificationStore.shouldRefresh.mockReturnValue(true);
+    // Restore notification store mock after clearAllMocks
+    (useNotificationStore.getState as jest.Mock).mockImplementation(
+      () => mockNotificationStore
+    );
     // Reset store state
     useUserStore.setState({
       user: null,

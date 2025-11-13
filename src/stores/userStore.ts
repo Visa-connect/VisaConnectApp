@@ -282,7 +282,9 @@ export const useUserStore = create<UserStore>()(
 
         // Clear notifications when user logs out
         const notificationStore = useNotificationStore.getState();
-        notificationStore.clearNotifications();
+        if (notificationStore) {
+          notificationStore.clearNotifications();
+        }
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
