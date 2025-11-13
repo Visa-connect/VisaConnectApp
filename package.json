@@ -49,7 +49,7 @@
     "scripts:make-admin": "node scripts/make-admin.js",
     "scripts:set-admin-claims": "node scripts/set-admin-claims.js",
     "speckit:logs:rotate": "ts-node .specify/scripts/lib/rotateLogs.ts",
-    "heroku-postbuild": "export NODE_OPTIONS=--localstorage-file=/tmp/.localstorage && npm run build && cd server && npm install && npm run build && npm run migrate",
+    "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate",
     "prepare": "husky"
   },
   "eslintConfig": {
@@ -84,6 +84,6 @@
     "ts-node": "^10.9.2"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   }
 }
