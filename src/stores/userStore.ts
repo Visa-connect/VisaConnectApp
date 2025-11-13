@@ -61,10 +61,11 @@ export const useUserStore = create<UserStore>()(
         if (userData && userToken) {
           try {
             const user = JSON.parse(userData);
-            set({ user, isAuthenticated: true, hasToken: true });
 
             // Start token monitoring for existing user
             if (tokenRefreshService.isTokenValid(userToken)) {
+              // Token is valid, set authenticated state and start monitoring
+              set({ user, isAuthenticated: true, hasToken: true });
               try {
                 tokenRefreshService.startTokenMonitoring(
                   userToken,
@@ -91,16 +92,100 @@ export const useUserStore = create<UserStore>()(
                 get().clearUser();
               }
             } else {
-              // Token is expired, clear user data
-              console.log('Token expired on init, clearing user data');
-              get().clearUser();
+              // Token is expired, try to refresh it using the refresh token cookie
+              console.log('Token expired on init, attempting to refresh...');
+              // Set loading state while attempting refresh
+              set({
+                user,
+                isAuthenticated: false,
+                hasToken: false,
+                isLoading: true,
+              });
+
+              get()
+                .ensureValidToken()
+                .then((refreshed) => {
+                  if (refreshed) {
+                    const newToken = get().getToken();
+                    if (newToken) {
+                      // Refresh succeeded, set authenticated state
+                      set({
+                        user,
+                        isAuthenticated: true,
+                        hasToken: true,
+                        isLoading: false,
+                      });
+                      // Start token monitoring with the new token
+                      tokenRefreshService.startTokenMonitoring(
+                        newToken,
+                        (newToken) => {
+                          get().setToken(newToken);
+                          console.log('Token automatically refreshed on init');
+                        },
+                        (error) => {
+                          console.error(
+                            'Automatic token refresh failed on init:',
+                            error
+                          );
+                          get().clearUser();
+                        },
+                        () => get().getToken()
+                      );
+
+                      // Fetch notifications after successful refresh
+                      const hydrateAndFetch = () => {
+                        const notificationStore =
+                          useNotificationStore.getState();
+                        if (
+                          notificationStore &&
+                          notificationStore.shouldRefresh()
+                        ) {
+                          notificationStore
+                            .fetchNotifications()
+                            .catch((error) => {
+                              console.error(
+                                'Failed to fetch notifications on init:',
+                                error
+                              );
+                            });
+                          notificationStore
+                            .fetchUnreadCount()
+                            .catch((error) => {
+                              console.error(
+                                'Failed to fetch unread count on init:',
+                                error
+                              );
+                            });
+                        }
+                      };
+                      executeWhenHydrated(
+                        useNotificationStore,
+                        hydrateAndFetch
+                      );
+                    } else {
+                      // No token after refresh, clear user data
+                      console.log('No token after refresh, clearing user data');
+                      get().clearUser();
+                    }
+                  } else {
+                    // Refresh failed, clear user data
+                    console.log(
+                      'Token refresh failed on init, clearing user data'
+                    );
+                    get().clearUser();
+                  }
+                })
+                .catch((error) => {
+                  console.error('Error refreshing token on init:', error);
+                  get().clearUser();
+                });
               return;
             }
 
             // Fetch notifications if user is already authenticated
             const hydrateAndFetch = () => {
               const notificationStore = useNotificationStore.getState();
-              if (notificationStore.shouldRefresh()) {
+              if (notificationStore && notificationStore.shouldRefresh()) {
                 notificationStore.fetchNotifications().catch((error) => {
                   console.error(
                     'Failed to fetch notifications on init:',
@@ -163,15 +248,20 @@ export const useUserStore = create<UserStore>()(
         if (hasToken) {
           const runFetch = () => {
             const notificationStore = useNotificationStore.getState();
-            notificationStore.fetchNotifications().catch((error) => {
-              console.error(
-                'Failed to fetch notifications after login:',
-                error
-              );
-            });
-            notificationStore.fetchUnreadCount().catch((error) => {
-              console.error('Failed to fetch unread count after login:', error);
-            });
+            if (notificationStore) {
+              notificationStore.fetchNotifications().catch((error) => {
+                console.error(
+                  'Failed to fetch notifications after login:',
+                  error
+                );
+              });
+              notificationStore.fetchUnreadCount().catch((error) => {
+                console.error(
+                  'Failed to fetch unread count after login:',
+                  error
+                );
+              });
+            }
           };
 
           // Ensure notification store is hydrated first
@@ -200,7 +290,9 @@ export const useUserStore = create<UserStore>()(
 
         // Clear notifications when user logs out
         const notificationStore = useNotificationStore.getState();
-        notificationStore.clearNotifications();
+        if (notificationStore) {
+          notificationStore.clearNotifications();
+        }
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
