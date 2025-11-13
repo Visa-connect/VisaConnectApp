@@ -30,7 +30,7 @@
   "scripts": {
     "start": "node server/dist/index.js",
     "build": "npm run build:client && npm run build:server",
-    "build:client": "react-scripts build",
+    "build:client": "NODE_OPTIONS=--localstorage-file=/tmp/.localstorage react-scripts build",
     "build:server": "cd server && npm install && npm run build",
     "test": "npm run test:client && npm run test:server",
     "pretest:server": "npm --prefix server install --no-progress --no-audit",
