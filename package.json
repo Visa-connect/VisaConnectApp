@@ -30,7 +30,7 @@
   "scripts": {
     "start": "node server/dist/index.js",
     "build": "npm run build:client && npm run build:server",
-    "build:client": "NODE_OPTIONS=--localstorage-file=/tmp/.localstorage react-scripts build",
+    "build:client": "react-scripts build",
     "build:server": "cd server && npm install && npm run build",
     "test": "npm run test:client && npm run test:server",
     "pretest:server": "npm --prefix server install --no-progress --no-audit",
@@ -49,7 +49,7 @@
     "scripts:make-admin": "node scripts/make-admin.js",
     "scripts:set-admin-claims": "node scripts/set-admin-claims.js",
     "speckit:logs:rotate": "ts-node .specify/scripts/lib/rotateLogs.ts",
-    "heroku-postbuild": "npm run build && cd server && npm install && npm run build && npm run migrate",
+    "heroku-postbuild": "export NODE_OPTIONS=--localstorage-file=/tmp/.localstorage && npm run build && cd server && npm install && npm run build && npm run migrate",
     "prepare": "husky"
   },
   "eslintConfig": {
