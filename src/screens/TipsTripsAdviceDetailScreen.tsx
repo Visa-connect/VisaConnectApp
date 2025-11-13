@@ -8,11 +8,13 @@ import {
 } from '../api/tipsTripsAdviceService';
 import { formatTimeAgo } from '../utils/time';
 import { useUserStore } from '../stores/userStore';
+import { useCreateConversation } from '../hooks/useCreateConversation';
 
 const TipsTripsAdviceDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const { postId } = useParams<{ postId: string }>();
   const { user } = useUserStore();
+  const createConversation = useCreateConversation();
   const [post, setPost] = useState<TipsTripsAdvicePost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,54 +43,14 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
     navigate(-1);
   };
 
-  const handleChat = async () => {
-    if (!post || !user) return;
+  const handleChat = () => {
+    if (!post) return;
 
-    // Don't allow chatting with yourself
-    if (post.creator_id === user.uid) {
-      return;
-    }
-
-    try {
-      // Create or get existing conversation with the post creator
-      const token = useUserStore.getState().getToken();
-      const response = await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          participantIds: [user.uid, post.creator_id],
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          // Navigate directly to the specific conversation
-          navigate(`/chat/${result.data.id}`, {
-            state: {
-              otherUserId: post.creator_id,
-              otherUserName: `${post.creator.first_name} ${post.creator.last_name}`,
-              otherUserPhoto: post.creator.profile_photo_url || null,
-            },
-          });
-        } else {
-          console.error('Failed to create conversation:', result.message);
-          // Fallback: navigate to general chat
-          navigate('/chat');
-        }
-      } else {
-        console.error('Failed to create conversation');
-        // Fallback: navigate to general chat
-        navigate('/chat');
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      // Fallback: navigate to general chat
-      navigate('/chat');
-    }
+    createConversation({
+      otherUserId: post.creator_id,
+      otherUserName: `${post.creator.first_name} ${post.creator.last_name}`,
+      otherUserPhoto: post.creator.profile_photo_url || null,
+    });
   };
 
   const handleEditPost = () => {

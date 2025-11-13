@@ -275,7 +275,12 @@ export const useUserStore = create<UserStore>()(
         // Stop token monitoring
         tokenRefreshService.stopTokenMonitoring();
 
-        set({ user: null, isAuthenticated: false, hasToken: false });
+        set({
+          user: null,
+          isAuthenticated: false,
+          hasToken: false,
+          isLoading: false,
+        });
         // Clear localStorage
         localStorage.removeItem('userData');
         get().removeToken();
