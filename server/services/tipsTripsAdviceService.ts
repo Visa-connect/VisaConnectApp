@@ -488,8 +488,9 @@ export class TipsTripsAdviceService {
       }
     } catch (error) {
       console.error('Error updating post:', error);
-
-      throw new DatabaseError('Failed to update post', error as Error);
+      throw error instanceof AppError
+        ? error
+        : new DatabaseError('Failed to update post', error as Error);
     }
   }
 
@@ -522,7 +523,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error deleting post:', error);
 
-      if (error instanceof AppError || error instanceof NotFoundError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
@@ -580,6 +581,10 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error adding comment:', error);
 
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       throw new DatabaseError('Failed to add comment', error as Error);
     }
   }
@@ -624,7 +629,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error toggling like:', error);
 
-      if (error instanceof AppError || error instanceof NotFoundError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
@@ -708,7 +713,7 @@ export class TipsTripsAdviceService {
     } catch (error) {
       console.error('Error fetching user posts:', error);
 
-      if (error instanceof AppError || error instanceof NotFoundError) {
+      if (error instanceof AppError) {
         throw error;
       }
 
