@@ -1,8 +1,6 @@
 // Test file: src/stores/__tests__/userStore.test.ts
 import { useUserStore } from '../userStore';
 import { tokenRefreshService } from '../../utils/tokenRefresh';
-import { useNotificationStore } from '../notificationStore';
-import { executeWhenHydrated } from '../../utils/persistUtils';
 
 // Mock the token refresh service
 jest.mock('../../utils/tokenRefresh', () => ({
@@ -38,10 +36,6 @@ jest.mock('../../utils/persistUtils', () => ({
 
 const mockTokenRefreshService = tokenRefreshService as jest.Mocked<
   typeof tokenRefreshService
->;
-
-const mockNotificationStore = useNotificationStore as jest.Mocked<
-  typeof useNotificationStore
 >;
 
 describe('UserStore', () => {
@@ -355,9 +349,7 @@ describe('UserStore', () => {
     });
 
     it('should do nothing when no user exists', () => {
-      const initialState = useUserStore.getState();
       useUserStore.getState().updateUser({ first_name: 'Updated' });
-
       expect(useUserStore.getState().user).toBeNull();
     });
   });

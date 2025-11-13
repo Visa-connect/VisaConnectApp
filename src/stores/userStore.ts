@@ -136,7 +136,10 @@ export const useUserStore = create<UserStore>()(
                       const hydrateAndFetch = () => {
                         const notificationStore =
                           useNotificationStore.getState();
-                        if (notificationStore.shouldRefresh()) {
+                        if (
+                          notificationStore &&
+                          notificationStore.shouldRefresh()
+                        ) {
                           notificationStore
                             .fetchNotifications()
                             .catch((error) => {
@@ -182,7 +185,7 @@ export const useUserStore = create<UserStore>()(
             // Fetch notifications if user is already authenticated
             const hydrateAndFetch = () => {
               const notificationStore = useNotificationStore.getState();
-              if (notificationStore.shouldRefresh()) {
+              if (notificationStore && notificationStore.shouldRefresh()) {
                 notificationStore.fetchNotifications().catch((error) => {
                   console.error(
                     'Failed to fetch notifications on init:',
@@ -245,15 +248,20 @@ export const useUserStore = create<UserStore>()(
         if (hasToken) {
           const runFetch = () => {
             const notificationStore = useNotificationStore.getState();
-            notificationStore.fetchNotifications().catch((error) => {
-              console.error(
-                'Failed to fetch notifications after login:',
-                error
-              );
-            });
-            notificationStore.fetchUnreadCount().catch((error) => {
-              console.error('Failed to fetch unread count after login:', error);
-            });
+            if (notificationStore) {
+              notificationStore.fetchNotifications().catch((error) => {
+                console.error(
+                  'Failed to fetch notifications after login:',
+                  error
+                );
+              });
+              notificationStore.fetchUnreadCount().catch((error) => {
+                console.error(
+                  'Failed to fetch unread count after login:',
+                  error
+                );
+              });
+            }
           };
 
           // Ensure notification store is hydrated first
@@ -282,7 +290,9 @@ export const useUserStore = create<UserStore>()(
 
         // Clear notifications when user logs out
         const notificationStore = useNotificationStore.getState();
-        notificationStore.clearNotifications();
+        if (notificationStore) {
+          notificationStore.clearNotifications();
+        }
       },
 
       setLoading: (loading: boolean) => set({ isLoading: loading }),
