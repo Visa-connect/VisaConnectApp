@@ -41,9 +41,54 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
     navigate(-1);
   };
 
-  const handleChat = () => {
-    // TODO: Implement chat functionality
-    console.log('Opening chat for post:', post?.id);
+  const handleChat = async () => {
+    if (!post || !user) return;
+
+    // Don't allow chatting with yourself
+    if (post.creator_id === user.uid) {
+      return;
+    }
+
+    try {
+      // Create or get existing conversation with the post creator
+      const token = useUserStore.getState().getToken();
+      const response = await fetch('/api/chat/conversations', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          participantIds: [user.uid, post.creator_id],
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          // Navigate directly to the specific conversation
+          navigate(`/chat/${result.data.id}`, {
+            state: {
+              otherUserId: post.creator_id,
+              otherUserName: `${post.creator.first_name} ${post.creator.last_name}`,
+              otherUserPhoto: post.creator.profile_photo_url || null,
+            },
+          });
+        } else {
+          console.error('Failed to create conversation:', result.message);
+          // Fallback: navigate to general chat
+          navigate('/chat');
+        }
+      } else {
+        console.error('Failed to create conversation');
+        // Fallback: navigate to general chat
+        navigate('/chat');
+      }
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      // Fallback: navigate to general chat
+      navigate('/chat');
+    }
   };
 
   const handleEditPost = () => {
