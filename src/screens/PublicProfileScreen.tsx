@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { HandThumbUpIcon } from '@heroicons/react/24/outline';
 import { useUserStore } from '../stores/userStore';
+import { useCreateConversation } from '../hooks/useCreateConversation';
 import DrawerMenu from '../components/DrawerMenu';
 
 interface ProfileUser {
@@ -38,6 +39,7 @@ const PublicProfileScreen: React.FC = () => {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useUserStore();
+  const createConversation = useCreateConversation();
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [similarities, setSimilarities] = useState<string[]>([]);
@@ -218,54 +220,14 @@ const PublicProfileScreen: React.FC = () => {
     fetchProfileUser();
   }, [userId, currentUser, calculateSimilarities]);
 
-  const handleChatClick = async () => {
-    if (!profileUser || !currentUser) return;
+  const handleChatClick = () => {
+    if (!profileUser) return;
 
-    // Don't allow chatting with yourself
-    if (profileUser.id === currentUser.uid) {
-      return;
-    }
-
-    try {
-      // Create or get existing conversation with this user
-      const token = useUserStore.getState().getToken();
-      const response = await fetch('/api/chat/conversations', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          participantIds: [currentUser.uid, profileUser.id],
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success) {
-          // Navigate directly to the specific conversation
-          navigate(`/chat/${result.data.id}`, {
-            state: {
-              otherUserId: profileUser.id,
-              otherUserName: `${profileUser.first_name} ${profileUser.last_name}`,
-              otherUserPhoto: profileUser.profile_photo_url || null,
-            },
-          });
-        } else {
-          console.error('Failed to create conversation:', result.message);
-          // Fallback: navigate to general chat
-          navigate('/chat');
-        }
-      } else {
-        console.error('Failed to create conversation');
-        // Fallback: navigate to general chat
-        navigate('/chat');
-      }
-    } catch (error) {
-      console.error('Error creating conversation:', error);
-      // Fallback: navigate to general chat
-      navigate('/chat');
-    }
+    createConversation({
+      otherUserId: profileUser.id,
+      otherUserName: `${profileUser.first_name} ${profileUser.last_name}`,
+      otherUserPhoto: profileUser.profile_photo_url || null,
+    });
   };
 
   // Helper function to format travel experience

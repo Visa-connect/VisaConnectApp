@@ -8,11 +8,13 @@ import {
 } from '../api/tipsTripsAdviceService';
 import { formatTimeAgo } from '../utils/time';
 import { useUserStore } from '../stores/userStore';
+import { useCreateConversation } from '../hooks/useCreateConversation';
 
 const TipsTripsAdviceDetailScreen: React.FC = () => {
   const navigate = useNavigate();
   const { postId } = useParams<{ postId: string }>();
   const { user } = useUserStore();
+  const createConversation = useCreateConversation();
   const [post, setPost] = useState<TipsTripsAdvicePost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,8 +44,13 @@ const TipsTripsAdviceDetailScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    // TODO: Implement chat functionality
-    console.log('Opening chat for post:', post?.id);
+    if (!post) return;
+
+    createConversation({
+      otherUserId: post.creator_id,
+      otherUserName: `${post.creator.first_name} ${post.creator.last_name}`,
+      otherUserPhoto: post.creator.profile_photo_url || null,
+    });
   };
 
   const handleEditPost = () => {
